@@ -9,6 +9,4 @@
 
 #include "utils.h"
 
-void terminar_programa()
-
 #endif /* MAIN_FS_H_ */

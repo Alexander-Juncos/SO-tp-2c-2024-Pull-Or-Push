@@ -25,6 +25,4 @@ void* rutina_ejecucion(void *nada);
 void atender_cpu(int socket);
 */
 
-void terminar_programa(); // revisar y modificar-quizas podria liberar la memoria tambien
-
 #endif /* MAIN_MEMORIA_H */

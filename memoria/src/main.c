@@ -2,18 +2,14 @@
 
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
+    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip,
             puerto;
 
     /****************** Inicialización *****************/
     // estaria bueno q se pudieran manejar diferentes a traves de arg de main
     config = iniciar_config("default"); 
-
-    log_memoria_gral = log_create("Memoria_general.log", "Memoria", true, LOG_LEVEL_DEBUG);
-    /*
-    Tomar de config el LOG_LEVEL y convertirlo para usarlo en log_kernel_oblig
-    */
-	log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_INFO);
+    iniciar_logs(modulo_en_testeo);
 
     /*
         Hacer lo requerido para que arranque memoria (descargar config), iniciar el espacio de 
@@ -50,15 +46,4 @@ int main(int argc, char* argv[]) {
 
     terminar_programa();
     return 0;
-}
-
-void terminar_programa()
-{
-	// Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
-	 // con las funciones de las commons y del TP mencionadas en el enunciado /
-	liberar_conexion(log_memoria_gral, "CPU", socket_cpu);
-	liberar_conexion(log_memoria_gral, "Mi propio Servidor Escucha", socket_escucha);
-	log_destroy(log_memoria_oblig);
-	log_destroy(log_memoria_gral);
-	config_destroy(config);
 }

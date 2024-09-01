@@ -55,5 +55,7 @@ typedef struct {
 // ==========================================================================
 
 void retardo_operacion();
+void iniciar_logs(bool testeo);
+void terminar_programa(); // revisar y modificar-quizas podria liberar la memoria tambien
 
 #endif /* UTILS_H_ */

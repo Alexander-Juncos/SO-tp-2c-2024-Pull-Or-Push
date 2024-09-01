@@ -2,18 +2,14 @@
 
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
+    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip,
             puerto;
 
     /****************** Inicialización *****************/
     // estaria bueno q se pudieran manejar diferentes a traves de arg de main
     config = iniciar_config("default"); 
-
-    log_fs_gral = log_create("FileSytem_general.log", "FileSytem", true, LOG_LEVEL_DEBUG);
-    /*
-    Tomar de config el LOG_LEVEL y convertirlo para usarlo en
-    */
-	log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_INFO);
+    iniciar_logs(modulo_en_testeo);
 
     /*
         Hacer lo requerido para que arranque el FS (descargar config), iniciarlo y a sus estructuras 
@@ -42,12 +38,4 @@ int main(int argc, char* argv[]) {
 
     terminar_programa();
     return 0;
-}
-
-void terminar_programa()
-{
-	// Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
-	// con las funciones de las commons y del TP mencionadas en el enunciado /
-	// liberar_conexion(log_io_gral, nombre,socket); 
-	config_destroy(config);
 }

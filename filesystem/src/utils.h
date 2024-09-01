@@ -45,5 +45,7 @@ extern t_file_system* fs;
 /*
     obtener bloques libres, actualizar bitmap, obtener path absoluto, quizas algo q emita logs
 */
+void iniciar_logs(bool testeo);
+void terminar_programa();
 
 #endif /* UTILS_FS_H */

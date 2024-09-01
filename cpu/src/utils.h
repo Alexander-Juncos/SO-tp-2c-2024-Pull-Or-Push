@@ -44,6 +44,7 @@ typedef enum {
 // ====  Funciones utils:  ==================================================
 // ==========================================================================
 
+void iniciar_logs(bool testeo);
 void terminar_programa();
 
 #endif /* UTILS_CPU_H_ */

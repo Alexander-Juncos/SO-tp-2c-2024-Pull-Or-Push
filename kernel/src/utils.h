@@ -35,4 +35,12 @@ extern int quantum_de_config;
 extern t_log* log_kernel_oblig; // logger para los logs obligatorios
 extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con criterio de niveles.
 
+// ==========================================================================
+// ====  Funciones Utils:  ==================================================
+// ==========================================================================
+
+
+void iniciar_logs(bool testeo);
+void terminar_programa();
+
 #endif /* UTILS_KERNEL_H */

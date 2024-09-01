@@ -4,6 +4,4 @@
 #include <utils/general.h>
 #include <utils.h>
 
-void terminar_programa();
-
 #endif /* MAIN_KERNEL_H */

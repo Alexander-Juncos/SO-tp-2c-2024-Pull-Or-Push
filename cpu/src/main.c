@@ -2,18 +2,14 @@
 
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
+    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip,
             puerto;
 
     /****************** Inicialización *****************/
     // estaria bueno q se pudieran manejar diferentes a traves de arg de main
     config = iniciar_config("default"); 
-
-    log_cpu_gral = log_create("cpu_general.log", "CPU", true, LOG_LEVEL_DEBUG);
-    /*
-    Tomar de config el LOG_LEVEL y convertirlo para usarlo en log_kernel_oblig
-    */
-	log_cpu_oblig = log_create("cpu_obligatorio.log", "CPU", true, LOG_LEVEL_INFO);
+    iniciar_logs(modulo_en_testeo);
 
     saludar("cpu");
     
