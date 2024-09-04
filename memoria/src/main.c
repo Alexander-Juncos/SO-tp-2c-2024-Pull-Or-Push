@@ -6,8 +6,8 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    char*   ip,
-            puerto;
+    int yes = 1; // para setsockop
+    char* puerto;
 
     /****************** Inicialización *****************/
     if (argc == 1) // si no recibe ruta para archivo config
@@ -29,33 +29,44 @@ int main(int argc, char* argv[]) {
         memoria y sus estructuras segun corresponda (llamar a funciones q lo hagan), etc
     */
 
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
+    socket_escucha = iniciar_servidor(puerto);
+    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
     saludar("Memoria");
     
     /****************** Servidor CPU *******************/
-    /*
-        descargar de config - crear conexion - hanshake (y lo q CPU necesita para funcionar)
-        se puede usar como referencia mi implementación del tp anterior
-    */
+    socket_cpu = esperar_cliente(socket_escucha);
+    if (!(recibir_handshake(socket_cpu))){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK);
 
     /***************** Servidor Kernel *****************/
-    /*
-        descargar de config - crear conexion - hanshake (para Disp e Interr)
-        se puede usar como referencia mi implementación del tp anterior
-        
-    */
+    // esto solo hasta q se implemente servidor multihilo
+    socket_cliente_temp = esperar_cliente(socket_escucha);
+    if (!(recibir_handshake(socket_cliente_temp))){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK);
+    liberar_conexion(log_memoria_gral, "Kernel", socket_escucha);
+    // crear hilo para servidor multihilo
 
-    /*
-        recordar de utilizar setsockopt()
-        int yes = 1;
-        setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    */
+    /****************** Conexion a FS ******************/
+    // Solo placeholder para cumplir con check 1 (van a ser conexiones temporales cuando se requeria (DUMP))
+    char* ip_fs = config_get_string_value(config, "IP_FILESYSTEM");
+    char* puerto_fs = config_get_string_value(config, "PUERTO_FILESYSTEM");
+    int socket_temp = crear_conexion(ip_fs, puerto_fs);
+    enviar_handshake(MEMORIA, socket_temp);
+    recibir_y_manejar_rta_handshake(log_memoria_gral, "FileSystem", socket_temp); // esto ya emite y todo
+    liberar_conexion(log_memoria_gral, "FileSystem", socket_temp);
 
     /****************** Logíca Memoria *****************/
-    /*
-        Realmente es la logica para atender lo q necesite CPU... Kernel se manejara por hilos
-        dejar un join para q el main espere al hilo q gestione las conexiones temporales de kernel
-        + limpieza de estructuras y liberar la memoria
-    */
+    // atender cpu (un bucle)
+    // join del hilo del servidor multihilo (para q espere a q finalicen las peticiones)
+    // liberar memoria
 
     terminar_programa();
     return 0;

@@ -7,6 +7,8 @@ t_log* log_fs_oblig;
 t_log* log_fs_gral;
 t_config* config;
 
+int socket_escucha = 1;
+
 t_file_system* fs;
 
 // ==========================================================================
@@ -49,6 +51,6 @@ void terminar_programa()
 {
 	// Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
 	// con las funciones de las commons y del TP mencionadas en el enunciado /
-	// liberar_conexion(log_io_gral, nombre,socket); 
+	liberar_conexion(log_fs_gral, "Servidor Multihilo",socket_escucha); 
 	config_destroy(config);
 }

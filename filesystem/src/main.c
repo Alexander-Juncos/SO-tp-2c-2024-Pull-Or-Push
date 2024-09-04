@@ -6,11 +6,11 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    char*   ip,
-            puerto;
+    int yes = 1; // para setsockop
+    char* puerto;
 
     /****************** Inicialización *****************/
-    /****************** Inicialización *****************/
+
     if (argc == 1) // si no recibe ruta para archivo config
     {
         config = iniciar_config("default"); 
@@ -30,26 +30,32 @@ int main(int argc, char* argv[]) {
         segun corresponda (llamar a funciones q lo hagan), etc
     */
 
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
+    socket_escucha = iniciar_servidor(puerto);
+    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
     saludar("File System");
     
     /**************** Servidor Memoria *****************/
     /*
         descargar de config - crear conexion - hanshake (y lo q CPU necesita para funcionar)
-        las conexiones van a ser temporales? posiblemente tenga q esperar un msj de fin de ejecución
+        las conexiones van a ser temporales => posiblemente tenga q esperar un msj de fin de ejecución
+        /////////////////// Logíca FS ///////////////////
+        /
+            Realmente es la logica para atender memoria (en teoria no va separado de la parte de servidor)
+            ya q son conexiones temporales la logica en realidad contendria la parte de servidor
+            + limpieza de estructuras y liberar la memoria
+        /
+        Tendria q tener un hilo distruibuidor de hilos q reciba cada nuevo cliente (similar a memoria en tp anterior)
     */
-    /*
-        recordar de utilizar setsockopt()
-        int yes = 1;
-        setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    */
-
-    /****************** Logíca FS *********************/
-    /*
-        Realmente es la logica para atender memoria (en teoria no va separado de la parte de servidor)
-        ya q son conexiones temporales la logica en realidad contendria la parte de servidor
-        + limpieza de estructuras y liberar la memoria
-    */
-
+    int socket_temp = esperar_cliente(socket_escucha); 
+    if (!(recibir_handshake(socket_temp))){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK, socket_temp);
+    // lo de arriba es solo para poder hacer check1
+    
     terminar_programa();
     return 0;
 }

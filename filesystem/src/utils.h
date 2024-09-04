@@ -23,6 +23,8 @@ extern t_log* log_fs_oblig; // logger para los logs obligatorios
 extern t_log* log_fs_gral; // logger para los logs nuestros. Loguear con criterio de niveles.
 extern t_config* config;
 
+extern int socket_escucha;
+
 typedef struct {
     /*
         pendiente
