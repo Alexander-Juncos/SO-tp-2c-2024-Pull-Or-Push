@@ -27,16 +27,35 @@ int main(int argc, char* argv[]) {
     saludar("cpu");
     
     /***************** Conexión Memoria ****************/
-     /*
-        descargar de config - crear conexion - hanshake (y lo q CPU necesita para funcionar)
-    */
+    ip = config_get_string_value(config, "IP_MEMORIA");
+    puerto = config_get_string_value(config, "IP_MEMORIA");
+    socket_memoria = crear_conexion(ip, puerto);
+    enviar_handshake(CPU, socket_memoria);
+    recibir_y_manejar_rta_handshake(log_cpu_gral, "Memoria", socket_memoria);
 
     /***************** Conexión Kernel *****************/
-     /*
-        descargar de config - crear conexion - hanshake (para Disp e Interr)
-    */
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+    socket_kernel_dispatch = iniciar_servidor(puerto);
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+    socket_kernel_interrupt = iniciar_servidor(puerto);
+
+    // prueba conexion - limpiar y rehacer despues de check 1
+    int kernel_dispatch = esperar_cliente(socket_kernel_dispatch);
+    if (!(recibir_handshake(kernel_dispatch))){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK, kernel_dispatch);
+
+    int kernel_interrupt = esperar_cliente(socket_kernel_interrupt);
+    if (!(recibir_handshake(kernel_interrupt))){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK, kernel_interrupt);
 
     /******************** Logíca CPU *******************/
+    imprimir_mensaje("pude completar check 1");
      /*
         
     */

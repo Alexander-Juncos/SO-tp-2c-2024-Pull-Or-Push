@@ -39,7 +39,7 @@ void iniciar_logs(bool testeo)
     free(nivel);		
 }
 
-void terminar_programa()
+void terminar_programa() // revisar
 {
 	liberar_conexion(log_cpu_gral, "Memoria", socket_memoria);
 	liberar_conexion(log_cpu_gral, "Kernel del puerto Dispatch", socket_kernel_dispatch);
