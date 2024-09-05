@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         terminar_programa();
         return EXIT_FAILURE;
     }
-    enviar_handshake(HANDSHAKE_OK);
+    enviar_handshake(HANDSHAKE_OK, socket_cpu);
 
     /***************** Servidor Kernel *****************/
     // esto solo hasta q se implemente servidor multihilo
@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
     liberar_conexion(log_memoria_gral, "FileSystem", socket_temp);
 
     /****************** Logíca Memoria *****************/
+    imprimir_mensaje("pude completar check 1");
     // atender cpu (un bucle)
     // join del hilo del servidor multihilo (para q espere a q finalicen las peticiones)
     // liberar memoria

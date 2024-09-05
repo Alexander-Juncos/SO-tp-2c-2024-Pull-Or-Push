@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
     }
     enviar_handshake(HANDSHAKE_OK, socket_temp);
     // lo de arriba es solo para poder hacer check1
+    imprimir_mensaje("pude completar check 1");
     
     terminar_programa();
     return 0;
