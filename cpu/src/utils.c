@@ -4,9 +4,11 @@
 // ====  Variables globales:  ===============================================
 // ==========================================================================
 
-int socket_memoria = 1;
+int socket_escucha_puerto_dispatch = 1;
+int socket_escucha_puerto_interrupt = 1;
 int socket_kernel_dispatch = 1;
 int socket_kernel_interrupt = 1;
+int socket_memoria = 1;
 
 t_log* log_cpu_oblig; 
 t_log* log_cpu_gral; 

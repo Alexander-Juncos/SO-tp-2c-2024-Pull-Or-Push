@@ -34,25 +34,26 @@ int main(int argc, char* argv[]) {
     recibir_y_manejar_rta_handshake(log_cpu_gral, "Memoria", socket_memoria);
 
     /***************** Conexión Kernel *****************/
-    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-    socket_kernel_dispatch = iniciar_servidor(puerto);
-    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-    socket_kernel_interrupt = iniciar_servidor(puerto);
 
     // prueba conexion - limpiar y rehacer despues de check 1
-    int kernel_dispatch = esperar_cliente(socket_kernel_dispatch);
-    if (!(recibir_handshake(kernel_dispatch))){
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+    socket_escucha_puerto_dispatch = iniciar_servidor(puerto);
+    socket_kernel_dispatch = esperar_cliente(socket_escucha_puerto_dispatch);
+    if (!(recibir_handshake(socket_kernel_dispatch))){
         terminar_programa();
         return EXIT_FAILURE;
     }
-    enviar_handshake(HANDSHAKE_OK, kernel_dispatch);
+    enviar_handshake(HANDSHAKE_OK, socket_kernel_dispatch);
+    
 
-    int kernel_interrupt = esperar_cliente(socket_kernel_interrupt);
-    if (!(recibir_handshake(kernel_interrupt))){
+    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+    socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
+    socket_kernel_interrupt = esperar_cliente(socket_escucha_puerto_interrupt);
+    if (!(recibir_handshake(socket_kernel_interrupt))){
         terminar_programa();
         return EXIT_FAILURE;
     }
-    enviar_handshake(HANDSHAKE_OK, kernel_interrupt);
+    enviar_handshake(HANDSHAKE_OK, socket_kernel_interrupt);
 
     /******************** Logíca CPU *******************/
     imprimir_mensaje("pude completar check 1");

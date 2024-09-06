@@ -25,9 +25,11 @@
 // ====  Variables globales:  ===============================================
 // ==========================================================================
 
+extern int socket_escucha_puerto_dispatch;
+extern int socket_escucha_puerto_interrupt;
+extern int socket_kernel_dispatch;
+extern int socket_kernel_interrupt;
 extern int socket_memoria;
-extern int socket_kernel_dispatch; // revisar
-extern int socket_kernel_interrupt; // revisar
 
 extern t_log* log_cpu_oblig; // logger para los logs obligatorios
 extern t_log* log_cpu_gral; // logger para los logs nuestros. Loguear con criterio de niveles.
