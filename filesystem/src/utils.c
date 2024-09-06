@@ -28,18 +28,18 @@ void iniciar_logs(bool testeo)
     // Log obligatorio
     char * nivel;
     nivel = config_get_string_value(config, "LOG_LEVEL");
-    if (strcmp(nivel, "LOG_LEVEL_TRACE")== 0){
+    if (strcmp(nivel, "TRACE")== 0){
         log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_TRACE);
-    } else if (strcmp(nivel, "LOG_LEVEL_DEBUG") == 0){
+    } else if (strcmp(nivel, "DEBUG") == 0){
         log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_DEBUG);
-    } else if (strcmp(nivel, "LOG_LEVEL_INFO") == 0){
+    } else if (strcmp(nivel, "INFO") == 0){
         log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_INFO);
-    } else if (strcmp(nivel, "LOG_LEVEL_WARNING") == 0){
+    } else if (strcmp(nivel, "WARNING") == 0){
         log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_WARNING);
-    } else if (strcmp(nivel, "LOG_LEVEL_ERROR") == 0){
+    } else if (strcmp(nivel, "ERROR") == 0){
         log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_ERROR);
     } else {
-        printf("LOG_LEVEL de config desconocido...")
+        printf("LOG_LEVEL de config desconocido...");
         /*
             Ver si se quiere manejar caso de que el config este mal () y como cerrar el programa
         */

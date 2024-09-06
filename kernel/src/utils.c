@@ -35,7 +35,7 @@ void iniciar_logs(bool testeo)
     } else if (strcmp(nivel, "LOG_LEVEL_ERROR") == 0){
         log_kernel_oblig = log_create("kernel_obligatorio.log", "Kernel", true, LOG_LEVEL_ERROR);
     } else {
-        printf("LOG_LEVEL de config desconocido...")
+        printf("LOG_LEVEL de config desconocido...");
         /*
             Ver si se quiere manejar caso de que el config este mal () y como cerrar el programa
         */

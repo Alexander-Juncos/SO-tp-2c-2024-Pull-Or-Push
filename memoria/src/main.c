@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
         terminar_programa();
         return EXIT_FAILURE;
     }
-    enviar_handshake(HANDSHAKE_OK);
+    enviar_handshake(HANDSHAKE_OK, socket_kernel);
     liberar_conexion(log_memoria_gral, "Kernel", socket_escucha);
     // crear hilo para servidor multihilo
 

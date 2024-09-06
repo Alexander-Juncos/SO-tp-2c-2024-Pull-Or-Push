@@ -7,6 +7,7 @@
 int socket_cpu = 1;
 int socket_escucha = 1;
 int socket_cliente_temp = 1; // para que los hilos puedan tomar su cliente, protegido x semaforo (a implementar)
+int socket_kernel = 1;
 
 t_config *config; 
 t_log *log_memoria_oblig; 
@@ -46,7 +47,7 @@ void iniciar_logs(bool testeo)
     } else if (strcmp(nivel, "LOG_LEVEL_ERROR") == 0){
         log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_ERROR);
     } else {
-        printf("LOG_LEVEL de config desconocido...")
+        printf("LOG_LEVEL de config desconocido...");
         /*
             Ver si se quiere manejar caso de que el config este mal () y como cerrar el programa
         */

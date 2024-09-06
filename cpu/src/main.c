@@ -6,8 +6,8 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    char*   ip,
-            puerto;
+    char*   ip;
+    char*   puerto;
 
     /****************** Inicialización *****************/
     if (argc == 1) // si no recibe ruta para archivo config

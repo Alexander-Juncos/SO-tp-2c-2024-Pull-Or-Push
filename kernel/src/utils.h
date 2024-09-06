@@ -18,7 +18,7 @@
 #include <commons/collections/dictionary.h>
 #include <utils/general.h>
 #include <utils/conexiones.h>
-#include <hilos.h>
+//#include <hilos.h>
 #include <pthread.h>
 #include <semaphore.h>
 

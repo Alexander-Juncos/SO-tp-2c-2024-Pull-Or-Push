@@ -34,11 +34,15 @@ extern t_log* log_cpu_gral; // logger para los logs nuestros. Loguear con criter
 
 extern t_config* config;
 
+/*
 typedef enum {
-    /*
-        placeholder
-    */
+
+    // Tuve que comentarlo para que compile, a medida que vayamos avanzando podemos descomentarlo.
+    
+    placeholder  
+
 } execute_op_code;
+*/
 
 // ==========================================================================
 // ====  Funciones utils:  ==================================================
