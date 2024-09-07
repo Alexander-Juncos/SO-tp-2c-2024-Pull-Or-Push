@@ -31,27 +31,17 @@ void retardo_operacion()
 
 void iniciar_logs(bool testeo)
 {
-    log_memoria_gral = log_create("Memoria_general.log", "Memoria", testeo, LOG_LEVEL_DEBUG);
+    log_memoria_gral = log_create("memoria_general.log", "Memoria", testeo, LOG_LEVEL_DEBUG);
     
     // Log obligatorio
     char * nivel;
     nivel = config_get_string_value(config, "LOG_LEVEL");
-    if (strcmp(nivel, "LOG_LEVEL_TRACE")== 0){
-        log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_TRACE);
-    } else if (strcmp(nivel, "LOG_LEVEL_DEBUG") == 0){
-        log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_DEBUG);
-    } else if (strcmp(nivel, "LOG_LEVEL_INFO") == 0){
-        log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_INFO);
-    } else if (strcmp(nivel, "LOG_LEVEL_WARNING") == 0){
-        log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_WARNING);
-    } else if (strcmp(nivel, "LOG_LEVEL_ERROR") == 0){
-        log_memoria_oblig = log_create("Memoria_obligatorio.log", "Memoria", true, LOG_LEVEL_ERROR);
-    } else {
-        printf("LOG_LEVEL de config desconocido...");
-        /*
-            Ver si se quiere manejar caso de que el config este mal () y como cerrar el programa
-        */
-    }
+    log_memoria_oblig = log_create("memoria_obligatorio.log", "Memoria", true, log_level_from_string(nivel));
+
+    /*
+        Ver luego si se quiere manejar caso de que el config este mal () y como cerrar el programa.
+    */
+
     free(nivel);		
 }
 

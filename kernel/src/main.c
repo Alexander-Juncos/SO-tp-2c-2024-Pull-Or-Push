@@ -8,6 +8,7 @@ requeriria mas logica de gestion de errores... a menos q fuera al inicio como ar
 int main(int argc, char* argv[]) {
 
     /******************** Variables ********************/
+
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
 
     char*   ip;
@@ -25,8 +26,13 @@ int main(int argc, char* argv[]) {
     } 
     else
     {
-        imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
-        exit(3);
+        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES.
+
+        /* COMENTO ESTO POR AHORA, PARA PROBAR LOS HANDSHAKES.
+        *
+        * imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
+        * exit(3);
+        */
     }
 
     // argv[1] => ruta de archivo de pseudocodigo (para memoria)
@@ -37,17 +43,22 @@ int main(int argc, char* argv[]) {
     saludar("kernel");
 
     /****************** Conexión CPU *******************/
-     //descargar de config - crear conexion - hanshake (para Disp e Interr)
-     
+
     ip = config_get_string_value(config, "IP_CPU");
 
     puerto = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
-     // FALTA...
-     // .
-     // .
+    socket_cpu_dispatch = crear_conexion(ip, puerto);
+    enviar_handshake(KERNEL_D, socket_cpu_dispatch);
+    recibir_y_manejar_rta_handshake(log_kernel_gral, "CPU puerto Dispatch", socket_cpu_dispatch);
+
+    puerto = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
+    socket_cpu_interrupt = crear_conexion(ip, puerto);
+    enviar_handshake(KERNEL_I, socket_cpu_interrupt);
+    recibir_y_manejar_rta_handshake(log_kernel_gral, "CPU puerto Interrupt", socket_cpu_interrupt);
 
     /******************* Cuerpo Main *******************/
-    
+    imprimir_mensaje("pude completar check 1");
+
     terminar_programa();
     return 0;
 }

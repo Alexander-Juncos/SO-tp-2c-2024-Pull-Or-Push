@@ -20,8 +20,13 @@ int main(int argc, char* argv[]) {
     }
     else
     {
+        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES.
+
+        /* COMENTO ESTO POR AHORA, PARA PROBAR LOS HANDSHAKES.
+        *
         imprimir_mensaje("Error: demasiados argumentos, solo se acepta <pathConfig>");
         exit(3);
+        */
     }
     iniciar_logs(modulo_en_testeo);
 
@@ -48,13 +53,15 @@ int main(int argc, char* argv[]) {
         /
         Tendria q tener un hilo distruibuidor de hilos q reciba cada nuevo cliente (similar a memoria en tp anterior)
     */
+
     int socket_temp = esperar_cliente(socket_escucha); 
-    if (!(recibir_handshake(socket_temp))){
+    if (recibir_handshake(socket_temp) != MEMORIA){
         terminar_programa();
         return EXIT_FAILURE;
     }
     enviar_handshake(HANDSHAKE_OK, socket_temp);
     // lo de arriba es solo para poder hacer check1
+
     imprimir_mensaje("pude completar check 1");
     
     terminar_programa();

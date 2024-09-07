@@ -23,27 +23,17 @@ t_file_system* fs;
 
 void iniciar_logs(bool testeo)
 {
-    log_fs_gral = log_create("FileSytem_general.log", "FileSytem", testeo, LOG_LEVEL_DEBUG);
+    log_fs_gral = log_create("fs_general.log", "FS", testeo, LOG_LEVEL_DEBUG);
     
     // Log obligatorio
     char * nivel;
     nivel = config_get_string_value(config, "LOG_LEVEL");
-    if (strcmp(nivel, "TRACE")== 0){
-        log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_TRACE);
-    } else if (strcmp(nivel, "DEBUG") == 0){
-        log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_DEBUG);
-    } else if (strcmp(nivel, "INFO") == 0){
-        log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_INFO);
-    } else if (strcmp(nivel, "WARNING") == 0){
-        log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_WARNING);
-    } else if (strcmp(nivel, "ERROR") == 0){
-        log_fs_oblig = log_create("FileSytem_obligatorio.log", "FileSytem", true, LOG_LEVEL_ERROR);
-    } else {
-        printf("LOG_LEVEL de config desconocido...");
-        /*
-            Ver si se quiere manejar caso de que el config este mal () y como cerrar el programa
-        */
-    }
+    log_fs_oblig = log_create("fs_obligatorio.log", "FS", true, log_level_from_string(nivel));
+
+    /*
+        Ver luego si se quiere manejar caso de que el config este mal () y como cerrar el programa.
+    */
+
     free(nivel);		
 }
 

@@ -34,25 +34,6 @@ int main(int argc, char* argv[]) {
     setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
     saludar("Memoria");
-    
-    /****************** Servidor CPU *******************/
-    socket_cpu = esperar_cliente(socket_escucha);
-    if (!(recibir_handshake(socket_cpu))){
-        terminar_programa();
-        return EXIT_FAILURE;
-    }
-    enviar_handshake(HANDSHAKE_OK, socket_cpu);
-
-    /***************** Servidor Kernel *****************/
-    // esto solo hasta q se implemente servidor multihilo
-    socket_cliente_temp = esperar_cliente(socket_escucha);
-    if (!(recibir_handshake(socket_cliente_temp))){
-        terminar_programa();
-        return EXIT_FAILURE;
-    }
-    enviar_handshake(HANDSHAKE_OK, socket_kernel);
-    liberar_conexion(log_memoria_gral, "Kernel", socket_escucha);
-    // crear hilo para servidor multihilo
 
     /****************** Conexion a FS ******************/
     // Solo placeholder para cumplir con check 1 (van a ser conexiones temporales cuando se requeria (DUMP))
@@ -62,6 +43,25 @@ int main(int argc, char* argv[]) {
     enviar_handshake(MEMORIA, socket_temp);
     recibir_y_manejar_rta_handshake(log_memoria_gral, "FileSystem", socket_temp); // esto ya emite y todo
     liberar_conexion(log_memoria_gral, "FileSystem", socket_temp);
+    
+    /****************** Servidor CPU *******************/
+    socket_cpu = esperar_cliente(socket_escucha);
+    if (recibir_handshake(socket_cpu) != CPU){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK, socket_cpu);
+
+    /***************** Servidor Kernel *****************/
+    // esto solo hasta q se implemente servidor multihilo
+    socket_cliente_temp = esperar_cliente(socket_escucha);
+    if (recibir_handshake(socket_cliente_temp) != KERNEL){
+        terminar_programa();
+        return EXIT_FAILURE;
+    }
+    enviar_handshake(HANDSHAKE_OK, socket_cliente_temp);
+    liberar_conexion(log_memoria_gral, "Kernel", socket_escucha);
+    // crear hilo para servidor multihilo
 
     /****************** Logíca Memoria *****************/
     imprimir_mensaje("pude completar check 1");

@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     
     /***************** Conexión Memoria ****************/
     ip = config_get_string_value(config, "IP_MEMORIA");
-    puerto = config_get_string_value(config, "IP_MEMORIA");
+    puerto = config_get_string_value(config, "PUERTO_MEMORIA");
     socket_memoria = crear_conexion(ip, puerto);
     enviar_handshake(CPU, socket_memoria);
     recibir_y_manejar_rta_handshake(log_cpu_gral, "Memoria", socket_memoria);
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
     socket_escucha_puerto_dispatch = iniciar_servidor(puerto);
     socket_kernel_dispatch = esperar_cliente(socket_escucha_puerto_dispatch);
-    if (!(recibir_handshake(socket_kernel_dispatch))){
+    if (recibir_handshake(socket_kernel_dispatch) != KERNEL_D){
         terminar_programa();
         return EXIT_FAILURE;
     }
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
     socket_kernel_interrupt = esperar_cliente(socket_escucha_puerto_interrupt);
-    if (!(recibir_handshake(socket_kernel_interrupt))){
+    if (recibir_handshake(socket_kernel_interrupt) != KERNEL_I){
         terminar_programa();
         return EXIT_FAILURE;
     }
