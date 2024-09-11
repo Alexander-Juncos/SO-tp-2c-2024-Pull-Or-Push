@@ -6,7 +6,7 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    int aux = 1; // para setsockop y errores pthread
+    int setsockt_val_aux = 1; // para setsockop
     char* puerto;
 
     /****************** Inicialización *****************/
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
     socket_escucha = iniciar_servidor(puerto);
-    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &aux, sizeof(int));
+    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &setsockt_val_aux, sizeof(int));
 
     saludar("File System");
     
