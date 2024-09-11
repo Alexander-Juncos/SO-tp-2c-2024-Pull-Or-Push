@@ -6,7 +6,7 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    int valor_aux = 1; // para setsockop y recibir resultado pthread
+    int setsockt_val_aux = 1; // para setsockop y recibir resultado pthread
     char* puerto;
     pthread_t hilo_recepcion;
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
     socket_escucha = iniciar_servidor(puerto);
-    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &valor_aux, sizeof(int));
+    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &setsockt_val_aux, sizeof(int));
 
     saludar("Memoria");
 
@@ -54,10 +54,13 @@ int main(int argc, char* argv[]) {
     enviar_handshake(HANDSHAKE_OK, socket_cpu);
 
     /***************** Servidor Kernel *****************/
-    valor_aux = pthread_create(&hilo_recepcion, NULL, rutina_recepcion, NULL);
-    if (valor_aux != 0) {
+    // valor_aux = pthread_create(&hilo_recepcion, NULL, rutina_recepcion, NULL);
+    // if (valor_aux != 0) {
+	// 	log_error(log_memoria_gral, "Error al crear hilo_recepcion");
+	// } 
+    if (pthread_create(&hilo_recepcion, NULL, rutina_recepcion, NULL) != 0) {
 		log_error(log_memoria_gral, "Error al crear hilo_recepcion");
-	} 
+	} // si esto les parece bien lo podemos dejar así
 
     /****************** Logíca Memoria *****************/
     // atender cpu (un bucle)
