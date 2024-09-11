@@ -31,6 +31,10 @@ typedef enum
     INTERRUPCION,
 
     // KERNEL-MEMORIA (y FS)
+    CREAR_PROCESO,
+    FINALIZAR_PROCESO,
+    CREAR_HILO,
+    FINALIZAR_HILO,
     MEMORY_DUMP
     
 } op_code;

@@ -8,21 +8,26 @@
 
 #include "utils.h"
 
-/* PLACE HOLDER - a revisar
+// ==========================================================================
+// ====  Variables:  ========================================================
+// ==========================================================================
 
-/// @brief recibe solo conexiones temporales (IO y KERNEL)
-/// @param nada // no deberia recibir nada, simplemente es * por pthread
-/// @return // no deberia retornar, solo utilizar pthread_exit()
-void* rutina_recepcion(void *nada);
+pthread_mutex_t mutex_socket_cliente_temp;
+int socket_cliente_temp = 1;
 
-/// @brief Actua sobre un cliente (ya verificado), recibiendo su operacion y ejecutando lo que sea necesario
-/// @param nada // no deberia recibir nada, simplemente es * por pthread
-/// @return // no deberia retornar, solo utilizar pthread_exit()
-void* rutina_ejecucion(void *nada);
+// ==========================================================================
+// ====  Funcion Hilo main (serv. cpu):  ====================================
+// ==========================================================================
 
 /// @brief Atiende al CPU en bucle hasta q este se desconecte
 /// @param socket comunicacion con CPU, para recepcion y envio de paquetes
 void atender_cpu(int socket);
-*/
+
+// ==========================================================================
+// ====  Funciones Servidor Multihilo:  =====================================
+// ==========================================================================
+
+void* rutina_recepcion (void*);
+void* rutina_ejecucion (void*);
 
 #endif /* MAIN_MEMORIA_H */
