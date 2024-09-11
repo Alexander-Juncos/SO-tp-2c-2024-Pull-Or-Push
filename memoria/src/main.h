@@ -19,9 +19,7 @@ int socket_cliente_temp = 1;
 // ====  Funcion Hilo main (serv. cpu):  ====================================
 // ==========================================================================
 
-/// @brief Atiende al CPU en bucle hasta q este se desconecte
-/// @param socket comunicacion con CPU, para recepcion y envio de paquetes
-void atender_cpu(int socket);
+void atender_cpu(void);
 
 // ==========================================================================
 // ====  Funciones Servidor Multihilo:  =====================================

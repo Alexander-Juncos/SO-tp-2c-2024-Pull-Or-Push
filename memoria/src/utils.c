@@ -6,7 +6,6 @@
 
 int socket_cpu = 1;
 int socket_escucha = 1;
-int socket_kernel = 1;
 
 t_config *config; 
 t_log *log_memoria_oblig; 

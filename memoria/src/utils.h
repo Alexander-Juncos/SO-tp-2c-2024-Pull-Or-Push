@@ -23,7 +23,6 @@
 // ==========================================================================
 extern int socket_escucha; // socket servidor
 extern int socket_cpu;
-extern int socket_kernel;
 
 extern t_config *config; // donde se levanta lo del archivo .config del módulo memoria
 extern t_log *log_memoria_oblig; // logger para los logs obligatorios

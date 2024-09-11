@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 	} // si esto les parece bien lo podemos dejar así
 
     /****************** Logíca Memoria *****************/
-    // atender cpu (un bucle)
+    atender_cpu();
 
     pthread_join(hilo_recepcion, NULL); // bloquea el main hasta q fin_programa sea true
 
@@ -71,6 +71,74 @@ int main(int argc, char* argv[]) {
 
     terminar_programa();
     return 0;
+}
+
+// ==========================================================================
+// ====  Funcion Hilo main (serv. cpu):  ====================================
+// ==========================================================================
+
+void atender_cpu()
+{
+    int operacion;
+    t_list* pedido;
+    t_paquete* paquete;
+
+    log_debug(log_memoria_gral, "Atendiendo CPU");
+
+    while (!fin_programa)
+    {
+        operacion = recibir_codigo(socket_cliente);
+        switch (operacion)
+        {
+        case CONTEXTO_EJECUCION:
+            pedido = recibir_paquete(socket_cpu);
+
+            // Stub temporal
+            enviar_mensaje("Recibi operación: CONTEXTO_EJECUCION", socket_cpu);
+            log_debug(log_memoria_gral, "Operacion: CONTEXTO_EJECUCION");
+
+            list_destroy_and_destroy_elements(pedido, free);
+            break;
+        
+        case OBTENER_INSTRUCCION:
+            pedido = recibir_paquete(socket_cpu);
+
+            // Stub temporal
+            enviar_mensaje("Recibi operación: OBTENER_INSTRUCCION", socket_cpu);
+            log_debug(log_memoria_gral, "Operacion: OBTENER_INSTRUCCION");
+
+            list_destroy_and_destroy_elements(pedido, free);
+            break;
+        
+        case ACCESO_LECTURA:
+            pedido = recibir_paquete(socket_cpu);
+
+            // Stub temporal
+            enviar_mensaje("Recibi operación: ACCESO_LECTURA", socket_cpu);
+            log_debug(log_memoria_gral, "Operacion: ACCESO_LECTURA");
+
+            list_destroy_and_destroy_elements(pedido, free);
+            break;
+        
+        case ACCESO_ESCRITURA:
+            pedido = recibir_paquete(socket_cpu);
+
+            // Stub temporal
+            enviar_mensaje("Recibi operación: ACCESO_ESCRITURA", socket_cpu);
+            log_debug(log_memoria_gral, "Operacion: ACCESO_ESCRITURA");
+
+            list_destroy_and_destroy_elements(pedido, free);
+            break;
+
+        default:
+            // consumo lo q haya llegado (para liberar socket) (esto puede causar algun error)
+            pedido = recibir_paquete(socket_cpu);
+            list_destroy_and_destroy_elements(pedido, free);
+            enviar_mensaje("Recibi operación: ERROR", socket_cpu);
+            log_error(log_memoria_gral, "Operacion invalida");
+            break;
+        }
+    }
 }
 
 // ==========================================================================
