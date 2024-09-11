@@ -7,11 +7,24 @@
 int socket_cpu_dispatch = 1;
 int socket_cpu_interrupt = 1;
 
+
 t_config *config = NULL;
 int quantum_de_config;
 
 t_log* log_kernel_oblig = NULL;
 t_log* log_kernel_gral = NULL;
+
+// ==========================================================================
+// ====  Funciones Comunicación:  ===========================================
+// ==========================================================================
+
+void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code) {
+	t_paquete* paquete = crear_paquete(INTERRUPCION);
+	agregar_a_paquete(paquete, &interrupt_code, sizeof(t_interrupt_code));
+	// agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int)); // Segun como hagamos protocolo creo q tendria q tener pid y tid
+	enviar_paquete(paquete, socket_cpu_interrupt);
+	eliminar_paquete(paquete);
+}
 
 // ==========================================================================
 // ====  Funciones Utils:  ==================================================

@@ -36,6 +36,12 @@ extern t_log* log_kernel_oblig; // logger para los logs obligatorios
 extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con criterio de niveles.
 
 // ==========================================================================
+// ====  Funciones Comunicación:  ===========================================
+// ==========================================================================
+
+void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code);
+
+// ==========================================================================
 // ====  Funciones Utils:  ==================================================
 // ==========================================================================
 

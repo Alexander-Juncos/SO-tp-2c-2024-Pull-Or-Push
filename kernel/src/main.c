@@ -43,7 +43,6 @@ int main(int argc, char* argv[]) {
     saludar("kernel");
 
     /****************** Conexión CPU *******************/
-
     ip = config_get_string_value(config, "IP_CPU");
 
     puerto = config_get_string_value(config, "PUERTO_CPU_DISPATCH");

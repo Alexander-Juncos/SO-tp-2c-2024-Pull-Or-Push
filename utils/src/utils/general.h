@@ -41,6 +41,13 @@ typedef struct
     /* data */
 } t_pcb;
 
+typedef enum // son los posibles mensajes q puede recibir por interrupción CPU
+{
+    NADA,
+    FINALIZAR, // interrumpido de forma "manual"
+    DESALOJAR // por fin de quantum
+} t_interrupt_code; // revisar si no requiere ampliación por la consigna
+
 /**
 * @brief Imprime un saludo por consola
 * @param quien Módulo desde donde se llama a la función

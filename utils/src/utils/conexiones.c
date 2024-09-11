@@ -131,20 +131,20 @@ bool recibir_y_manejar_rta_handshake(t_log* logger, const char* nombre_servidor,
 
 	switch (handshake_codigo) {
 		case HANDSHAKE_OK:
-      exito_handshake = true;
-		log_debug(logger, "Handshake con %s fue aceptado.", nombre_servidor);
+     		exito_handshake = true;
+			log_debug(logger, "Handshake con %s fue aceptado.", nombre_servidor);
 		break;
 		case HANDSHAKE_INVALIDO:
-		log_error(logger, "Handshake con %s fue rechazado por ser invalido.", nombre_servidor);
-		break;
+			log_error(logger, "Handshake con %s fue rechazado por ser invalido.", nombre_servidor);
+			break;
 		case -1:
-		log_error(logger, "op_code no esperado de %s. Se esperaba HANDSHAKE.", nombre_servidor);
-		break;
+			log_error(logger, "op_code no esperado de %s. Se esperaba HANDSHAKE.", nombre_servidor);
+			break;
 		case -2:
-		log_error(logger, "al recibir la rta al handshake de %s hubo un tamanio de buffer no esperado.", nombre_servidor);
-		break;
+			log_error(logger, "al recibir la rta al handshake de %s hubo un tamanio de buffer no esperado.", nombre_servidor);
+			break;
 		default:
-		log_error(logger, "error desconocido al recibir la rta al handshake de %s.", nombre_servidor);
+			log_error(logger, "error desconocido al recibir la rta al handshake de %s.", nombre_servidor);
 		break;
 	}
 

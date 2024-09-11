@@ -22,12 +22,14 @@
 
 typedef enum 
 {
+    // Todas las conexiónes
     MENSAJE_ERROR,
+    HANDSHAKE,
 	MENSAJE,
-    /*
-        a desarrollar 
-    */
-    HANDSHAKE
+    
+    // KERNEL-CPU
+    INTERRUPCION
+    
 } op_code;
 
 typedef enum
