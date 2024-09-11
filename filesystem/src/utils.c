@@ -13,10 +13,18 @@ t_file_system* fs;
 
 bool fin_programa = 0;
 
+pthread_mutex_t mutex_socket_cliente_temp;
+int socket_cliente_temp = 1;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
+bool iniciar_fs()
+{
+    imprimir_mensaje("Place Holder: iniciar_fs");
+    return true;
+}
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================

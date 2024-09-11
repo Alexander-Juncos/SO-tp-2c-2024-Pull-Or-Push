@@ -27,7 +27,8 @@ extern int socket_escucha;
 
 extern bool fin_programa;
 
-pthread_mutex_t mutex_socket_cliente_temp;
+extern pthread_mutex_t mutex_socket_cliente_temp;
+extern int socket_cliente_temp;
 
 typedef struct {
     /*
@@ -40,6 +41,7 @@ extern t_file_system* fs;
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
+bool iniciar_fs(void);
 /*
     iniciar el fs, crear archivos, cerrar el fs
 */

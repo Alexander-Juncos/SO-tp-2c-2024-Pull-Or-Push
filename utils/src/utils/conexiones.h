@@ -28,7 +28,10 @@ typedef enum
 	MENSAJE,
     
     // KERNEL-CPU
-    INTERRUPCION
+    INTERRUPCION,
+
+    // KERNEL-MEMORIA (y FS)
+    MEMORY_DUMP
     
 } op_code;
 
