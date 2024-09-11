@@ -6,7 +6,7 @@
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
-    int yes = 1; // para setsockop
+    int aux = 1; // para setsockop y errores pthread
     char* puerto;
 
     /****************** Inicialización *****************/
@@ -37,33 +37,58 @@ int main(int argc, char* argv[]) {
 
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
     socket_escucha = iniciar_servidor(puerto);
-    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    setsockopt(socket_escucha, SOL_SOCKET, SO_REUSEADDR, &aux, sizeof(int));
 
     saludar("File System");
     
     /**************** Servidor Memoria *****************/
-    /*
-        descargar de config - crear conexion - hanshake (y lo q CPU necesita para funcionar)
-        las conexiones van a ser temporales => posiblemente tenga q esperar un msj de fin de ejecución
-        /////////////////// Logíca FS ///////////////////
-        /
-            Realmente es la logica para atender memoria (en teoria no va separado de la parte de servidor)
-            ya q son conexiones temporales la logica en realidad contendria la parte de servidor
-            + limpieza de estructuras y liberar la memoria
-        /
-        Tendria q tener un hilo distruibuidor de hilos q reciba cada nuevo cliente (similar a memoria en tp anterior)
-    */
-
-    int socket_temp = esperar_cliente(socket_escucha); 
-    if (recibir_handshake(socket_temp) != MEMORIA){
-        terminar_programa();
-        return EXIT_FAILURE;
-    }
-    enviar_handshake(HANDSHAKE_OK, socket_temp);
-    // lo de arriba es solo para poder hacer check1
-
-    imprimir_mensaje("pude completar check 1");
+    rutina_recepcion(); // la logica se va a distribuir desde aca
+    // int socket_temp = esperar_cliente(socket_escucha); 
+    // if (recibir_handshake(socket_temp) != MEMORIA){
+    //     terminar_programa();
+    //     return EXIT_FAILURE;
+    // }
+    // enviar_handshake(HANDSHAKE_OK, socket_temp);
     
     terminar_programa();
     return 0;
+}
+
+// ==========================================================================
+// ====  Funciones Servidor:  ===============================================
+// ==========================================================================
+
+void rutina_recepcion (void)
+{
+    pthread_t hilo_ejecucion;
+    int error;
+    int aux_socket_cliente_temp;
+    pthread_mutex_init(&mutex_socket_cliente_temp, NULL);
+
+    log_debug(log_fs_gral, "Hilo recepcion listo.");
+
+    while (!fin_programa)
+    {
+        aux_socket_cliente_temp = esperar_cliente(socket_escucha);
+        pthread_mutex_lock(&mutex_socket_cliente_temp);
+        aux_socket_cliente_temp;
+        // el hilo ejecución lo desbloquea luego de descargar el socket
+
+        error = pthread_create(&hilo_ejecucion, NULL, rutina_ejecucion, NULL);
+        if (error != 0) {
+			log_error(log_fs_gral, "Error al crear hilo_ejecucion");
+		}
+		else {
+			pthread_detach(hilo_ejecucion);
+		}
+    }
+    pthread_mutex_destroy(&mutex_socket_cliente_temp);
+
+	return NULL;
+}
+
+
+void* rutina_ejecucion (void*)
+{
+    
 }

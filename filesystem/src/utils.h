@@ -25,6 +25,10 @@ extern t_config* config;
 
 extern int socket_escucha;
 
+extern bool fin_programa;
+
+pthread_mutex_t mutex_socket_cliente_temp;
+
 typedef struct {
     /*
         pendiente
