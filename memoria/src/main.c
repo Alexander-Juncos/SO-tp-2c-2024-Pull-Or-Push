@@ -87,7 +87,7 @@ void atender_cpu()
 
     while (!fin_programa)
     {
-        operacion = recibir_codigo(socket_cliente);
+        operacion = recibir_codigo(socket_cpu);
         switch (operacion)
         {
         case CONTEXTO_EJECUCION:

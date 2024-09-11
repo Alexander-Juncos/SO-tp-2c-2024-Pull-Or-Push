@@ -38,11 +38,21 @@ typedef enum {
 } resultado_operacion; // para funciones internas de memoria
 
 typedef struct {
+    int tid;
+    uint32_t PC;
+    t_reg_cpu registros;
+    t_list* instrucciones; 
+} t_tcb_mem;
+
+typedef struct {
     int pid;
-    /*
-        pendiente
-    */
-} t_proceso; // inicia sin paginas asignadas
+    unsigned int base; 
+    unsigned int limite;
+    t_list* t_tcb_mem;
+} t_pcb_mem;
+
+extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
+extern pthread_mutex_t mutex_procesos_cargados;
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================

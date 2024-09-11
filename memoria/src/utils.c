@@ -13,6 +13,9 @@ t_log *log_memoria_gral;
 
 bool fin_programa = 0;
 
+t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
+pthread_mutex_t mutex_procesos_cargados;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================

@@ -38,8 +38,17 @@ typedef struct
 
 typedef struct
 {
-    /* data */
+    int pid;
+    t_list* tids_asociados;
+    t_list* mutex_asignados;
 } t_pcb;
+
+typedef struct 
+{
+    int tid;
+    int prioridad;
+} t_tcb;
+
 
 typedef enum // son los posibles mensajes q puede recibir por interrupción CPU
 {
