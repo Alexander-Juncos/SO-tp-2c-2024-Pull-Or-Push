@@ -27,9 +27,6 @@ extern int socket_escucha;
 
 extern bool fin_programa;
 
-extern pthread_mutex_t mutex_socket_cliente_temp;
-extern int socket_cliente_temp;
-
 typedef struct {
     /*
         pendiente

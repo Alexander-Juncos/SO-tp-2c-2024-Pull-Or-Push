@@ -77,7 +77,7 @@ void rutina_recepcion (void)
 }
 
 
-void* rutina_ejecucion (void*)
+void* rutina_ejecucion (void* nada)
 {
     int socket_cliente;
     int operacion;
@@ -89,6 +89,7 @@ void* rutina_ejecucion (void*)
 
     if (recibir_handshake(socket_cliente) != MEMORIA){
         log_error(log_fs_gral, "Error en handshake.");
+        enviar_handshake(HANDSHAKE_INVALIDO, socket_cliente);
         return NULL;
     }
     enviar_handshake(HANDSHAKE_OK, socket_cliente);
@@ -119,6 +120,6 @@ void* rutina_ejecucion (void*)
             break;
     }
 
-    liberar_conexion(log_fs_gral, "MEMORIA", socket_cliente); // como servidor creo q es innecesario salvo x su log...
+    liberar_conexion(log_fs_gral, "Hilo Serv. temp. FileSystem", socket_cliente); // como servidor creo q es innecesario salvo x su log...
     return NULL;
 }
