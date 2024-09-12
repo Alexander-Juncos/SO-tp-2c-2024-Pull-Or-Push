@@ -25,10 +25,10 @@ int main(int argc, char* argv[]) {
     }
     iniciar_logs(modulo_en_testeo);
 
-    /*
-        Hacer lo requerido para que arranque memoria (descargar config), iniciar el espacio de 
-        memoria y sus estructuras segun corresponda (llamar a funciones q lo hagan), etc
-    */
+    if (iniciar_memoria() == false){
+        log_error(log_memoria_gral, "Error al iniciar la memoria, abortando");
+        exit(3);
+    }
 
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
     socket_escucha = iniciar_servidor(puerto);

@@ -30,12 +30,20 @@ extern t_log *log_memoria_gral; // logger para los logs nuestros. Loguear con cr
 
 extern void *espacio_bitmap_no_tocar; // solo se usa al crear/destruir el bitmap (a implementar)
 extern bool fin_programa;
+int retardo_respuesta; // se descargara y convertira para usleep
+char* path_instrucciones;
 
 typedef enum {
     ERROR,
     CORRECTA,
     INSUFICIENTE
 } resultado_operacion; // para funciones internas de memoria
+
+typedef enum {
+    FIRST_FIT,
+    BEST_FIT,
+    WORST_FIT
+} algoritmo_busqueda_part_dinam;
 
 typedef struct {
     int tid;
@@ -54,11 +62,24 @@ typedef struct {
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
 
+typedef struct {
+    void* espacio_usuario;
+    bool particiones_dinamicas;
+    uint8_t algorit_busq; // solo va a ser usado si particiones_dinamicas = TRUE
+    int tamano_memoria;
+} t_memoria_particionada; // temporal hasta q plantee bien el tema de particiones
+/* 
+    Todavia tengo q considerar como "saber" donde inicia/termina cada particion
+    a fin de implementar los algoritmos de busqueda. (sin considerar de revisar
+    a traves de fuerza bruta cada proceso en ejecución)
+*/
+extern t_memoria_particionada* memoria;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
-
+bool iniciar_memoria();
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================

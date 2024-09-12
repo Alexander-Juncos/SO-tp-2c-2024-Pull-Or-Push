@@ -16,11 +16,66 @@ bool fin_programa = 0;
 t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 pthread_mutex_t mutex_procesos_cargados;
 
+t_memoria_particionada* memoria;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
+bool iniciar_memoria()
+{
+    char* str_auxiliar;
+    char** particiones_temp;
 
+    memoria = malloc(sizeof(t_memoria_particionada));
+
+    str_auxiliar = config_get_string_value(config, "ESQUEMA");
+    if (strcmp(str_auxiliar, "FIJAS") == 0){
+        memoria->particiones_dinamicas = false;
+    } else if (strcmp(str_auxiliar, "DINAMICAS")){
+        memoria->particiones_dinamicas = true;
+    } else {
+        log_error(log_memoria_gral, "Error obtener el esquema de particiones");
+        return false;
+    }
+    free(str_auxiliar);
+
+    str_auxiliar = config_get_string_value(config, "ALGORITMO_BUSQUEDA");
+    if (strcmp(str_auxiliar, "FIRST") == 0){
+        memoria->algorit_busq = FIRST_FIT;
+    } else if (strcmp(str_auxiliar, "BEST")){
+        memoria->algorit_busq = BEST_FIT;
+    } else if (strcmp(str_auxiliar, "WORST")){
+        memoria->algorit_busq = WORST_FIT; 
+    } else {
+        log_error(log_memoria_gral, "Error al obtener el algoritmo busqueda");
+        return false;
+    }
+    free(str_auxiliar);
+
+    memoria->tamano_memoria = config_get_int_value(config, "TAM_MEMORIA");
+    retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
+    path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+
+    if (memoria->particiones_dinamicas == false){
+        particiones_temp = config_get_array_value(config, "PARTICIONES");
+        /*
+            convertilo en algo util (while particiones_temp[i]/=NULL, yo crearia una 
+            funcion para hacerlo)
+        */
+        free(particiones_temp);
+    } 
+
+    /*
+        inicar espacio usuario y lo q requiera
+    */
+
+    // inicio lista procesos y su mutex
+    procesos_cargados = list_create();
+    pthread_mutex_init(&mutex_procesos_cargados, NULL);
+    
+    return true;
+}
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
