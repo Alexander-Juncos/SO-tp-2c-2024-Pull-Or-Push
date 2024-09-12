@@ -170,6 +170,7 @@ void* rutina_recepcion (void* nada)
 		}
     }
     pthread_mutex_destroy(&mutex_socket_cliente_temp);
+    return NULL;
 }
 
 
@@ -201,6 +202,8 @@ void* rutina_ejecucion (void* nada)
             // Stub temporal
             enviar_mensaje("Recibi operación: CREAR_PROCESO", socket_cliente);
             log_debug(log_memoria_gral, "Operacion: CREAR_PROCESO");
+
+            // deberia llamar a algo q se use en crear hilo (para el tema del script)
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

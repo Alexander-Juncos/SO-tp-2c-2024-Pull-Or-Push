@@ -25,10 +25,10 @@ t_memoria_particionada* memoria;
 bool iniciar_memoria()
 {
     char* str_auxiliar;
-    char** particiones_temp;
 
     memoria = malloc(sizeof(t_memoria_particionada));
 
+    // distingue tipo de particiones
     str_auxiliar = config_get_string_value(config, "ESQUEMA");
     if (strcmp(str_auxiliar, "FIJAS") == 0){
         memoria->particiones_dinamicas = false;
@@ -40,6 +40,7 @@ bool iniciar_memoria()
     }
     free(str_auxiliar);
 
+    // distingue algoritmo
     str_auxiliar = config_get_string_value(config, "ALGORITMO_BUSQUEDA");
     if (strcmp(str_auxiliar, "FIRST") == 0){
         memoria->algorit_busq = FIRST_FIT;
@@ -54,26 +55,26 @@ bool iniciar_memoria()
     free(str_auxiliar);
 
     memoria->tamano_memoria = config_get_int_value(config, "TAM_MEMORIA");
-    retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
-    path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+    
+    // cargo particiones (considera fijas-dinamicas)
+    memoria->lista_particiones = crear_lista_de_particiones();
 
-    if (memoria->particiones_dinamicas == false){
-        particiones_temp = config_get_array_value(config, "PARTICIONES");
-        /*
-            convertilo en algo util (while particiones_temp[i]/=NULL, yo crearia una 
-            funcion para hacerlo)
-        */
-        free(particiones_temp);
-    } 
+    // si no tiene particiones aborta
+    if (memoria->lista_particiones == NULL)
+    {
+        log_error(log_memoria_gral, "Memoria sin particiones, abortando");
+        free(memoria);
+        return false;
+    }
 
-    /*
-        inicar espacio usuario y lo q requiera
-    */
+    // reservo espacio usuario
+    memoria->espacio_usuario = malloc(memoria->tamano_memoria);
 
     // inicio lista procesos y su mutex
     procesos_cargados = list_create();
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
     
+    log_debug(log_memoria_gral, "Memoria iniciada correctamente");
     return true;
 }
 
@@ -85,6 +86,96 @@ void retardo_operacion()
 {
     unsigned int tiempo_en_microsegs = config_get_int_value(config, "RETARDO_RESPUESTA")*MILISEG_A_MICROSEG;
     usleep(tiempo_en_microsegs);
+}
+
+t_list* crear_lista_de_particiones() 
+{
+    char** array_particiones;
+	t_list* lista_particiones = list_create();
+	int puntero = 0;
+    int i=0;
+    t_particion* particion;
+
+    if (memoria->particiones_dinamicas == false)
+    {
+        array_particiones = config_get_array_value(config, "PARTICIONES");
+	    while (array_particiones[i] != NULL) 
+        {
+            particion = malloc(sizeof(t_particion));
+            particion->base = puntero;
+            puntero += atoi(array_particiones[i]); //
+            particion->limite = puntero - 1; // el -1 para que cumpla el rango ej: 0->256-1 = 256 de tam_particion
+            list_add(lista_particiones, particion);
+            i++;
+	    }
+        free(array_particiones);
+    }
+    else
+    { // crea una partición q ocupa toda la memoria
+        particion = malloc(sizeof(t_particion));
+        particion->base = puntero;
+        puntero = memoria->tamano_memoria;
+        particion->limite = puntero - 1;
+        list_add(lista_particiones, particion);
+    }
+
+    // La condicion de paso ayuda a comprobar q todas las particiones sumadas formen toda la memoria... (capaz no es correcto?)
+    if (puntero != memoria->tamano_memoria){
+        log_debug(log_memoria_gral, "particiones no completan el tamano de memoria, particiones no creadas");
+        list_destroy_and_destroy_elements(lista_particiones, free); //ya libera el puntero
+        return NULL;
+    }
+	return lista_particiones;
+}
+
+t_list *cargar_instrucciones(char *directorio, int pid, int tid)
+{
+    FILE *archivo;
+    size_t lineaSize = 0; // esto es necesario para que getline() funcione bien
+    char *lineaInstruccion = NULL; // esto es necesario para que getline() funcione bien
+    int cant_instrucciones_cargadas = 0;
+    char *base_dir = config_get_string_value(config, "PATH_INSTRUCCIONES");
+
+    log_debug(log_memoria_gral, "Cargando instrucciones del hilo %d, del proceso %d....", tid, pid);
+    
+    // Crear una nueva cadena para la ruta completa
+    size_t tamano_ruta = strlen(base_dir) + strlen(directorio) + 1;
+    char *dir_completa = malloc(tamano_ruta);
+    if (dir_completa == NULL) {
+        return NULL;
+    }
+    strcpy(dir_completa, base_dir);
+    strcat(dir_completa, directorio);
+    
+    archivo = fopen(dir_completa, "r");
+    free(dir_completa); // ahora podemos liberar la memoria de dir_completa
+
+    if (archivo == NULL) {
+        log_error(log_memoria_gral, "No se pudo abrir el archivo de instrucciones");
+        return NULL;
+    }
+
+    t_list *lista = list_create();
+    if (lista == NULL) {
+        log_error(log_memoria_gral, "No se pudo crear la lista para cargar las instrucciones leidas");
+        fclose(archivo);
+        return NULL;
+    }
+
+    while (getline(&lineaInstruccion, &lineaSize, archivo) != -1) {
+        char *instruccion_copia = strdup(lineaInstruccion); // Copiar la línea leída
+        if (instruccion_copia != NULL) {
+            string_trim_right(&instruccion_copia);
+            list_add(lista, instruccion_copia);
+            cant_instrucciones_cargadas++;
+        }
+    }
+
+    log_debug(log_memoria_gral, "Se cargaron correctamente %d instrucciones para el hilo %d, del proceso %d", cant_instrucciones_cargadas, tid, pid);
+
+    fclose(archivo);
+    free(lineaInstruccion);
+    return lista;
 }
 
 void iniciar_logs(bool testeo)

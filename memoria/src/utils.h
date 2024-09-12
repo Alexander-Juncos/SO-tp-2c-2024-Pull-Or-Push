@@ -30,8 +30,6 @@ extern t_log *log_memoria_gral; // logger para los logs nuestros. Loguear con cr
 
 extern void *espacio_bitmap_no_tocar; // solo se usa al crear/destruir el bitmap (a implementar)
 extern bool fin_programa;
-int retardo_respuesta; // se descargara y convertira para usleep
-char* path_instrucciones;
 
 typedef enum {
     ERROR,
@@ -46,6 +44,11 @@ typedef enum {
 } algoritmo_busqueda_part_dinam;
 
 typedef struct {
+    unsigned int base;
+    unsigned int limite;
+} t_particion;
+
+typedef struct {
     int tid;
     uint32_t PC;
     t_reg_cpu registros;
@@ -54,8 +57,7 @@ typedef struct {
 
 typedef struct {
     int pid;
-    unsigned int base; 
-    unsigned int limite;
+    t_particion* particion;
     t_list* t_tcb_mem;
 } t_pcb_mem;
 
@@ -67,11 +69,10 @@ typedef struct {
     bool particiones_dinamicas;
     uint8_t algorit_busq; // solo va a ser usado si particiones_dinamicas = TRUE
     int tamano_memoria;
+    t_list* lista_particiones; // cada elemento puede apuntar a las particiones de los t_pcb?
 } t_memoria_particionada; // temporal hasta q plantee bien el tema de particiones
 /* 
-    Todavia tengo q considerar como "saber" donde inicia/termina cada particion
-    a fin de implementar los algoritmos de busqueda. (sin considerar de revisar
-    a traves de fuerza bruta cada proceso en ejecución)
+    hay q generar metodos para q la lista_particiones se mantenga ordenada
 */
 extern t_memoria_particionada* memoria;
 
@@ -85,8 +86,10 @@ bool iniciar_memoria();
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
-void retardo_operacion();
+void retardo_operacion(void);
+t_list* crear_lista_de_particiones(void);
+t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 void iniciar_logs(bool testeo);
-void terminar_programa(); // revisar y modificar-quizas podria liberar la memoria tambien
+void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 
 #endif /* UTILS_H_ */
