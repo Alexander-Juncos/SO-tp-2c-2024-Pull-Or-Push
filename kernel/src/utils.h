@@ -29,6 +29,13 @@
 extern int socket_cpu_dispatch;
 extern int socket_cpu_interrupt;
 
+extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos)
+extern t_list* cola_ready; // Estado READY. Es una lista de t_tcb* (Hilos)
+extern t_pcb* proceso_exec; // Estado EXEC. Es un t_pcb* (Proceso)
+extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo)
+extern t_list* cola_blocked; // Estado BLOCKED. Es una lista de t_tcb* (Hilos)
+extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos)
+
 extern t_config *config;
 extern int quantum_de_config;
 
