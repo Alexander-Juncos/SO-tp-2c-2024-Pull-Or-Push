@@ -254,7 +254,12 @@ void* rutina_ejecucion (void* nada)
 
             // Stub temporal
             enviar_mensaje("Recibi operación: MEMORY_DUMP", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: MEMORY DUMP");            
+            log_debug(log_memoria_gral, "Operacion: MEMORY DUMP"); 
+
+            if (memory_dump_fs(pedido) == false) { // hace toda la comunicacion con fs
+                // enviar mensaje error
+            }
+            // enviar mensaje ok
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
