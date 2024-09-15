@@ -1,8 +1,41 @@
 #include <new.h>
 
+// variables globales para este hilo:
+// ----------------------------------
+char* ip_memoria = NULL;
+char* puerto_memoria = NULL;
+// ----------------------------------
+
 void* rutina_new(void* puntero_null) {
 
-/* --- COPIADO DE TP ANTERIOR. A REVISAR. ---
+// DESARROLLANDO...
+
+    t_pcb* pcb = NULL;
+    t_pcb* tcb = NULL;
+    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+    bool exito_al_inicializar_proceso = false;
+    bool exito_al_inicializar_hilo = false;
+
+    //log_debug(log_kernel_gral, "Hilo responsable de cola NEW listo.");
+
+    pcb = list_remove(cola_new, 0);
+
+    //exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria();
+    if(exito_al_inicializar_proceso) {
+        // crear tcb
+        //exito_al_inicializar_hilo = enviar_nuevo_hilo_a_memoria();
+    }
+    //.
+    //.
+
+
+
+    //list_add(cola_ready, tcb);
+
+    return NULL;
+
+/* --- COPIADO DE TP ANTERIOR. PARA TENER DE REFERENCIA. ---
 
     t_pcb* pcb = NULL;
     bool exito = true;
@@ -44,5 +77,46 @@ void* rutina_new(void* puntero_null) {
 
     }
 */
-    return NULL;
+
+}
+
+// ==========================================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
+
+bool enviar_nuevo_proceso_a_memoria() {
+
+    bool exito_al_crear_proceso_en_memoria = false;
+
+    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+
+    //enviar_nuevo_proceso(socket_memoria);
+
+    char* respuesta;
+    //respuesta = recibir_mensaje(socket_memoria);
+
+    liberar_conexion(log_kernel_gral, "Memoria", socket_memoria);
+
+    return exito_al_crear_proceso_en_memoria;
+}
+
+bool enviar_nuevo_hilo_a_memoria() {
+    //
+}
+
+// ==========================================================================
+// ====  Funciones Internas:  ===============================================
+// ==========================================================================
+
+
+// ==========================================================================
+// ====  Funciones Auxiliares:  =============================================
+// ==========================================================================
+
+void enviar_nuevo_proceso(int socket) {
+    t_paquete* paquete;
+    //crear_paquete(paquete);
+    //agregar_a_paquete(paquete, zzzzz);
+    //enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
 }

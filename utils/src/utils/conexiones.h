@@ -112,7 +112,8 @@ void* recibir_buffer(int*, int);
 /// @brief Recibe solamente un código de operación.
 /// @param socket           : Socket de la conexión.
 int recibir_codigo(int socket);
-void recibir_mensaje(int);
+
+char* recibir_mensaje(int socket);
 // Recibe un paquete con valores cuyo tamanio va obteniendo uno a uno, y retorna una t_list* de los mismos.
 t_list* recibir_paquete(int socket);
 void* serializar_paquete(t_paquete* paquete, int bytes);

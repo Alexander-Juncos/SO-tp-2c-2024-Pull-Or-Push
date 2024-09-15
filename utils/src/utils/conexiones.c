@@ -254,13 +254,11 @@ int recibir_codigo(int socket)
 	}
 }
 
-void recibir_mensaje(int socket_cliente)
+char* recibir_mensaje(int socket)
 {
 	int size;
-	char* buffer = recibir_buffer(&size, socket_cliente);
-	imprimir_mensaje("Me llego el mensaje:");
-	imprimir_mensaje(buffer);
-	free(buffer);
+	char* buffer = recibir_buffer(&size, socket);
+	return buffer;
 }
 
 t_list* recibir_paquete(int socket)
