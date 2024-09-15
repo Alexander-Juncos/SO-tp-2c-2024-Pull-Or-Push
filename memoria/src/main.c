@@ -203,7 +203,10 @@ void* rutina_ejecucion (void* nada)
             enviar_mensaje("Recibi operación: CREAR_PROCESO", socket_cliente);
             log_debug(log_memoria_gral, "Operacion: CREAR_PROCESO");
 
-            // deberia llamar a algo q se use en crear hilo (para el tema del script)
+            // t_pcb_mem* pcb_new = iniciar_pcb(pid);
+            // si es pcb = NULL entonces no hay particiones disponibles
+            // avisa a kernel INSUFICIENTE
+            // de otra forma le dice que OK
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -225,6 +228,14 @@ void* rutina_ejecucion (void* nada)
             enviar_mensaje("Recibi operación: CREAR_HILO", socket_cliente);
             log_debug(log_memoria_gral, "Operacion: CREAR_HILO");
 
+            /*
+                recibe: PID, TID (creador), TID (nuevo), script
+            */
+
+            // t_tcb_mem* tcb_new = iniciar_tcb(/* pid, tid nuevo, script */);
+            // pushear a lista del pcb del contexto_ejecucion el nuevo tcb_new (ultima posicion)
+            // enviar_mensaje("OK", socket_cliente);
+
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
@@ -243,7 +254,7 @@ void* rutina_ejecucion (void* nada)
 
             // Stub temporal
             enviar_mensaje("Recibi operación: MEMORY_DUMP", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: MEMORY DUMP");
+            log_debug(log_memoria_gral, "Operacion: MEMORY DUMP");            
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

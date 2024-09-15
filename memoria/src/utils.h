@@ -58,11 +58,18 @@ typedef struct {
 typedef struct {
     int pid;
     t_particion* particion;
-    t_list* t_tcb_mem;
+    t_list* lista_tcb;
 } t_pcb_mem;
+
+typedef struct {
+    t_pcb_mem* pcb;
+    t_tcb_mem* tcb;
+} t_contexto_de_ejecucion;
 
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
+extern t_contexto_de_ejecucion* contexto_ejecucion;
+extern pthread_mutex_t mutex_contexto_ejecucion;
 
 typedef struct {
     void* espacio_usuario;
@@ -81,6 +88,8 @@ extern t_memoria_particionada* memoria;
 // ==========================================================================
 
 bool iniciar_memoria();
+t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
+t_pcb_mem* iniciar_pcb(int pid);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
