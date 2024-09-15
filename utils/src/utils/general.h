@@ -28,13 +28,14 @@ typedef struct
     uint32_t HX;
 } t_reg_cpu;
 
-typedef struct
-{
-    int pid;
-    int tid;
-    uint32_t PC;
-    t_reg_cpu reg_cpu;
-} t_contexto_de_ejecucion;
+// typedef struct
+// {
+//     int pid;
+//     int tid;
+//     uint32_t PC;
+//     t_reg_cpu reg_cpu;
+// } t_contexto_de_ejecucion;
+// lo comento, porque cpu y memoria tendran sus propias estructuras
 
 typedef struct
 {

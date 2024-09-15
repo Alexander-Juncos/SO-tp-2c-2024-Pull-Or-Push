@@ -18,6 +18,9 @@ pthread_mutex_t mutex_procesos_cargados;
 
 t_memoria_particionada* memoria;
 
+t_contexto_de_ejecucion* contexto_ejecucion;
+pthread_mutex_t mutex_contexto_ejecucion;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
@@ -73,9 +76,74 @@ bool iniciar_memoria()
     // inicio lista procesos y su mutex
     procesos_cargados = list_create();
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
+    // inicio contexto_ejecucion
+    pthread_mutex_init(&mutex_contexto_ejecucion, NULL);
+    contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion));
     
     log_debug(log_memoria_gral, "Memoria iniciada correctamente");
     return true;
+}
+
+t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script)
+{
+    t_tcb_mem* tcb_new = malloc(sizeof(t_tcb_mem));
+    tcb_new->tid = tid;
+    tcb_new->PC = 0;
+    tcb_new->registros.AX = 0;
+    tcb_new->registros.BX = 0;
+    tcb_new->registros.CX = 0;
+    tcb_new->registros.DX = 0;
+    tcb_new->registros.EX = 0;
+    tcb_new->registros.FX = 0;
+    tcb_new->registros.GX = 0;
+    tcb_new->registros.HX = 0;
+    tcb_new->instrucciones = cargar_instrucciones(ruta_script, pid, tid);
+
+    if (tcb_new->instrucciones == NULL)
+    {
+        free(tcb_new);
+        return NULL;
+    }
+    
+    return tcb_new;
+}
+
+t_pcb_mem* iniciar_pcb(int pid){
+    t_pcb_mem* pcb_new = NULL;
+
+    // busca si hay particion libre (din-fijas)
+    // si hay la marca como ocupada y crea un t_pcb_mem para el pid
+    // >> iniciar lista tcb y cargar particion y pid
+
+    return pcb_new;
+}
+// ==========================================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
+
+bool memory_dump_fs (t_list* pedido)
+{
+    char* ip;
+    char* puerto;
+    int socket_fs;
+    t_paquete* paquete;
+
+    ip = config_get_string_value(config, "IP_FILESYSTEM");
+    puerto = config_get_string_value(config, "PUERTO_FILESYSTEM");
+    socket_fs = crear_conexion(ip, puerto);
+    enviar_handshake(MEMORIA, socket_fs);
+    recibir_y_manejar_rta_handshake(log_memoria_gral, "Memoria", socket_fs);
+
+
+    paquete = crear_paquete(MEMORY_DUMP);
+    // agregar el pid, tid, y el tiempo actual al iniciar el memory_dump?
+    // hay q agregar al paquete TODO lo contenido en la particion del proceso
+    // puede ser en un void*
+    enviar_paquete(paquete, socket_fs);
+    recibir_mensaje(socket_fs);
+    // tendria q modificarse para sacar información
+    // if (correcta) return true else return false
+    liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
 }
 
 // ==========================================================================
