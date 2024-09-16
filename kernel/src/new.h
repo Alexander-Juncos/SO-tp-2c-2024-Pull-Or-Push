@@ -21,12 +21,6 @@ void* rutina_new(void* puntero_null); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!
 * @return Exito al inicializar el nuevo proceso.
 */
 bool enviar_nuevo_proceso_a_memoria(t_pcb* pcb);
-/**
-* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
-*         hilo, recibe la respuesta, y se desconecta.
-* @return Exito al inicializar el nuevo hilo.
-*/
-bool enviar_nuevo_hilo_a_memoria(); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================

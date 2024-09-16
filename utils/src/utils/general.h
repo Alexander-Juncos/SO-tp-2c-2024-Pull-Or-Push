@@ -37,28 +37,29 @@ typedef struct
 // } t_contexto_de_ejecucion;
 // lo comento, porque cpu y memoria tendran sus propias estructuras
 
+typedef struct 
+{
+    int tid;
+    int prioridad;
+    char* nombre_archivo_instrucciones;
+} t_tcb;
+
 typedef struct
 {
     int pid;
     int tamanio;
     t_list* tids_asociados;
     t_list* mutex_asignados;
-    int contador_de_tids;
+    int sig_tid_a_asignar;
+    t_tcb* hilo_main;
 } t_pcb;
-
-typedef struct 
-{
-    int tid;
-    int prioridad;
-} t_tcb;
-
 
 typedef enum // son los posibles mensajes q puede recibir por interrupción CPU
 {
     NADA,
-    FINALIZAR, // interrumpido de forma "manual"
+    FINALIZAR, // interrumpido de forma "manual". NO SÉ SI ES NECESARIO TENER ESTE COD. EN ESTE TP
     DESALOJAR // por fin de quantum
-} t_interrupt_code; // revisar si no requiere ampliación por la consigna
+} t_interrupt_code; // revisar si no requiere modificación, por la consigna de este TP
 
 /**
 * @brief Imprime un saludo por consola

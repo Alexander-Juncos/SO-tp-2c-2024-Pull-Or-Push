@@ -36,6 +36,8 @@ extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo)
 extern t_list* cola_blocked; // Estado BLOCKED. Es una lista de t_tcb* (Hilos)
 extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos)
 
+extern t_list* procesos_activos; // Es una lista de t_pcb* (Procesos). Son los que están en READY, EXEC, o BLOCKED.
+
 extern t_config *config;
 extern int quantum_de_config;
 
@@ -45,8 +47,17 @@ extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con cri
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================
 // ==========================================================================
-
+/**
+* @brief Envía una orden de interrupción a CPU.
+* @param interrupt_code : El código de la interrupción.
+*/
 void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code);
+/**
+* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
+*         hilo, recibe la respuesta, y se desconecta.
+* @return Exito al inicializar el nuevo hilo.
+*/
+bool enviar_nuevo_hilo_a_memoria(); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // ==========================================================================
 // ====  Funciones Utils:  ==================================================

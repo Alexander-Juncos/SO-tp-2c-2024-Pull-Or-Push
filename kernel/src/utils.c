@@ -14,6 +14,8 @@ t_tcb* hilo_exec = NULL;
 t_list* cola_blocked = NULL;
 t_list* cola_exit = NULL;
 
+t_list* procesos_activos = NULL;
+
 t_config *config = NULL;
 int quantum_de_config;
 
@@ -30,6 +32,10 @@ void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code) {
 	// agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int)); // Segun como hagamos protocolo creo q tendria q tener pid y tid
 	enviar_paquete(paquete, socket_cpu_interrupt);
 	eliminar_paquete(paquete);
+}
+
+bool enviar_nuevo_hilo_a_memoria() {
+    //
 }
 
 // ==========================================================================

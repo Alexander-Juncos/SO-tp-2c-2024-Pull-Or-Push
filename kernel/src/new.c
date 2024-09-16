@@ -23,7 +23,7 @@ void* rutina_new(void* puntero_null) {
 
     exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
     if(exito_al_inicializar_proceso) {
-        //tcb = crear_hilo();
+        //tcb = crear_hilo(); VER BIEN ESTA FUNCIÓN, O QUÉ HACER.
         //exito_al_inicializar_hilo = enviar_nuevo_hilo_a_memoria();
     }
     //.
@@ -93,10 +93,6 @@ bool enviar_nuevo_proceso_a_memoria(t_pcb* pcb) {
     liberar_conexion(log_kernel_gral, "Memoria", socket_memoria);
 
     return exito_al_crear_proceso_en_memoria;
-}
-
-bool enviar_nuevo_hilo_a_memoria() {
-    //
 }
 
 // ==========================================================================
