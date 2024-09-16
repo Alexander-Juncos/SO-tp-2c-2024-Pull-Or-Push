@@ -52,8 +52,8 @@ void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code);
 // ====  Funciones Utils:  ==================================================
 // ==========================================================================
 
-
+void crear_hilo(int pid); // DESARROLLANDO
 void iniciar_logs(bool testeo);
 void terminar_programa();
 
-#endif /* UTILS_KERNEL_H */
+#endif

@@ -21,9 +21,9 @@ void* rutina_new(void* puntero_null) {
 
     pcb = list_remove(cola_new, 0);
 
-    //exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria();
+    exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
     if(exito_al_inicializar_proceso) {
-        // crear tcb
+        //tcb = crear_hilo();
         //exito_al_inicializar_hilo = enviar_nuevo_hilo_a_memoria();
     }
     //.
@@ -84,17 +84,12 @@ void* rutina_new(void* puntero_null) {
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
-bool enviar_nuevo_proceso_a_memoria() {
+bool enviar_nuevo_proceso_a_memoria(t_pcb* pcb) {
 
-    bool exito_al_crear_proceso_en_memoria = false;
-
+    bool exito_al_crear_proceso_en_memoria;
     int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
-
-    //enviar_nuevo_proceso(socket_memoria);
-
-    char* respuesta;
-    //respuesta = recibir_mensaje(socket_memoria);
-
+    enviar_nuevo_proceso(pcb, socket_memoria);
+    exito_al_crear_proceso_en_memoria = recibir_mensaje_de_rta(log_kernel_gral, "CREAR PROCESO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria", socket_memoria);
 
     return exito_al_crear_proceso_en_memoria;
@@ -108,15 +103,16 @@ bool enviar_nuevo_hilo_a_memoria() {
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
+void enviar_nuevo_proceso(t_pcb* pcb, int socket) {
+    t_paquete* paquete = crear_paquete(CREAR_PROCESO);
+    agregar_a_paquete(paquete, (void*)&(pcb->pid), sizeof(int));
+    agregar_a_paquete(paquete, (void*)&(pcb->tamanio), sizeof(int));
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
-void enviar_nuevo_proceso(int socket) {
-    t_paquete* paquete;
-    //crear_paquete(paquete);
-    //agregar_a_paquete(paquete, zzzzz);
-    //enviar_paquete(paquete, socket);
-    eliminar_paquete(paquete);
-}
+

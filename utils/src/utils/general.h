@@ -40,8 +40,10 @@ typedef struct
 typedef struct
 {
     int pid;
+    int tamanio;
     t_list* tids_asociados;
     t_list* mutex_asignados;
+    int contador_de_tids;
 } t_pcb;
 
 typedef struct 

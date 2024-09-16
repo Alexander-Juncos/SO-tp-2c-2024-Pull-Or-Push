@@ -36,6 +36,10 @@ void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code) {
 // ====  Funciones Utils:  ==================================================
 // ==========================================================================
 
+void crear_hilo(int pid) {
+	// DESARROLLANDO
+}
+
 void iniciar_logs(bool testeo)
 {
     log_kernel_gral = log_create("kernel_general.log", "Kernel", testeo, LOG_LEVEL_DEBUG);

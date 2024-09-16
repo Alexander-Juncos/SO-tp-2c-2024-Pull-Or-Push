@@ -78,7 +78,13 @@ typedef struct
 // ====  Funciones conexión:  ===============================================
 // ==========================================================================
 
+/**
+* @brief  Crea una conexión. En caso de error, imprime un mensaje y detiene
+*         la ejecución del programa.
+* @return file descriptor del socket de la conexión.
+*/
 int crear_conexion(char* ip, char* puerto);
+
 int iniciar_servidor(char* puerto);
 int esperar_cliente(int socket);
 void liberar_conexion(t_log* log, char* nombre_conexion, int socket); // revisar si es necesaria
@@ -113,9 +119,22 @@ void* recibir_buffer(int*, int);
 /// @param socket           : Socket de la conexión.
 int recibir_codigo(int socket);
 
+/**
+* @brief Recibe un mensaje (que es una respuesta), tomando "OK" como
+         respuesta exitosa, y cualquier otra como no exitosa.
+* @param logger                 : Logger para loguear la respuesta.
+* @param nombre_de_la_operacion : Traducción del op_code de la operación,
+                                  para incluir en el log.
+* @param socket                 : Socket de la conexión a recibir el msj.
+* @return Respuesta exitosa.
+*/
+bool recibir_mensaje_de_rta(t_log* logger, char* nombre_de_la_operacion, int socket);
+
 char* recibir_mensaje(int socket);
+
 // Recibe un paquete con valores cuyo tamanio va obteniendo uno a uno, y retorna una t_list* de los mismos.
 t_list* recibir_paquete(int socket);
+
 void* serializar_paquete(t_paquete* paquete, int bytes);
 void enviar_mensaje(char* mensaje, int socket_cliente);
 void crear_buffer(t_paquete* paquete);
@@ -128,7 +147,11 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void agregar_estatico_a_paquete(t_paquete* paquete, void* valor, int tamanio); 
 // la agregue x si alguien la requiere pero me parece mejor usar simplemente agregar_a_paquete (xq coincide con recibir_paquete)
 
+/**
+* @return bytes enviados.
+*/
 int enviar_paquete(t_paquete* paquete, int socket);
+
 void eliminar_paquete(t_paquete* paquete);
 
 #endif /* UTILS_CONEXIONES_H_ */

@@ -254,6 +254,22 @@ int recibir_codigo(int socket)
 	}
 }
 
+bool recibir_mensaje_de_rta(t_log* logger, char* nombre_de_la_operacion, int socket) {
+    bool rta_exitosa = false;
+
+    char* respuesta = recibir_mensaje(socket);
+    if(strcmp(respuesta, "OK") == 0) {
+        rta_exitosa = true;
+        log_debug(logger, "Exito al %s", nombre_de_la_operacion);
+    }
+    else {
+        log_debug(logger, "Fallo al %s: %s", nombre_de_la_operacion, respuesta);
+    }
+    free(respuesta);
+
+    return rta_exitosa;
+}
+
 char* recibir_mensaje(int socket)
 {
 	int size;

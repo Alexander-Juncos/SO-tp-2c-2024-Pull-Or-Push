@@ -200,7 +200,7 @@ void* rutina_ejecucion (void* nada)
             pedido = recibir_paquete(socket_cliente);
 
             // Stub temporal
-            enviar_mensaje("Recibi operación: CREAR_PROCESO", socket_cliente);
+            enviar_mensaje("OK", socket_cliente);
             log_debug(log_memoria_gral, "Operacion: CREAR_PROCESO");
 
             // t_pcb_mem* pcb_new = iniciar_pcb(pid);
