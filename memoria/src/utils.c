@@ -108,12 +108,21 @@ t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script)
     return tcb_new;
 }
 
-t_pcb_mem* iniciar_pcb(int pid){
+t_pcb_mem* iniciar_pcb(int pid, int tamanio)
+{
     t_pcb_mem* pcb_new = NULL;
 
-    // busca si hay particion libre (din-fijas)
-    // si hay la marca como ocupada y crea un t_pcb_mem para el pid
-    // >> iniciar lista tcb y cargar particion y pid
+    // busca si hay particion libre (din-fijas) - x ahora STUB afirmativo
+    pcb_new->particion = particion_libre(tamanio);
+
+    if (pcb_new->particion == NULL)
+    {
+        free(pcb_new);
+        return NULL;
+    }
+
+    pcb_new->pid = pid;
+    pcb_new->lista_tcb = list_create();
 
     return pcb_new;
 }
@@ -194,6 +203,17 @@ t_list* crear_lista_de_particiones()
         return NULL;
     }
 	return lista_particiones;
+}
+
+t_particion* particion_libre (int tamanio) // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
+{
+    t_particion* particion = malloc(t_particion);
+
+    // no verifica nada
+    particion->base = 0;
+    particion->limite = tamanio - 1;
+
+    return particion;
 }
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid)

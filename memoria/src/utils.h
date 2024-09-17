@@ -89,7 +89,7 @@ extern t_memoria_particionada* memoria;
 
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
-t_pcb_mem* iniciar_pcb(int pid);
+t_pcb_mem* iniciar_pcb(int pid, int tamanio);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -103,6 +103,7 @@ bool memory_dump_fs (t_list* pedido);
 
 void retardo_operacion(void);
 t_list* crear_lista_de_particiones(void);
+t_particion* particion_libre (int tamanio); // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 void iniciar_logs(bool testeo);
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
