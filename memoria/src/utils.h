@@ -90,6 +90,9 @@ extern t_memoria_particionada* memoria;
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
 t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0);
+bool obtener_contexto_ejecucion(int pid, int tid); // EN DESARROLLO
+bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // EN DESARROLLO
+char* obtener_instruccion(int num_instruccion); // EN DESARROLLO
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================

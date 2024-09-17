@@ -177,6 +177,7 @@ bool memory_dump_fs (t_list* pedido)
     // tendria q modificarse para sacar información
     // if (correcta) return true else return false
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
+    return true;
 }
 
 // ==========================================================================

@@ -97,15 +97,36 @@ void atender_cpu()
             enviar_mensaje("Recibi operación: CONTEXTO_EJECUCION", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: CONTEXTO_EJECUCION");
 
+            // obtener_contexto_ejecucion(pid, tid); // carga en variable global el contexto
+            // devolver contexto_ejecucion segun protocolo
+            // devuelve bool para verificar si operacion fue exitosa o no
+
             list_destroy_and_destroy_elements(pedido, free);
             break;
-        
+
+        case ACTUALIZAR_CONTEXTO_EJECUCION:
+            pedido = recibir_paquete(socket_cpu);
+
+            // Stub temporal
+            enviar_mensaje("Recibi operación: ACTUALIZAR_CONTEXTO_EJECUCION", socket_cpu);
+            log_debug(log_memoria_gral, "Operacion: ACTUALIZAR_CONTEXTO_EJECUCION");
+
+            // actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // actualiza en variable global el contexto
+            // avisar a cpu segun resultado
+            // devuelve bool para verificar si operacion fue exitosa o no
+
+            list_destroy_and_destroy_elements(pedido, free);
+            break;
+
         case OBTENER_INSTRUCCION:
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
             enviar_mensaje("Recibi operación: OBTENER_INSTRUCCION", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: OBTENER_INSTRUCCION");
+
+            // char* obtener_instruccion(int num_instruccion);
+            // se puede enviar directamente a cpu
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -116,6 +137,8 @@ void atender_cpu()
             // Stub temporal
             enviar_mensaje("Recibi operación: ACCESO_LECTURA", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: ACCESO_LECTURA");
+            
+            // pendiente hasta desarrollo de espacio usuario
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -126,6 +149,8 @@ void atender_cpu()
             // Stub temporal
             enviar_mensaje("Recibi operación: ACCESO_ESCRITURA", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: ACCESO_ESCRITURA");
+
+            // pendiente hasta desarrollo de espacio usuario
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
