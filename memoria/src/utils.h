@@ -89,7 +89,7 @@ extern t_memoria_particionada* memoria;
 
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
-t_pcb_mem* iniciar_pcb(int pid, int tamanio);
+t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
