@@ -82,6 +82,8 @@ void atender_cpu()
     int operacion;
     t_list* pedido;
     t_paquete* paquete;
+    void* aux_datos_pedido = NULL;
+    void* aux_datos_paquete = NULL;
 
     log_debug(log_memoria_gral, "Atendiendo CPU");
 
@@ -97,6 +99,7 @@ void atender_cpu()
             enviar_mensaje("Recibi operación: CONTEXTO_EJECUCION", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: CONTEXTO_EJECUCION");
 
+            // REQUIERE DEFINIR PROTOCOLO DE COMUNICACION
             // obtener_contexto_ejecucion(pid, tid); // carga en variable global el contexto
             // devolver contexto_ejecucion segun protocolo
             // devuelve bool para verificar si operacion fue exitosa o no
@@ -112,6 +115,7 @@ void atender_cpu()
             enviar_mensaje("Recibi operación: ACTUALIZAR_CONTEXTO_EJECUCION", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: ACTUALIZAR_CONTEXTO_EJECUCION");
 
+            // REQUIERE DEFINIR PROTOCOLO DE COMUNICACION
             // actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // actualiza en variable global el contexto
             // avisar a cpu segun resultado
             // devuelve bool para verificar si operacion fue exitosa o no
@@ -123,14 +127,20 @@ void atender_cpu()
         case OBTENER_INSTRUCCION:
             pedido = recibir_paquete(socket_cpu);
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: OBTENER_INSTRUCCION", socket_cpu);
-            log_debug(log_memoria_gral, "Operacion: OBTENER_INSTRUCCION");
+            log_debug(log_memoria_gral, 
+                        "Operacion: OBTENER_INSTRUCCION - PID:TID <%d:%d>",
+                        contexto_ejecucion->pcb->pid,
+                        contexto_ejecucion->tcb->tid);
 
-            // char* obtener_instruccion(int num_instruccion);
-            // se puede enviar directamente a cpu
+            aux_datos_pedido = list_get(pedido, 0);
+            aux_datos_paquete = obtener_instruccion(*(uint32_t*)aux_datos_pedido);
+            
+            enviar_mensaje((char*)aux_datos_paquete, socket_cpu);
 
             list_destroy_and_destroy_elements(pedido, free);
+            // no hay q liberar aux_datos_paquete ya q apunta a la instruccion en el tcb
+            aux_datos_pedido = NULL;
+            aux_datos_paquete = NULL;
             break;
         
         case ACCESO_LECTURA:
