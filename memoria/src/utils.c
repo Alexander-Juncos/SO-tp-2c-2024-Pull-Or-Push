@@ -204,9 +204,14 @@ bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
 
 char* obtener_instruccion(int num_instruccion)
 {
-    // como implica q antes se obtuvo el contexto de ejecucion, no se necesita cambiar el contexto
-    // se puede acceder desde el contexto al tcb y hacer list_get(num_instruccion)
-    // y lo q tiene devolverlo
+    // como instruccion va de 0 en adelante la instruccion 4 (5 instruccion) 
+    // se obtiene con list_get(... , 4) [4 posicion de la lista q es el 5to elemento]
+    char* instruccion = NULL;
+    instruccion = (char*) list_get(contexto_ejecucion->tcb->instrucciones,
+                                    num_instruccion);
+    // emito para testear la instruccion                                
+    log_debug(log_memoria_gral,"Intruccion %d: %s", num_instruccion, instruccion);
+    return instruccion;
 }
 
 // ==========================================================================
