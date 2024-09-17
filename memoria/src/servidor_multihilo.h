@@ -1,22 +1,19 @@
-#ifndef MAIN_MEMORIA_H_
-#define MAIN_MEMORIA_H_
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <commons/log.h>
-
-#include "utils.h"
-#include <servidor_multihilo.h>
+#ifndef SERVIDOR_MULTIHILO_MEMORIA_H_
+#define SERVIDOR_MULTIHILO_MEMORIA_H_
+#include <utils.h>
 
 // ==========================================================================
 // ====  Variables:  ========================================================
 // ==========================================================================
 
+pthread_mutex_t mutex_socket_cliente_temp;
+int socket_cliente_temp = 1;
+
 // ==========================================================================
-// ====  Funcion Hilo main (serv. cpu):  ====================================
+// ====  Funciones Servidor Multihilo:  =====================================
 // ==========================================================================
 
-void atender_cpu(void);
+void* rutina_recepcion (void*);
+void* rutina_ejecucion (void*);
 
-#endif /* MAIN_MEMORIA_H */
+#endif /* SERVIDOR_MULTIHILO_MEMORIA_H_ */
