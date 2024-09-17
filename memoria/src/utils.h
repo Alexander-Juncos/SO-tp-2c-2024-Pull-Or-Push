@@ -69,7 +69,7 @@ typedef struct {
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
 extern t_contexto_de_ejecucion* contexto_ejecucion;
-extern pthread_mutex_t mutex_contexto_ejecucion;
+// extern pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 typedef struct {
     void* espacio_usuario;
@@ -90,7 +90,7 @@ extern t_memoria_particionada* memoria;
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
 t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0);
-bool obtener_contexto_ejecucion(int pid, int tid); // EN DESARROLLO
+bool cargar_contexto_ejecucion(int pid, int tid);
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // EN DESARROLLO
 char* obtener_instruccion(int num_instruccion); // EN DESARROLLO 
 
@@ -108,6 +108,8 @@ void retardo_operacion(void);
 t_list* crear_lista_de_particiones(void);
 t_particion* particion_libre (int tamanio); // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
+t_pcb_mem* obtener_pcb (int pid);
+t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
 void iniciar_logs(bool testeo);
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 

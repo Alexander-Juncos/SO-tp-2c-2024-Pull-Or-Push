@@ -19,7 +19,7 @@ pthread_mutex_t mutex_procesos_cargados;
 t_memoria_particionada* memoria;
 
 t_contexto_de_ejecucion* contexto_ejecucion;
-pthread_mutex_t mutex_contexto_ejecucion;
+// pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
@@ -150,11 +150,50 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     return pcb_new;
 }
 
-bool obtener_contexto_ejecucion(int pid, int tid)
+bool cargar_contexto_ejecucion(int pid, int tid)
 {
-    // tiene q buscar en la lista de procesos el pid, luego en su lista de hilos el tcb
-    // con esos 2 se puede obtener todo lo necesario para el contexto y cargarlo en var global contexto_ejecucion
-    // se podria comprobar si coinciden con el actual contexto de ejecucion para ahorrar busqueda
+    t_pcb_mem* pcb = NULL;
+    t_tcb_mem* tcb = NULL;
+    bool nuevo_pcb = false;
+
+    // buscando pcb
+    if (pid != contexto_ejecucion->pcb->pid)
+    {
+        pcb = obtener_pcb(pid);
+
+        if (pcb == NULL){
+            log_error(log_memoria_gral, 
+                        "ERROR: pid %d no se encuentra en la lista de procesos cargados. No se pudo cargar el contexto de ejecución",
+                        pid);
+            return false;
+        }
+
+        nuevo_pcb = true;
+    }
+
+    // buscando tcb
+    if (nuevo_pcb || tid != contexto_ejecucion->tcb->tid)
+    {
+        // verifico si cambio el pcb o no (si no cambio busco el tid desde el contexto ya cargado)
+        if (nuevo_pcb)
+            tcb = obtener_tcb(tid, pcb->lista_tcb);
+        else
+            tcb = obtener_tcb(tid, contexto_ejecucion->pcb->lista_tcb);
+
+        if (tcb == NULL){
+                    log_error(log_memoria_gral, 
+                        "ERROR: tid %d del pcb %d no se encuentra en su lista de hilos cargados. No se pudo cargar el contexto de ejecución",
+                        tid, pid);
+            return false;
+        }
+    }
+      
+    // cargando a var global
+    if (pcb != NULL)
+        contexto_ejecucion->pcb = pcb;
+    if (tcb != NULL)
+        contexto_ejecucion->tcb = tcb;
+    return true;
 }
 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
@@ -309,6 +348,46 @@ t_list *cargar_instrucciones(char *directorio, int pid, int tid)
     fclose(archivo);
     free(lineaInstruccion);
     return lista;
+}
+
+t_pcb_mem* obtener_pcb (int pid)
+{
+    int i;
+    bool coincidencia = true;
+    t_pcb_mem* pcb;
+
+    i = 0;
+    coincidencia = false;
+    while (!coincidencia && i < list_size(procesos_cargados) )
+    {
+        pcb = (t_pcb_mem*) list_get(procesos_cargados, i);
+        i++; 
+        if (pcb->pid == pid)
+            coincidencia = true;
+    }
+    if (!coincidencia)
+        pcb = NULL;
+    return pcb;
+}
+
+t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
+{
+    int i;
+    bool coincidencia = true;
+    t_tcb_mem* tcb;
+
+    i = 0;
+    coincidencia = false;
+    while (!coincidencia && i < list_size(lista_tcb) )
+    {
+        tcb = (t_tcb_mem*) list_get(lista_tcbs, i);
+        i++; 
+        if (pcb->pid == tid)
+            coincidencia = true;
+    }
+    if (!coincidencia)
+        tcb = NULL;
+    return tcb;
 }
 
 void iniciar_logs(bool testeo)
