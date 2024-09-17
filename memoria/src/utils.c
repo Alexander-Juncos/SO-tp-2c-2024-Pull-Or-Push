@@ -102,30 +102,54 @@ t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script)
     if (tcb_new->instrucciones == NULL)
     {
         free(tcb_new);
+        log_error(log_memoria_gral, 
+                    "proceso %d : thread %d: ERROR: instrucciones no cargadas. Abortando creacion de tcb",pid, tid);
         return NULL;
     }
     
+    log_debug(log_memoria_gral, 
+                    "Creado el thread %d del proceso %d", pid, tid);
     return tcb_new;
 }
 
-t_pcb_mem* iniciar_pcb(int pid, int tamanio)
+t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
 {
     t_pcb_mem* pcb_new = NULL;
+    t_tcb_mem* tcb_0 = NULL;
 
     // busca si hay particion libre (din-fijas) - x ahora STUB afirmativo
     pcb_new->particion = particion_libre(tamanio);
 
-    if (pcb_new->particion == NULL)
+    if (pcb_new->particion == NULL) // si no hay particion aborto
     {
         free(pcb_new);
+        log_debug(log_memoria_gral, 
+                    "No se le asigno una particion al proceso %d, abortando creacion del pcb",pid);
         return NULL;
     }
-
+    // inicializo resto del pcb
     pcb_new->pid = pid;
     pcb_new->lista_tcb = list_create();
 
+    // inicializo el tcb-> tid=0
+    tcb_0 = iniciar_tcb(pid, 0, ruta_script_tid_0);
+    // si no se pudo iniciar aborto
+    if (tcb_0 == NULL)
+    {
+        free(pcb_new->lista_tcb);
+        free(pcb_new->particion);
+        free(pcb_new);
+        log_error(log_memoria_gral, 
+                    "ERROR: thread 0 del proceso %d no pudo ser iniciado. Abortando creacion de pcb",pid);
+        return NULL;
+    }
+
+    // este log luego deberia cambiarse por un log obligatorio
+    log_debug(log_memoria_gral, 
+                    "Creado el proceso %d, junto con su thread 0",pid);
     return pcb_new;
 }
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================

@@ -61,8 +61,8 @@ void* rutina_ejecucion (void* nada)
             enviar_mensaje("OK", socket_cliente);
             log_debug(log_memoria_gral, "Operacion: CREAR_PROCESO");
 
-            // t_pcb_mem* pcb_new = iniciar_pcb(pid);
-            // si es pcb = NULL entonces no hay particiones disponibles
+            // t_pcb_mem* pcb_new = iniciar_pcb(pid, tamanio, ruta_tid_0);
+            // si es pcb = NULL entonces no hay particiones disponibles o hubo error al crear tid 0
             // avisa a kernel INSUFICIENTE
             // de otra forma le dice que OK
 
