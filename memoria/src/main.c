@@ -100,6 +100,7 @@ void atender_cpu()
             // obtener_contexto_ejecucion(pid, tid); // carga en variable global el contexto
             // devolver contexto_ejecucion segun protocolo
             // devuelve bool para verificar si operacion fue exitosa o no
+            // requeriria una funcion q devuelva el paquete ya armado para cpu
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -114,6 +115,7 @@ void atender_cpu()
             // actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // actualiza en variable global el contexto
             // avisar a cpu segun resultado
             // devuelve bool para verificar si operacion fue exitosa o no
+            // requeriria una funcion q devuelva el paquete ya armado para cpu
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

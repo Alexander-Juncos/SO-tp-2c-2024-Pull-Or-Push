@@ -150,6 +150,26 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     return pcb_new;
 }
 
+bool obtener_contexto_ejecucion(int pid, int tid)
+{
+    // tiene q buscar en la lista de procesos el pid, luego en su lista de hilos el tcb
+    // con esos 2 se puede obtener todo lo necesario para el contexto y cargarlo en var global contexto_ejecucion
+    // se podria comprobar si coinciden con el actual contexto de ejecucion para ahorrar busqueda
+}
+
+bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
+{
+    // como actualizar un contexto de ejecucion implica q previamente lo pidio no se necesita chequear nada
+    // por lo tanto simplemente descargamos el pedido y lo cargamos en el contexto de ejecucion (es decir en el pcb y tcb segun corresponda)
+}
+
+char* obtener_instruccion(int num_instruccion)
+{
+    // como implica q antes se obtuvo el contexto de ejecucion, no se necesita cambiar el contexto
+    // se puede acceder desde el contexto al tcb y hacer list_get(num_instruccion)
+    // y lo q tiene devolverlo
+}
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
