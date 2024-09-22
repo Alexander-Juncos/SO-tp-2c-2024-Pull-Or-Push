@@ -79,13 +79,45 @@ typedef enum {
 } t_interrupcion;
 
 extern t_contexto_exec contexto_exec;
-extern execute_op_code codigo_instruccion;
 extern t_interrupcion tipo_interrupcion;
 extern pthread_mutex_t mutex_interrupcion;
 
+// ==========================================================================
+// ====  Funciones Internas:  ===============================================
+// ==========================================================================
+
+t_list* decode (char* instruccion); // carga en lista la intruccion
+
+// intrucciones para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
+void instruccion_set (t_list* param);
+void instruccion_read_mem (t_list* param);
+void instruccion_write_mem (t_list* param);
+void instruccion_sum (t_list* param);
+void instruccion_sub (t_list* param);
+void instruccion_jnz (t_list* param);
+void instruccion_log (t_list* param);
 
 // ==========================================================================
-// ====  Funciones utils:  ==================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
+
+char* fetch (uint32_t pc);
+
+// syscalls para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
+void syscall_dump_memory (void);
+void syscall_io (t_list* param);
+void syscall_process_create (t_list* param);
+void syscall_thread_create (t_list* param);
+void syscall_thread_join (t_list* param);
+void syscall_thread_cancel (t_list* param);
+void syscall_mutex_create (t_list* param);
+void syscall_mutex_lock (t_list* param);
+void syscall_mutex_unlock (t_list* param);
+void syscall_thread_exit (void);
+void syscall_process_exit (void);
+
+// ==========================================================================
+// ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
 void iniciar_logs(bool testeo);

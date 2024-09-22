@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     /******************** Logíca CPU *******************/
     imprimir_mensaje("pude completar check 1");
     /*
-        
+        usar valor tipo_interrupcion para saber si hay q recibir contexto o no
     */
 
     terminar_programa();
@@ -63,6 +63,9 @@ int main(int argc, char* argv[]) {
 
 void* rutina_hilo_interrupcion (void*)
 {
+    int operacion;
+    t_list* recibido;
+
     char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
     socket_kernel_interrupt = esperar_cliente(socket_escucha_puerto_interrupt);
@@ -74,5 +77,7 @@ void* rutina_hilo_interrupcion (void*)
 
     /*
         logica recepcion de interrupciones
+        actualizar tipo_interrupcion para q cuando se checkee se pueda atender
+        tiene mutex -> mutex_interrupcion
     */
 }
