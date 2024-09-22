@@ -14,6 +14,11 @@ t_log* log_cpu_oblig;
 t_log* log_cpu_gral; 
 t_config* config;
 
+t_contexto_exec contexto_exec;
+execute_op_code codigo_instruccion = DESCONOCIDA;
+t_interrupcion tipo_interrupcion = NINGUNA;
+pthread_mutex_t mutex_interrupcion;
+
 // ==========================================================================
 void iniciar_logs(bool testeo)
 {

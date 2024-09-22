@@ -8,6 +8,7 @@ int main(int argc, char* argv[]) {
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip;
     char*   puerto;
+    pthread_t hilo_interrupt;
 
     /****************** Inicialización *****************/
     if (argc == 1) // si no recibe ruta para archivo config
@@ -45,8 +46,24 @@ int main(int argc, char* argv[]) {
     }
     enviar_handshake(HANDSHAKE_OK, socket_kernel_dispatch);
     
+    pthread_mutex_init(&mutex_interrupcion, NULL);
 
-    puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+    if (pthread_create(hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
+        log_error(log_cpu_gral, "Error al crear hilo interrupcion");
+
+    /******************** Logíca CPU *******************/
+    imprimir_mensaje("pude completar check 1");
+    /*
+        
+    */
+
+    terminar_programa();
+    return 0;
+}
+
+void* rutina_hilo_interrupcion (void*)
+{
+    char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
     socket_kernel_interrupt = esperar_cliente(socket_escucha_puerto_interrupt);
     if (recibir_handshake(socket_kernel_interrupt) != KERNEL_I){
@@ -55,12 +72,7 @@ int main(int argc, char* argv[]) {
     }
     enviar_handshake(HANDSHAKE_OK, socket_kernel_interrupt);
 
-    /******************** Logíca CPU *******************/
-    imprimir_mensaje("pude completar check 1");
-     /*
-        
+    /*
+        logica recepcion de interrupciones
     */
-
-    terminar_programa();
-    return 0;
 }

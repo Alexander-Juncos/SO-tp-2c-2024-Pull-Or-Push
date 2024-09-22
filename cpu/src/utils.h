@@ -36,15 +36,53 @@ extern t_log* log_cpu_gral; // logger para los logs nuestros. Loguear con criter
 
 extern t_config* config;
 
-/*
 typedef enum {
+    DESCONOCIDA,
 
-    // Tuve que comentarlo para que compile, a medida que vayamos avanzando podemos descomentarlo.
-    
-    placeholder  
+    // instrucciones (solo cpu)
+    SET, // (registro, valor)
+    READ_MEM, // (registro dat, registro dir)
+    WRITE_MEM, // (registro dir, registro dat)
+    SUM, // (registro, registro)
+    SUB, // (registro, registro)
+    JNZ, // (registro, instruccion)
+    LOG, // registro
 
+    // syscalls (guardar contexto y dar control a kernel)
+    DUMP_MEMORY, 
+    IO, // (tiempo)
+    PROCESS_CREATE, // (archivo, tamaño, prioridad tid 0)
+    THREAD_CREATE, // (archivo, prioridad)
+    THREAD_JOIN, // (tid)
+    THREAD_CANCEL, // (tid)
+    MUTEX_CREATE, // (recurso)
+    MUTEX_LOCK, // (recurso)
+    MUTEX_UNLOCK, // (recurso)
+    THREAD_EXIT,
+    PROCESS_EXIT
 } execute_op_code;
-*/
+
+typedef struct {
+    int pid;
+    int tid;
+    uint32_t PC;
+    t_reg_cpu registros;
+    unsigned int base;
+    unsigned int limite;
+} t_contexto_exec;
+
+typedef enum {
+    NINGUNA,
+    DESALOJO,
+    SYSCALL,
+    SEG_FAULT
+} t_interrupcion;
+
+extern t_contexto_exec contexto_exec;
+extern execute_op_code codigo_instruccion;
+extern t_interrupcion tipo_interrupcion;
+extern pthread_mutex_t mutex_interrupcion;
+
 
 // ==========================================================================
 // ====  Funciones utils:  ==================================================
