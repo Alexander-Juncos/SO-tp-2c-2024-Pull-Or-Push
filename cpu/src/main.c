@@ -46,16 +46,16 @@ int main(int argc, char* argv[]) {
     }
     enviar_handshake(HANDSHAKE_OK, socket_kernel_dispatch);
     
+    /******************** Logíca CPU *******************/
     pthread_mutex_init(&mutex_interrupcion, NULL);
 
     if (pthread_create(hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
         log_error(log_cpu_gral, "Error al crear hilo interrupcion");
 
-    /******************** Logíca CPU *******************/
-    imprimir_mensaje("pude completar check 1");
     /*
         usar valor tipo_interrupcion para saber si hay q recibir contexto o no
     */
+    rutina_main_cpu();
 
     terminar_programa();
     return 0;
@@ -75,9 +75,27 @@ void* rutina_hilo_interrupcion (void*)
     }
     enviar_handshake(HANDSHAKE_OK, socket_kernel_interrupt);
 
+    // lo tome del tp anterior, aunque no se su funcion bien...
+    // (comentario tp anterior) agregué esto para que el recv() de check interrupt no se quede esperando
+    fcntl(socket_kernel_interrupt, F_SETFL, O_NONBLOCK); 
+
     /*
         logica recepcion de interrupciones
         actualizar tipo_interrupcion para q cuando se checkee se pueda atender
         tiene mutex -> mutex_interrupcion
     */
+}
+
+void rutina_main_cpu(void)
+{
+    // ver el tema de diccionarios para los registros???
+    // bucle
+        // revisar si hay q cargar nuevo pid
+        // fetch
+
+        // decode (cargar instruccion a un valor para switch)
+
+        // swith para llamar a cada instruccion segun corresponda... (exec)
+
+        // revisar interrupcion (de var global q actualiza el hilo interrupcion)
 }

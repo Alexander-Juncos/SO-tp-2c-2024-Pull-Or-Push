@@ -26,6 +26,30 @@ pthread_mutex_t mutex_interrupcion;
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
+char* fetch (void)
+{
+    t_paquete* paq = crear_paquete(OBTENER_INSTRUCCION);
+    agregar_a_paquete(paq, &(contexto_exec.pid), sizeof(int));
+    agregar_a_paquete(paq, &(contexto_exec.tid), sizeof(int));
+    agregar_a_paquete(paq, &(contexto_exec.PC), sizeof(uint32_t));
+    enviar_paquete(paq, socket_memoria);
+    eliminar_paquete(paq);
+
+    if(recibir_codigo(socket_memoria) != OBTENER_INSTRUCCION){
+        log_error(log_cpu_gral,"Error en respuesta de siguiente instruccion");
+    }
+    t_list* list = recibir_paquete(socket_memoria);
+    char* instruccion = list_get(list,0);
+    list_destroy(list);
+
+    // logs grales y obligatorio
+    log_info(log_cpu_gral, "PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.PC.PC);
+    log_info(log_cpu_oblig, "## TID: <%d> - FETCH - Program Counter: <%d>",contexto_exec.tid,contexto_exec.PC);
+    log_info(log_cpu_gral, "Instruccion recibida: %s", instruccion);
+
+    return instruccion;
+}
+
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================

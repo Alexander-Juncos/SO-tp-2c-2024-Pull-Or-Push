@@ -101,7 +101,7 @@ void instruccion_log (t_list* param);
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
-char* fetch (uint32_t pc);
+char* fetch (void);
 
 // syscalls para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void syscall_dump_memory (void);

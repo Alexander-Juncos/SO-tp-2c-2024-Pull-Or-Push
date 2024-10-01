@@ -137,6 +137,8 @@ void atender_cpu()
             
             enviar_mensaje((char*)aux_datos_paquete, socket_cpu);
 
+            // revisar el tema del log obligatorio...
+
             list_destroy_and_destroy_elements(pedido, free);
             // no hay q liberar aux_datos_paquete ya q apunta a la instruccion en el tcb
             aux_datos_pedido = NULL;
