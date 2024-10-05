@@ -21,8 +21,6 @@ void planific_corto_multinivel(void);
 
 // Pone el siguiente proceso a ejecutar. Asume que no hay proceso en ejecucion.
 void ejecutar_sig_proceso(void);
-// Igual a ejecutar_sig_proceso(), pero para VRR, por lo que se fija primero en la cola_ready_plus
-void ejecutar_sig_proceso_vrr(void);
 // Recibe un op_code y verifica que es el esperado. Esta función se podría pasar a utils generales.
 void recibir_y_verificar_codigo(int socket, op_code cod, char* traduccion_de_cod);
 

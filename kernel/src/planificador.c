@@ -938,20 +938,6 @@ void ejecutar_sig_proceso(void) {
     enviar_contexto_de_ejecucion(contexto_de_ejecucion, socket_cpu_dispatch);
 }
 
-void ejecutar_sig_proceso_vrr(void) {
-
-    if (list_is_empty(cola_ready_plus)) { // En este caso la cola_ready_plus está vacía, entonces toma al proceso de la cola_ready
-        proceso_exec = list_remove(cola_ready, 0);
-        // proceso_exec->quantum = quantum_de_config;
-    }
-    else { // En este caso la cola_ready_plus NO está vacía, entonces toma al proceso de dicha cola
-        proceso_exec = list_remove(cola_ready_plus, 0);
-    }
-    
-    t_contexto_de_ejecucion contexto_de_ejecucion = contexto_de_ejecucion_de_pcb(proceso_exec);
-    enviar_contexto_de_ejecucion(contexto_de_ejecucion, socket_cpu_dispatch);
-}
-
 void recibir_y_verificar_codigo(int socket, op_code cod, char* traduccion_de_cod) {
     if (recibir_codigo(socket) != cod) {
         log_error(log_kernel_gral, "Codigo erroneo. Se esperaba %s.", traduccion_de_cod);
