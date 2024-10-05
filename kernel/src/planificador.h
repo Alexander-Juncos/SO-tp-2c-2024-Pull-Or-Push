@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+/* TODO SACADO DEL TP ANTERIOR!! */
+
 // esta se pasa al crear el hilo
 void* rutina_planificador(void* puntero_null);
 
@@ -16,6 +18,7 @@ void planific_corto_fifo(void);
 void planific_corto_rr(void);
 void planific_corto_prioridades(void);
 void planific_corto_multinivel(void);
+void planific_corto_prioridades(void);
 
 /////// Funciones auxiliares
 

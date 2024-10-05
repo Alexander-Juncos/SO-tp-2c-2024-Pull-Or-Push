@@ -5,6 +5,8 @@ int ms_transcurridos;
 
 pthread_mutex_t mutex_rutina_quantum;
 
+/* TODO SACADO DEL TP ANTERIOR!! */
+
 //////////////////////////////////////
 
 void* rutina_quantum(void *puntero_null) {
