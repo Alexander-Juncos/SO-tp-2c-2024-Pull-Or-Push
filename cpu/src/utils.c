@@ -397,7 +397,39 @@ void syscall_process_create (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, *tamanio, *prioridad);
 }
 
-void syscall_thread_create (t_list* param);
+void syscall_thread_create (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_CREATE");
+
+    // variables parametros
+    void* var_aux;
+    char* ruta;
+    int* prioridad;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(CREAR_HILO);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    ruta = (char*)var_aux;
+    agregar_a_paquete(paquete, ruta, strlen(var_aux) + 1);
+
+    var_aux = list_get(param, 1);
+    prioridad = (int*)var_aux;
+    agregar_a_paquete(paquete, (int*)prioridad, sizeof(int));
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, *prioridad);
+}
+
 void syscall_thread_join (t_list* param);
 void syscall_thread_cancel (t_list* param);
 void syscall_mutex_create (t_list* param);
