@@ -92,8 +92,6 @@ t_list* decode (char* instruccion); // carga en lista la intruccion
 
 // intrucciones para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void instruccion_set (t_list* param);
-void instruccion_read_mem (t_list* param);
-void instruccion_write_mem (t_list* param);
 void instruccion_sum (t_list* param);
 void instruccion_sub (t_list* param);
 void instruccion_jnz (t_list* param);
@@ -104,6 +102,10 @@ void instruccion_log (t_list* param);
 // ==========================================================================
 
 char* fetch (void);
+
+// instrucciones lecto-escritura memoria
+void instruccion_read_mem (t_list* param);
+void instruccion_write_mem (t_list* param);
 
 // syscalls para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void syscall_dump_memory (void);
@@ -117,6 +119,7 @@ void syscall_mutex_lock (t_list* param);
 void syscall_mutex_unlock (t_list* param);
 void syscall_thread_exit (void);
 void syscall_process_exit (void);
+
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================

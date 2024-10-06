@@ -105,20 +105,18 @@ t_list* decode (char* instruccion)
 
 void instruccion_set (t_list* param)
 {
-    char* texto_reg = (char*)list_get(param, 0);
+    char* str_r = (char*)list_get(param, 0);
     char* valor = (char*)list_get(param, 1);
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "SET", texto_reg, valor);
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "SET", str_r, valor);
     // para revisar si coincide hubo algun error al cambiar contexto
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", texto_reg, valor);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", str_r, valor);
 
-	void* registro = dictionary_get(diccionario_reg, texto_reg);
-	*(uint32_t*)registro = atoi(valor);
+	void* registro = dictionary_get(diccionario_reg, str_r);
+	*(uint32_t*)registro = (uint32_t*)atoi(valor);
 	log_debug(log_cpu_gral, "Se hizo SET de %u en %s", *(uint32_t*)registro, valor); // temporal. Sacar luego
 }
 
-void instruccion_read_mem (t_list* param);
-void instruccion_write_mem (t_list* param);
 void instruccion_sum (t_list* param);
 void instruccion_sub (t_list* param);
 void instruccion_jnz (t_list* param);
@@ -151,6 +149,52 @@ char* fetch (void)
 
     return instruccion;
 }
+
+// instrucciones lecto-escritura memoria
+
+void instruccion_read_mem (t_list* param)
+{
+    // actualmente esta armado para ser legible, pero podria optimizarse a usar solo 3 void* para manejar lista-registros (creo)
+    char* str_r_dat = (char*)list_get(param, 0);
+    char* str_r_dir = (char*)list_get(param, 1);
+    t_paquete* paquete;
+    t_list* respuesta;
+    void* valor;
+    
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
+
+	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
+    void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
+
+	
+    // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
+    paquete = crear_paquete(ACCESO_LECTURA);
+    agregar_a_paquete(paquete, *(int*)registro_dir, sizeof(uint32_t));
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // recibo respuesta mem
+    *valor = (int*)recibir_codigo(socket_memoria);
+    respuesta = recibir_paquete(socket_memoria);
+
+    if (*(int*)valor != ACCESO_LECTURA){ // si hubo error logueo y salgo
+        log_error(log_cpu_gral, "ERROR: Respuesta memoria diferente a lo esperado");
+        list_clean_and_destroy_elements(respuesta, free);
+        return;
+    }
+
+    *valor = list_get(respuesta, 0);
+    *(uint32_t*)registro_dat = (uint32_t*)atoi((char*)valor);
+
+	log_debug(log_cpu_gral, "Se hizo READ_MEM de %u a %s", *(uint32_t*)registro_dir, *(uint32_t*)registro_dir); // temporal. Sacar luego
+    log_info(log_cpu_oblig, "## TID: %d - Acción: LEER - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
+
+    list_clean_and_destroy_elements(respuesta, free);
+}
+
+void instruccion_write_mem (t_list* param);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
