@@ -67,8 +67,8 @@ typedef struct {
     int tid;
     uint32_t PC;
     t_reg_cpu registros;
-    unsigned int base;
-    unsigned int limite;
+    uint32_t Base;
+    uint32_t Limite;
 } t_contexto_exec;
 
 typedef enum {
@@ -81,6 +81,8 @@ typedef enum {
 extern t_contexto_exec contexto_exec;
 extern t_interrupcion tipo_interrupcion;
 extern pthread_mutex_t mutex_interrupcion;
+
+extern t_dictionary* diccionario_reg;
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
@@ -121,6 +123,7 @@ void syscall_process_exit (void);
 // ==========================================================================
 
 void iniciar_logs(bool testeo);
+t_dictionary* crear_diccionario_reg(t_contexto_exec* r);
 void terminar_programa(); // revisar tema socket_kernel...
 
 #endif /* UTILS_CPU_H_ */

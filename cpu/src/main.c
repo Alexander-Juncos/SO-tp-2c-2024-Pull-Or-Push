@@ -88,7 +88,7 @@ void* rutina_hilo_interrupcion (void*)
 
 void rutina_main_cpu(void)
 {
-    // ver el tema de diccionarios para los registros???
+    diccionario_reg = crear_diccionario_reg(contexto_exec);
     // bucle
         // revisar si hay q cargar nuevo pid
         // fetch
@@ -96,6 +96,7 @@ void rutina_main_cpu(void)
         // decode (cargar instruccion a un valor para switch)
 
         // swith para llamar a cada instruccion segun corresponda... (exec)
+        // las instrucciones no concideran q haya instruccion desconocida
 
         // revisar interrupcion (de var global q actualiza el hilo interrupcion)
 }

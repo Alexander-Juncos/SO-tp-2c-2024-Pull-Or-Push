@@ -18,6 +18,8 @@ t_contexto_exec contexto_exec;
 t_interrupcion tipo_interrupcion = NINGUNA;
 pthread_mutex_t mutex_interrupcion;
 
+t_dictionary* diccionario_reg;
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
@@ -29,6 +31,8 @@ t_list* decode (char* instruccion)
     void* var_instruccion = malloc(sizeof(int));
     *var_instruccion = DESCONOCIDA;
     int num_arg = string_array_size(arg);
+
+    // si el numero de parametros no coincide con lo esperado, desconoce la instruccion
 
     if (strcmp(arg[0], "SET") == 0 && num_arg == 2){
         *var_instruccion = SET;
@@ -101,12 +105,16 @@ t_list* decode (char* instruccion)
 
 void instruccion_set (t_list* param)
 {
-    // log_info(log_cpu_gral, "PID: %d - Ejecutando: %s - %s %s", reg.pid, arg[0], arg[1], arg[2]);
+    char* texto_reg = (char*)list_get(param, 0);
+    char* valor = (char*)list_get(param, 1);
+    
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "SET", texto_reg, valor);
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", texto_reg, valor);
 
-	// void* registro = dictionary_get(diccionario, arg[1]);
-	// 	*(uint32_t*)registro = atoi(arg[2]);
-	// 	log_debug(log_cpu_gral, "Se hizo SET de %u en %s", *(uint32_t*)registro, arg[1]); // temporal. Sacar luego
-	// }
+	void* registro = dictionary_get(diccionario_reg, texto_reg);
+	*(uint32_t*)registro = atoi(valor);
+	log_debug(log_cpu_gral, "Se hizo SET de %u en %s", *(uint32_t*)registro, valor); // temporal. Sacar luego
 }
 
 void instruccion_read_mem (t_list* param);
@@ -162,6 +170,24 @@ void iniciar_logs(bool testeo)
     */
 
     free(nivel);		
+}
+
+t_dictionary* crear_diccionario(t_contexto_exec* r)
+{
+   t_dictionary* dicc = dictionary_create();
+   dictionary_put(dicc, "PC", &(r->PC));
+   dictionary_put(dicc, "AX", &(r->registros.AX));
+   dictionary_put(dicc, "BX", &(r->registros.BX));
+   dictionary_put(dicc, "CX", &(r->registros.CX));
+   dictionary_put(dicc, "DX", &(r->registros.DX));
+   dictionary_put(dicc, "EX", &(r->registros.EX));
+   dictionary_put(dicc, "FX", &(r->registros.FX));
+   dictionary_put(dicc, "GX", &(r->registros.GX));
+   dictionary_put(dicc, "HX", &(r->registros.HX));
+//    dictionary_put(dicc, "", &(r->Base));
+//    dictionary_put(dicc, "", &(r->Limite));
+// por ahora los dejo comentados, ya q dudo q se requira en el diccionario
+   return dicc;
 }
 
 void terminar_programa() // revisar
