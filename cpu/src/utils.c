@@ -381,7 +381,7 @@ void syscall_process_create (t_list* param)
         // descargo parametros
     var_aux = list_get(param, 0);
     ruta = (char*)var_aux;
-    agregar_a_paquete(paquete, ruta, strlen(var_aux) + 1);
+    agregar_a_paquete(paquete, ruta, strlen(ruta) + 1);
 
     var_aux = list_get(param, 1);
     tamanio = (int*)var_aux;
@@ -418,7 +418,7 @@ void syscall_thread_create (t_list* param)
         // descargo parametros
     var_aux = list_get(param, 0);
     ruta = (char*)var_aux;
-    agregar_a_paquete(paquete, ruta, strlen(var_aux) + 1);
+    agregar_a_paquete(paquete, ruta, strlen(ruta) + 1);
 
     var_aux = list_get(param, 1);
     prioridad = (int*)var_aux;
@@ -430,13 +430,189 @@ void syscall_thread_create (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, *prioridad);
 }
 
-void syscall_thread_join (t_list* param);
-void syscall_thread_cancel (t_list* param);
-void syscall_mutex_create (t_list* param);
-void syscall_mutex_lock (t_list* param);
-void syscall_mutex_unlock (t_list* param);
-void syscall_thread_exit (void);
-void syscall_process_exit (void);
+void syscall_thread_join (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexo_exec.tid, "THREAD_JOIN");
+
+    // variables parametros
+    void* var_aux;
+    int* tid;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(HILO_JOIN);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    tid = (int*)var_aux;
+    agregar_a_paquete(paquete, (int*)tid, sizeof(int));
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_JOIN", *tid);
+}
+
+void syscall_thread_cancel (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexo_exec.tid, "THREAD_CANCEL");
+
+    // variables parametros
+    void* var_aux;
+    int* tid;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(HILO_CANCEL);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    tid = (int*)var_aux;
+    agregar_a_paquete(paquete, (int*)tid, sizeof(int));
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_CANCEL", *tid);
+}
+
+void syscall_mutex_create (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexo_exec.tid, "MUTEX_CREATE");
+
+    // variables parametros
+    void* var_aux;
+    char* recurso;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(CREAR_MUTEX);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    recurso = (char*)var_aux;
+    agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_CREATE", recurso);
+}
+
+void syscall_mutex_lock (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexo_exec.tid, "MUTEX_LOCK");
+
+    // variables parametros
+    void* var_aux;
+    char* recurso;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(BLOQUEAR_MUTEX);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    recurso = (char*)var_aux;
+    agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_LOCK", recurso);
+}
+
+void syscall_mutex_unlock (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexo_exec.tid, "MUTEX_UNLOCK");
+
+    // variables parametros
+    void* var_aux;
+    char* recurso;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(DESBLOQUEAR_MUTEX);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    recurso = (char*)var_aux;
+    agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_UNLOCK", recurso);
+}
+
+void syscall_thread_exit (void)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_EXIT");
+
+    // variables parametros
+    void* var_aux;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(FINALIZAR_HILO);
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "THREAD_EXIT");
+}
+
+void syscall_process_exit (void)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_EXIT");
+
+    // variables parametros
+    void* var_aux;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(FINALIZAR_PROCESO);
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "PROCESS_EXIT");
+}
 
 // comprobaciones se hicieron previamente (al llamarla protegerla con mutex)
 void rutina_interrupcion()
