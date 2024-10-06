@@ -242,8 +242,14 @@ void instruccion_read_mem (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
+    
+    // se requiere la mmu para convertir esta dir logica a fisica para enviar
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
 
+    /*
+        conversion a dir fisica (llamando mmu)
+        NO USAR REGSITRO_DIR EN PAQUETE
+    */
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
@@ -283,7 +289,14 @@ void instruccion_write_mem (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
+
+    // se requiere la mmu para convertir esta dir logica a fisica para enviar
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
+
+    /*
+        conversion a dir fisica (llamando mmu)
+        NO USAR REGSITRO_DIR EN PAQUETE
+    */
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
@@ -297,6 +310,51 @@ void instruccion_write_mem (t_list* param)
 
     if (resultado)
         log_info(log_cpu_oblig, "## TID: %d - Acción: ESCRIBIR - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
+}
+
+void syscall_dump_memory (void)
+{
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(MEMORY_DUMP);
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+}
+
+void syscall_io (t_list* param);
+void syscall_process_create (t_list* param);
+void syscall_thread_create (t_list* param);
+void syscall_thread_join (t_list* param);
+void syscall_thread_cancel (t_list* param);
+void syscall_mutex_create (t_list* param);
+void syscall_mutex_lock (t_list* param);
+void syscall_mutex_unlock (t_list* param);
+void syscall_thread_exit (void);
+void syscall_process_exit (void);
+
+// comprobaciones se hicieron previamente (al llamarla protegerla con mutex)
+void rutina_interrupcion()
+{
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(INTERRUPCION);
+    agregar_a_paquete(paquete, contexto_exec.pid, sizeof(int));
+    agregar_a_paquete(paquete, contexto_exec.tid, sizeof(int));
+    agregar_a_paquete(paquete, interrupcion.codigo); // actualmente DESALOJO, SEGFAULT
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    // en teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
+    // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
+    // todos los parametros de las syscall (ya q varian de 0 a 3) y complicaria tambien la recepcion
 }
 
 // ==========================================================================
@@ -319,7 +377,7 @@ void iniciar_logs(bool testeo)
     free(nivel);		
 }
 
-t_dictionary* crear_diccionario(t_contexto_exec* r)
+t_dictionary* crear_diccionario(op_code* r)
 {
    t_dictionary* dicc = dictionary_create();
    dictionary_put(dicc, "PC", &(r->PC));
@@ -335,6 +393,23 @@ t_dictionary* crear_diccionario(t_contexto_exec* r)
 //    dictionary_put(dicc, "", &(r->Limite));
 // por ahora los dejo comentados, ya q dudo q se requira en el diccionario
    return dicc;
+}
+
+t_paquete* empaquetar_contexto ()
+{
+    t_paquete* p = crear_paquete(ACTUALIZAR_CONTEXTO_EJECUCION);
+    agregar_a_paquete(p, contexto_exec.PC);
+    agregar_a_paquete(p, contexto_exec.registros.AX);
+    agregar_a_paquete(p, contexto_exec.registros.BX);
+    agregar_a_paquete(p, contexto_exec.registros.CX);
+    agregar_a_paquete(p, contexto_exec.registros.DX);
+    agregar_a_paquete(p, contexto_exec.registros.EX);
+    agregar_a_paquete(p, contexto_exec.registros.FX);
+    agregar_a_paquete(p, contexto_exec.registros.GX);
+    agregar_a_paquete(p, contexto_exec.registros.HX);
+    // no agrego base ni limite ya q no se alteran en ejecucion
+
+    return p;
 }
 
 void terminar_programa() // revisar

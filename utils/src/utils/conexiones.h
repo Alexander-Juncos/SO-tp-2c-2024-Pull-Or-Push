@@ -46,6 +46,13 @@ typedef enum
     
 } op_code;
 
+typedef enum {
+    NINGUNA,
+    DESALOJO,
+    // SYSCALL, son manejadas x instrucciones
+    SEG_FAULT
+} t_tipo_interrupcion;
+
 typedef enum
 {   
     // Módulo cliente

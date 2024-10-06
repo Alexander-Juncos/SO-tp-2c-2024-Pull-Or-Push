@@ -71,15 +71,17 @@ typedef struct {
     uint32_t Limite;
 } t_contexto_exec;
 
-typedef enum {
-    NINGUNA,
-    DESALOJO,
-    SYSCALL,
-    SEG_FAULT
+typedef struct
+{
+    t_tipo_interrupcion codigo;
+    int tid; // tid q se ve afectado x la interrupcion
 } t_interrupcion;
+// el tid va a ser usado para comprobar si kernel manda interrupcion al 
+// tid en ejecucion o no (entonces desestima)
+
 
 extern t_contexto_exec contexto_exec;
-extern t_interrupcion tipo_interrupcion;
+extern t_interrupcion interrupcion;
 extern pthread_mutex_t mutex_interrupcion;
 
 extern t_dictionary* diccionario_reg;
@@ -95,7 +97,7 @@ void instruccion_set (t_list* param);
 void instruccion_sum (t_list* param);
 void instruccion_sub (t_list* param);
 void instruccion_jnz (t_list* param);
-void instruccion_log (t_list* param);
+void instruccion_log (t_list* param); // revisar formato al loguear registro
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -104,8 +106,8 @@ void instruccion_log (t_list* param);
 char* fetch (void);
 
 // instrucciones lecto-escritura memoria
-void instruccion_read_mem (t_list* param);
-void instruccion_write_mem (t_list* param);
+void instruccion_read_mem (t_list* param);  /* PENDIENTE IMPLEMENTAR USO MMU*/
+void instruccion_write_mem (t_list* param); /* PENDIENTE IMPLEMENTAR USO MMU*/
 
 // syscalls para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void syscall_dump_memory (void);
@@ -120,6 +122,8 @@ void syscall_mutex_unlock (t_list* param);
 void syscall_thread_exit (void);
 void syscall_process_exit (void);
 
+// 
+void rutina_interrupcion(void);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
@@ -127,6 +131,7 @@ void syscall_process_exit (void);
 
 void iniciar_logs(bool testeo);
 t_dictionary* crear_diccionario_reg(t_contexto_exec* r);
+t_paquete* empaquetar_contexto ();
 void terminar_programa(); // revisar tema socket_kernel...
 
 #endif /* UTILS_CPU_H_ */
