@@ -177,7 +177,22 @@ void instruccion_jnz (t_list* param)
 	log_debug(log_cpu_gral, "Se hizo JNZ a instruccion %d (%s)", num_inst, str_r); // temporal. Sacar luego
 }
 
-void instruccion_log (t_list* param);
+void instruccion_log (t_list* param)
+{
+    char* str_r = (char*)list_get(param, 0);
+    
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "LOG", str_r);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "LOG", str_r);
+
+	void* reg = dictionary_get(diccionario_reg, str_r);
+    
+    // no sabria si asi es como quieren el q se realiza el log ya q no nos dieron formato...
+    log_info(log_cpu_oblig, "Registro %s : %d", str_r, *(uint32_t*)reg);
+    
+	log_debug(log_cpu_gral, "Se hizo LOG del registro (%s)", str_r); // temporal. Sacar luego
+}
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
