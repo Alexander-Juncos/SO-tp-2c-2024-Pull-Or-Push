@@ -154,7 +154,29 @@ void instruccion_sub (t_list* param)
 	log_debug(log_cpu_gral, "Se hizo SUB de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
 }
 
-void instruccion_jnz (t_list* param);
+void instruccion_jnz (t_list* param)
+{
+    char* str_r = (char*)list_get(param, 0);
+    uint32_t num_inst = (uint32_t*)list_get(param, 1);
+    
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "JNZ", str_r, num_inst);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d", contexto_exec.tid, "JNZ", str_r, num_inst);
+
+	void* reg = dictionary_get(diccionario_reg, str_r);
+
+    if(*(uint32_t)reg == 0){
+        log_debug(log_cpu_gral, "El registro %s tiene valor 0, no se realiza JNZ", str_r);
+        return;
+    }
+
+    // como no es 0 reemplazo el PC
+    contexto_exec.PC = *(uint32_t)reg;
+    
+	log_debug(log_cpu_gral, "Se hizo JNZ a instruccion %d (%s)", num_inst, str_r); // temporal. Sacar luego
+}
+
 void instruccion_log (t_list* param);
 
 // ==========================================================================
@@ -181,6 +203,9 @@ char* fetch (void)
     log_info(log_cpu_gral, "PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.PC.PC);
     log_info(log_cpu_oblig, "## TID: <%d> - FETCH - Program Counter: <%d>",contexto_exec.tid,contexto_exec.PC);
     log_info(log_cpu_gral, "Instruccion recibida: %s", instruccion);
+    
+    // actualizo registro program counter
+    contexto_exec.PC++;
 
     return instruccion;
 }
