@@ -108,7 +108,7 @@ void instruccion_set (t_list* param)
     char* str_r = (char*)list_get(param, 0);
     char* valor = (char*)list_get(param, 1);
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "SET", str_r, valor);
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SET", str_r, valor);
     // para revisar si coincide hubo algun error al cambiar contexto
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", str_r, valor);
 
@@ -161,7 +161,7 @@ void instruccion_read_mem (t_list* param)
     t_list* respuesta;
     void* valor;
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
     // para revisar si coincide hubo algun error al cambiar contexto
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
 
@@ -171,7 +171,7 @@ void instruccion_read_mem (t_list* param)
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
-    agregar_a_paquete(paquete, *(int*)registro_dir, sizeof(uint32_t));
+    agregar_a_paquete(paquete, *(uint32_t*)registro_dir, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
 
@@ -188,13 +188,39 @@ void instruccion_read_mem (t_list* param)
     *valor = list_get(respuesta, 0);
     *(uint32_t*)registro_dat = (uint32_t*)atoi((char*)valor);
 
-	log_debug(log_cpu_gral, "Se hizo READ_MEM de %u a %s", *(uint32_t*)registro_dir, *(uint32_t*)registro_dir); // temporal. Sacar luego
     log_info(log_cpu_oblig, "## TID: %d - Acción: LEER - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
 
     list_clean_and_destroy_elements(respuesta, free);
 }
 
-void instruccion_write_mem (t_list* param);
+void instruccion_write_mem (t_list* param)
+{
+    // actualmente esta armado para ser legible, pero podria optimizarse a usar solo 3 void* para manejar lista-registros (creo)
+    char* str_r_dat = (char*)list_get(param, 0);
+    char* str_r_dir = (char*)list_get(param, 1);
+    t_paquete* paquete;
+    bool resultado;
+    
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
+
+	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
+    void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
+	
+    // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
+    paquete = crear_paquete(ACCESO_LECTURA);
+    agregar_a_paquete(paquete, *(uint32_t*)registro_dir, sizeof(uint32_t));
+    agregar_a_paquete(paquete, *(uint32_t*)registro_dat, sizeof(uint32_t));
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // recibo respuesta mem
+    resultado = recibir_mensaje_de_rta(log_cpu_gral, "WRITE_MEM", socket_memoria);
+
+    if (resultado)
+        log_info(log_cpu_oblig, "## TID: %d - Acción: ESCRIBIR - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
+}
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
