@@ -29,6 +29,8 @@ typedef enum
     
     // KERNEL-CPU
     INTERRUPCION,
+    IO,
+
 
     // CPU-MEMORIA
     CONTEXTO_EJECUCION,
@@ -37,7 +39,7 @@ typedef enum
     ACCESO_LECTURA, // READ_MEM
     ACCESO_ESCRITURA, // WRITE_MEM
 
-    // KERNEL-MEMORIA (y FS)
+    // KERNEL-MEMORIA (y FS) (y syscalls de cpu)
     CREAR_PROCESO,
     FINALIZAR_PROCESO,
     CREAR_HILO,
@@ -49,7 +51,7 @@ typedef enum
 typedef enum {
     NINGUNA,
     DESALOJO,
-    // SYSCALL, son manejadas x instrucciones
+    // SYSCALL, son manejadas x instrucciones?
     SEG_FAULT
 } t_tipo_interrupcion;
 

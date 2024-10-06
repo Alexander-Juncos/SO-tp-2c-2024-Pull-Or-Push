@@ -111,11 +111,13 @@ void instruccion_set (t_list* param)
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SET", str_r, valor);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", str_r, valor);
 
 	void* registro = dictionary_get(diccionario_reg, str_r);
 	*(uint32_t*)registro = (uint32_t*)atoi(valor);
-	log_debug(log_cpu_gral, "Se hizo SET de %s en %s", str_r, valor); // temporal. Sacar luego
+	
+    log_debug(log_cpu_gral, "Se hizo SET de %s en %s", str_r, valor); // temporal. Sacar luego
+    
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %s", contexto_exec.tid, "SET", str_r, valor);
 }
 
 void instruccion_sum (t_list* param)
@@ -126,7 +128,6 @@ void instruccion_sum (t_list* param)
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SUM", str_r_dstn, str_r_orig);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SUM", str_r_dstn, str_r_orig);
 
 	void* reg_dstn = dictionary_get(diccionario_reg, str_r_dstn);
     void* reg_orig = dictionary_get(diccionario_reg, str_r_orig);
@@ -134,6 +135,8 @@ void instruccion_sum (t_list* param)
 	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn + *(uint32_t*)reg_orig;
 
 	log_debug(log_cpu_gral, "Se hizo SUM de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
+    
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %s", contexto_exec.tid, "SUM", str_r_dstn, str_r_orig);
 }
 
 void instruccion_sub (t_list* param)
@@ -144,7 +147,6 @@ void instruccion_sub (t_list* param)
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SUB", str_r_dstn, str_r_orig);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SUB", str_r_dstn, str_r_orig);
 
 	void* reg_dstn = dictionary_get(diccionario_reg, str_r_dstn);
     void* reg_orig = dictionary_get(diccionario_reg, str_r_orig);
@@ -152,6 +154,8 @@ void instruccion_sub (t_list* param)
 	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn - *(uint32_t*)reg_orig;
     
 	log_debug(log_cpu_gral, "Se hizo SUB de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
+    
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %s", contexto_exec.tid, "SUB", str_r_dstn, str_r_orig);
 }
 
 void instruccion_jnz (t_list* param)
@@ -161,8 +165,6 @@ void instruccion_jnz (t_list* param)
     
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "JNZ", str_r, num_inst);
-
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d", contexto_exec.tid, "JNZ", str_r, num_inst);
 
 	void* reg = dictionary_get(diccionario_reg, str_r);
 
@@ -175,6 +177,8 @@ void instruccion_jnz (t_list* param)
     contexto_exec.PC = *(uint32_t)reg;
     
 	log_debug(log_cpu_gral, "Se hizo JNZ a instruccion %d (%s)", num_inst, str_r); // temporal. Sacar luego
+    
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "JNZ", str_r, num_inst);
 }
 
 void instruccion_log (t_list* param)
@@ -184,7 +188,6 @@ void instruccion_log (t_list* param)
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "LOG", str_r);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "LOG", str_r);
 
 	void* reg = dictionary_get(diccionario_reg, str_r);
     
@@ -192,6 +195,8 @@ void instruccion_log (t_list* param)
     log_info(log_cpu_oblig, "Registro %s : %d", str_r, *(uint32_t*)reg);
     
 	log_debug(log_cpu_gral, "Se hizo LOG del registro (%s)", str_r); // temporal. Sacar luego
+    
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "LOG", str_r);
 }
 
 // ==========================================================================
@@ -210,9 +215,7 @@ char* fetch (void)
     if(recibir_codigo(socket_memoria) != OBTENER_INSTRUCCION){
         log_error(log_cpu_gral,"Error en respuesta de siguiente instruccion");
     }
-    t_list* list = recibir_paquete(socket_memoria);
-    char* instruccion = list_get(list,0);
-    list_destroy(list);
+    char* instruccion = recibir_mensaje(socket_memoria);
 
     // logs grales y obligatorio
     log_info(log_cpu_gral, "PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.PC.PC);
@@ -253,7 +256,7 @@ void instruccion_read_mem (t_list* param)
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
-    agregar_a_paquete(paquete, *(uint32_t*)registro_dir, sizeof(uint32_t));
+    agregar_a_paquete(paquete, /*(uint32_t*)registro_dir*/, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
 
@@ -300,8 +303,8 @@ void instruccion_write_mem (t_list* param)
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
-    agregar_a_paquete(paquete, *(uint32_t*)registro_dir, sizeof(uint32_t));
-    agregar_a_paquete(paquete, *(uint32_t*)registro_dat, sizeof(uint32_t));
+    agregar_a_paquete(paquete, /*(uint32_t*)registro_dir*/, sizeof(uint32_t));
+    agregar_a_paquete(paquete, (uint32_t*)registro_dat, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
 
@@ -314,6 +317,9 @@ void instruccion_write_mem (t_list* param)
 
 void syscall_dump_memory (void)
 {
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "DUMP_MEMORY");
+
     // actualizo el contexto de ejecucion en memoria
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
@@ -323,10 +329,74 @@ void syscall_dump_memory (void)
     paquete = crear_paquete(MEMORY_DUMP);
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "DUMP_MEMORY");
 }
 
-void syscall_io (t_list* param);
-void syscall_process_create (t_list* param);
+void syscall_io (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "IO");
+
+    // variables parametros
+    void* var_aux;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(IO);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    agregar_a_paquete(paquete, (int*)var_aux, sizeof(int));
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "IO", *(int*)var_aux);
+}
+
+void syscall_process_create (t_list* param)
+{
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_CREATE");
+
+    // variables parametros
+    void* var_aux;
+    char* ruta;
+    int* tamanio;
+    int* prioridad;
+
+    // actualizo el contexto de ejecucion en memoria
+    t_paquete* paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
+
+    // devuelvo control a kernel junto con parametros q requiera
+    paquete = crear_paquete(CREAR_PROCESO);
+
+        // descargo parametros
+    var_aux = list_get(param, 0);
+    ruta = (char*)var_aux;
+    agregar_a_paquete(paquete, ruta, strlen(var_aux) + 1);
+
+    var_aux = list_get(param, 1);
+    tamanio = (int*)var_aux;
+    agregar_a_paquete(paquete, (int*)tamanio, sizeof(int));
+
+    var_aux = list_get(param, 2);
+    prioridad = (int*)var_aux;
+    agregar_a_paquete(paquete, (int*)prioridad, sizeof(int));
+
+    enviar_paquete(paquete, socket_kernel_dispatch);
+    eliminar_paquete(paquete);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, *tamanio, *prioridad);
+}
+
 void syscall_thread_create (t_list* param);
 void syscall_thread_join (t_list* param);
 void syscall_thread_cancel (t_list* param);
@@ -346,9 +416,9 @@ void rutina_interrupcion()
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(INTERRUPCION);
-    agregar_a_paquete(paquete, contexto_exec.pid, sizeof(int));
-    agregar_a_paquete(paquete, contexto_exec.tid, sizeof(int));
-    agregar_a_paquete(paquete, interrupcion.codigo); // actualmente DESALOJO, SEGFAULT
+    agregar_a_paquete(paquete, &(contexto_exec.pid), sizeof(int));
+    agregar_a_paquete(paquete, &(contexto_exec.tid), sizeof(int));
+    agregar_a_paquete(paquete, &(interrupcion.codigo), sizeof(int)); // actualmente DESALOJO, SEGFAULT
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
