@@ -108,16 +108,34 @@ void instruccion_set (t_list* param)
     char* str_r = (char*)list_get(param, 0);
     char* valor = (char*)list_get(param, 1);
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SET", str_r, valor);
     // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SET", str_r, valor);
+
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SET", str_r, valor);
 
 	void* registro = dictionary_get(diccionario_reg, str_r);
 	*(uint32_t*)registro = (uint32_t*)atoi(valor);
-	log_debug(log_cpu_gral, "Se hizo SET de %u en %s", *(uint32_t*)registro, valor); // temporal. Sacar luego
+	log_debug(log_cpu_gral, "Se hizo SET de %s en %s", str_r, valor); // temporal. Sacar luego
 }
 
-void instruccion_sum (t_list* param);
+void instruccion_sum (t_list* param)
+{
+    char* str_r_dstn = (char*)list_get(param, 0);
+    char* str_r_orig = (char*)list_get(param, 1);
+    
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SUM", str_r_dstn, str_r_orig);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SUM", str_r_dstn, str_r_orig);
+
+	void* reg_dstn = dictionary_get(diccionario_reg, str_r_dstn);
+    void* reg_orig = dictionary_get(diccionario_reg, str_r_orig);
+
+	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn + *(uint32_t*)reg_orig;
+    
+	log_debug(log_cpu_gral, "Se hizo SUM de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
+}
+
 void instruccion_sub (t_list* param);
 void instruccion_jnz (t_list* param);
 void instruccion_log (t_list* param);
@@ -161,8 +179,9 @@ void instruccion_read_mem (t_list* param)
     t_list* respuesta;
     void* valor;
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
     // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
+
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
@@ -201,8 +220,9 @@ void instruccion_write_mem (t_list* param)
     t_paquete* paquete;
     bool resultado;
     
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
     // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
+
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
