@@ -132,11 +132,28 @@ void instruccion_sum (t_list* param)
     void* reg_orig = dictionary_get(diccionario_reg, str_r_orig);
 
 	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn + *(uint32_t*)reg_orig;
-    
+
 	log_debug(log_cpu_gral, "Se hizo SUM de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
 }
 
-void instruccion_sub (t_list* param);
+void instruccion_sub (t_list* param)
+{
+    char* str_r_dstn = (char*)list_get(param, 0);
+    char* str_r_orig = (char*)list_get(param, 1);
+    
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "SUB", str_r_dstn, str_r_orig);
+
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "SUB", str_r_dstn, str_r_orig);
+
+	void* reg_dstn = dictionary_get(diccionario_reg, str_r_dstn);
+    void* reg_orig = dictionary_get(diccionario_reg, str_r_orig);
+
+	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn - *(uint32_t*)reg_orig;
+    
+	log_debug(log_cpu_gral, "Se hizo SUB de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
+}
+
 void instruccion_jnz (t_list* param);
 void instruccion_log (t_list* param);
 
