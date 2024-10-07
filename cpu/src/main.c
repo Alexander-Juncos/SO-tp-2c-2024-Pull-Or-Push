@@ -83,6 +83,9 @@ void* rutina_hilo_interrupcion (void*)
         El pid y tid recibido en la comunicacion va a ser usado para comprobar si Kernel le mandó interrupcion al 
         tid en ejecucion, o no (en este caso la desestima).
         tiene mutex -> mutex_interrupcion
+
+        Interrupción Recibida: “## Llega interrupción al puerto Interrupt”.
+
     */
     return;
 }
@@ -94,6 +97,8 @@ void rutina_main_cpu(void)
         // segmentation_fault = false;
 
         // revisar si hay q cargar nuevo pid, si hay cargarlo y desalojado = false
+        // si hay q cargarlo emitir:
+        // Obtención de Contexto de Ejecución: “## TID: <TID> - Solicito Contexto Ejecución”.
 
         // fetch
 
