@@ -90,7 +90,10 @@ void rutina_main_cpu(void)
 {
     diccionario_reg = crear_diccionario_reg(contexto_exec);
     // bucle
-        // revisar si hay q cargar nuevo pid
+        // segmentation_fault = false;
+
+        // revisar si hay q cargar nuevo pid, si hay cargarlo y desalojado = false
+
         // fetch
 
         // decode (cargar instruccion a un valor para switch)
@@ -98,5 +101,6 @@ void rutina_main_cpu(void)
         // swith para llamar a cada instruccion segun corresponda... (exec)
         // las instrucciones no concideran q haya instruccion desconocida
 
-        // check interrupt
+        // si segmentation_fault == false entonces reviso si hubo interrupcion, si hubo interrupcion(INTERRUPCION)
+        // si segmentation_fault == true entonces reseteo seg_fault e interrupcion y mando interrupcion (SEGMENTATION_FAULT)
 }

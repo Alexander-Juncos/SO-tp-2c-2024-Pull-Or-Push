@@ -75,7 +75,13 @@ typedef struct {
 
 
 extern t_contexto_exec contexto_exec;
+
+extern bool hay_interrupcion;
 extern pthread_mutex_t mutex_interrupcion;
+
+extern bool desalojado; // para limitar caso de q ya se ejecuto syscall ("no hay proceso ejecutando") y haya llegado interrupcion
+// de paso va a ser usado para saber cuando hay q recibir un nuevo pid-tid de kernel
+extern bool segmentation_fault; // va a ser usado para omitir ejecucion y decidir si se revisa interrupcion
 
 extern t_dictionary* diccionario_reg;
 
@@ -84,6 +90,7 @@ extern t_dictionary* diccionario_reg;
 // ==========================================================================
 
 t_list* decode (char* instruccion); // carga en lista la intruccion
+uint32_t mmu(uint32_t* dir_log);
 
 // intrucciones para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void instruccion_set (t_list* param);
@@ -126,7 +133,7 @@ void syscall_process_exit (bool exitoso);
 *
 *         Comprobaciones se hicieron previamente (al llamarla protegerla con mutex).
 */
-void interrupcion (void);
+void interrupcion (op_code tipo_interrupcion);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================

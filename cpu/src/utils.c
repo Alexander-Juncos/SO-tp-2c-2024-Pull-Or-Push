@@ -15,7 +15,12 @@ t_log* log_cpu_gral;
 t_config* config;
 
 t_contexto_exec contexto_exec;
+
+bool hay_interrupcion;
 pthread_mutex_t mutex_interrupcion;
+
+bool desalojado;
+bool segmentation_fault;
 
 t_dictionary* diccionario_reg;
 
@@ -100,6 +105,19 @@ t_list* decode (char* instruccion)
         list_add(parametros, arg[i]);
     }
     return parametros;    
+}
+
+uint32_t mmu(uint32_t* dir_log)
+{
+    if (dir_log > contexto_exec.Limite)
+    {
+        segmentation_fault = true;
+        return 0;
+    }
+
+    uint32_t dir_fis = contexto_exec.Base + *dir_log;
+
+    return dir_fis;
 }
 
 void instruccion_set (t_list* param)
@@ -244,23 +262,27 @@ void instruccion_read_mem (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "READ_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
-    
-    // se requiere la mmu para convertir esta dir logica a fisica para enviar
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
 
-    /*
-        conversion a dir fisica (llamando mmu)
-        NO USAR REGSITRO_DIR EN PAQUETE
-    */
+    // MMU
+    valor = malloc(uint32_t);
+    *valor = mmu((uint32_t)registro_dir);
+    if (segmentation_fault)
+    {
+        free(valor);
+        return;
+    }
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
-    agregar_a_paquete(paquete, /*(uint32_t*)registro_dir*/, sizeof(uint32_t));
+    agregar_a_paquete(paquete, (uint32_t*)valor, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    free(valor);
 
     // recibo respuesta mem
-    *valor = (int*)recibir_codigo(socket_memoria);
+    valor = malloc(int);
+    *valor = recibir_codigo(socket_memoria);
     respuesta = recibir_paquete(socket_memoria);
 
     if (*(int*)valor != ACCESO_LECTURA){ // si hubo error logueo y salgo
@@ -268,7 +290,8 @@ void instruccion_read_mem (t_list* param)
         list_clean_and_destroy_elements(respuesta, free);
         return;
     }
-
+    
+    free(valor);
     *valor = list_get(respuesta, 0);
     *(uint32_t*)registro_dat = (uint32_t*)atoi((char*)valor);
 
@@ -284,6 +307,7 @@ void instruccion_write_mem (t_list* param)
     char* str_r_dir = (char*)list_get(param, 1);
     t_paquete* paquete;
     bool resultado;
+    uint32_t dir_fis;
     
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
@@ -291,18 +315,16 @@ void instruccion_write_mem (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
-
-    // se requiere la mmu para convertir esta dir logica a fisica para enviar
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
 
-    /*
-        conversion a dir fisica (llamando mmu)
-        NO USAR REGSITRO_DIR EN PAQUETE
-    */
+    // MMU
+    dir_fis = mmu((uint32_t)registro_dir);
+    if (segmentation_fault)
+        return;
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
-    agregar_a_paquete(paquete, /*(uint32_t*)registro_dir*/, sizeof(uint32_t));
+    agregar_a_paquete(paquete, &dir_fis, sizeof(uint32_t));
     agregar_a_paquete(paquete, (uint32_t*)registro_dat, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
@@ -612,17 +634,47 @@ void syscall_process_exit (bool exitoso)
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "PROCESS_EXIT");
 }
 
-void interrupcion (void)
+void interrupcion (op_code tipo_interrupcion)
 {
+    // gestion caso hay interrupcion, pero el cpu ya habia desalojado = no tengo q interrumpir
+    if (desalojado){
+        log_trace(log_cpu_gral, "PID: %d - TID: %d - interrupcion recibida pero cpu ya esta desalojado. Omitiendo interrupcion.", 
+                                contexto_exec.pid, contexto_exec.tid);
+        return;
+    }
+
+    char* str_interrupcion = string_new();
+    switch (tipo_interrupcion)
+    {
+    case INTERRUPCION:
+        string_append(str_interrupcion, "INTERRUPCION");
+        break;
+    case SEGMENTATION_FAULT:
+        string_append(str_interrupcion, "SEGMENTATION_FAULT");
+        break;
+    default:
+        log_debug(log_cpu_gral, "PID: %d - TID: %d - tipo interrupcion invalida, continuando ejecucion.", 
+                                contexto_exec.pid, contexto_exec.tid);
+        return;
+        break;
+    }
+
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - tipo interrupcion %s, continuando ejecucion.",
+                            contexto_exec.pid, contexto_exec.tid, str_interrupcion);
+
     // actualizo el contexto de ejecucion en memoria
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(INTERRUPCION);
+    paquete = crear_paquete(tipo_interrupcion);
+    // paquete = crear_paquete(INTERRUPCION);
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
+
+    free(str_interrupcion);
 
     // En teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
     // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
