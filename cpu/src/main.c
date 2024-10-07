@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     /******************** Logíca CPU *******************/
     pthread_mutex_init(&mutex_interrupcion, NULL);
 
-    if (pthread_create(hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
+    if (pthread_create(&hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
         log_error(log_cpu_gral, "Error al crear hilo interrupcion");
 
     rutina_main_cpu();
@@ -84,11 +84,12 @@ void* rutina_hilo_interrupcion (void*)
         tid en ejecucion, o no (en este caso la desestima).
         tiene mutex -> mutex_interrupcion
     */
+    return;
 }
 
 void rutina_main_cpu(void)
 {
-    diccionario_reg = crear_diccionario_reg(contexto_exec);
+    diccionario_reg = crear_diccionario_reg(&contexto_exec);
     // bucle
         // segmentation_fault = false;
 
@@ -99,8 +100,12 @@ void rutina_main_cpu(void)
         // decode (cargar instruccion a un valor para switch)
 
         // swith para llamar a cada instruccion segun corresponda... (exec)
+        // despues de syscalls marcar desalojado como true
         // las instrucciones no concideran q haya instruccion desconocida
 
         // si segmentation_fault == false entonces reviso si hubo interrupcion, si hubo interrupcion(INTERRUPCION)
         // si segmentation_fault == true entonces reseteo seg_fault e interrupcion y mando interrupcion (SEGMENTATION_FAULT)
+
+        // actualizo registro program counter
+        contexto_exec.PC++;
 }

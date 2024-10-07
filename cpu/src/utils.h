@@ -90,7 +90,7 @@ extern t_dictionary* diccionario_reg;
 // ==========================================================================
 
 t_list* decode (char* instruccion); // carga en lista la intruccion
-uint32_t mmu(uint32_t* dir_log);
+uint32_t* mmu(uint32_t* dir_log);
 
 // intrucciones para facilitar implementacion solo pasarles directamente lo decodificado (sin el op_code)
 void instruccion_set (t_list* param);
