@@ -68,7 +68,7 @@ void planific_corto_fifo(void) {
         }
 
         // Se queda esperando el desalojo del proceso.
-        recibir_y_verificar_codigo(socket_cpu_dispatch, DESALOJO, "DESALOJO");
+        recibir_y_verificar_codigo(socket_cpu_dispatch, , );
 
         hay_algun_proceso_en_exec = false;
 
@@ -294,7 +294,7 @@ void planific_corto_prioridades(void) {
         }
 
         // Se queda esperando el desalojo del proceso.
-        recibir_y_verificar_codigo(socket_cpu_dispatch, DESALOJO, "DESALOJO");
+        recibir_y_verificar_codigo(socket_cpu_dispatch, , );
 
         hay_algun_proceso_en_exec = false;
 
@@ -521,7 +521,7 @@ void planific_corto_multinivel(void) {
         }
 
         // Se queda esperando el desalojo del proceso.
-        recibir_y_verificar_codigo(socket_cpu_dispatch, DESALOJO, "DESALOJO");
+        recibir_y_verificar_codigo(socket_cpu_dispatch, , );
 
         hay_algun_proceso_en_exec = false;
 

@@ -71,17 +71,10 @@ typedef struct {
     uint32_t Limite;
 } t_contexto_exec;
 
-typedef struct
-{
-    t_tipo_interrupcion codigo;
-    int tid; // tid q se ve afectado x la interrupcion
-} t_interrupcion;
-// el tid va a ser usado para comprobar si kernel manda interrupcion al 
-// tid en ejecucion o no (entonces desestima)
+
 
 
 extern t_contexto_exec contexto_exec;
-extern t_interrupcion interrupcion;
 extern pthread_mutex_t mutex_interrupcion;
 
 extern t_dictionary* diccionario_reg;
@@ -120,10 +113,20 @@ void syscall_mutex_create (t_list* param);
 void syscall_mutex_lock (t_list* param);
 void syscall_mutex_unlock (t_list* param);
 void syscall_thread_exit (void);
-void syscall_process_exit (void);
+/**
+* @brief  Actualiza contexto en Memoria, y le devuelve el control a Kernel
+*         indicándole que el proceso debe finalizar.
+* @param exitoso : ´true´ si se leyó PROCESS_EXIT, ´false´ si hubo error (Segmentation Fault).
+*/
+void syscall_process_exit (bool exitoso);
 
-// 
-void rutina_interrupcion(void);
+/**
+* @brief  Actualiza contexto en Memoria, y le devuelve el control a Kernel
+*         indicándole que se ha interrumpido la ejecución (por fin de quantum).
+*
+*         Comprobaciones se hicieron previamente (al llamarla protegerla con mutex).
+*/
+void interrupcion (void);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
@@ -131,7 +134,7 @@ void rutina_interrupcion(void);
 
 void iniciar_logs(bool testeo);
 t_dictionary* crear_diccionario_reg(t_contexto_exec* r);
-t_paquete* empaquetar_contexto ();
+t_paquete* empaquetar_contexto();
 void terminar_programa(); // revisar tema socket_kernel...
 
 #endif /* UTILS_CPU_H_ */

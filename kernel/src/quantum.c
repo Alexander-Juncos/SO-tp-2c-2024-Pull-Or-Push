@@ -28,7 +28,7 @@ void esperar_cpu_rr(void)
     pthread_create(&hilo_quantum, NULL, rutina_quantum, NULL);
     pthread_detach(hilo_quantum);
 
-    recibir_y_verificar_codigo(socket_cpu_dispatch, DESALOJO, "DESALOJO");
+    recibir_y_verificar_codigo(socket_cpu_dispatch, , );
 
     temporal_stop(timer);
     pthread_mutex_lock(&mutex_rutina_quantum);

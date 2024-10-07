@@ -15,7 +15,6 @@ t_log* log_cpu_gral;
 t_config* config;
 
 t_contexto_exec contexto_exec;
-t_interrupcion tipo_interrupcion = NINGUNA;
 pthread_mutex_t mutex_interrupcion;
 
 t_dictionary* diccionario_reg;
@@ -326,7 +325,7 @@ void syscall_dump_memory (void)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(MEMORY_DUMP);
+    paquete = crear_paquete(SYSCALL_MEMORY_DUMP);
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
@@ -347,7 +346,7 @@ void syscall_io (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(IO);
+    paquete = crear_paquete(SYSCALL_IO);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -376,7 +375,7 @@ void syscall_process_create (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(CREAR_PROCESO);
+    paquete = crear_paquete(SYSCALL_CREAR_PROCESO);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -413,7 +412,7 @@ void syscall_thread_create (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(CREAR_HILO);
+    paquete = crear_paquete(SYSCALL_CREAR_HILO);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -445,7 +444,7 @@ void syscall_thread_join (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(HILO_JOIN);
+    paquete = crear_paquete(SYSCALL_JOIN_HILO);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -473,7 +472,7 @@ void syscall_thread_cancel (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(HILO_CANCEL);
+    paquete = crear_paquete(SYSCALL_FINALIZAR_ALGUN_HILO);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -501,7 +500,7 @@ void syscall_mutex_create (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(CREAR_MUTEX);
+    paquete = crear_paquete(SYSCALL_CREAR_MUTEX);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -529,7 +528,7 @@ void syscall_mutex_lock (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(BLOQUEAR_MUTEX);
+    paquete = crear_paquete(SYSCALL_BLOQUEAR_MUTEX);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -557,7 +556,7 @@ void syscall_mutex_unlock (t_list* param)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(DESBLOQUEAR_MUTEX);
+    paquete = crear_paquete(SYSCALL_DESBLOQUEAR_MUTEX);
 
         // descargo parametros
     var_aux = list_get(param, 0);
@@ -584,21 +583,20 @@ void syscall_thread_exit (void)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(FINALIZAR_HILO);
-
+    paquete = crear_paquete(SYSCALL_FINALIZAR_ESTE_HILO);
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "THREAD_EXIT");
 }
 
-void syscall_process_exit (void)
+void syscall_process_exit (bool exitoso)
 {
     // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_EXIT");
 
     // variables parametros
-    void* var_aux;
+    void* ptr_exitoso = &exitoso;
 
     // actualizo el contexto de ejecucion en memoria
     t_paquete* paquete = empaquetar_contexto();
@@ -606,16 +604,15 @@ void syscall_process_exit (void)
     eliminar_paquete(paquete);
 
     // devuelvo control a kernel junto con parametros q requiera
-    paquete = crear_paquete(FINALIZAR_PROCESO);
-
+    paquete = crear_paquete(SYSCALL_FINALIZAR_PROCESO);
+    agregar_a_paquete(paquete, ptr_exitoso, sizeof(bool));
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "PROCESS_EXIT");
 }
 
-// comprobaciones se hicieron previamente (al llamarla protegerla con mutex)
-void rutina_interrupcion()
+void interrupcion (void)
 {
     // actualizo el contexto de ejecucion en memoria
     t_paquete* paquete = empaquetar_contexto();
@@ -624,15 +621,13 @@ void rutina_interrupcion()
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(INTERRUPCION);
-    agregar_a_paquete(paquete, &(contexto_exec.pid), sizeof(int));
-    agregar_a_paquete(paquete, &(contexto_exec.tid), sizeof(int));
-    agregar_a_paquete(paquete, &(interrupcion.codigo), sizeof(int)); // actualmente DESALOJO, SEGFAULT
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    // en teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
+    // En teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
     // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
-    // todos los parametros de las syscall (ya q varian de 0 a 3) y complicaria tambien la recepcion
+    // todos los parametros de las syscall (ya q varian de 0 a 3) y complicaria tambien la recepcion.
+    // Asi que mejor, cada syscall se maneja por su propia funcion.
 }
 
 // ==========================================================================
@@ -655,7 +650,7 @@ void iniciar_logs(bool testeo)
     free(nivel);		
 }
 
-t_dictionary* crear_diccionario(op_code* r)
+t_dictionary* crear_diccionario_reg(t_contexto_exec* r)
 {
    t_dictionary* dicc = dictionary_create();
    dictionary_put(dicc, "PC", &(r->PC));
@@ -673,7 +668,7 @@ t_dictionary* crear_diccionario(op_code* r)
    return dicc;
 }
 
-t_paquete* empaquetar_contexto ()
+t_paquete* empaquetar_contexto()
 {
     t_paquete* p = crear_paquete(ACTUALIZAR_CONTEXTO_EJECUCION);
     agregar_a_paquete(p, contexto_exec.PC);

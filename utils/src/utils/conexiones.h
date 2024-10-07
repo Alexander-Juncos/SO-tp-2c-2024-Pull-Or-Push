@@ -22,43 +22,44 @@
 
 typedef enum 
 {
-    // Todas las conexiónes
+    // Todas las conexiones
     MENSAJE_ERROR,
     HANDSHAKE,
 	MENSAJE,
     
-    // KERNEL-CPU
+    // KERNEL a CPU (puerto Dispatch)
+    EJECUCION,
+    // KERNEL a CPU (puerto Interrupt)  y  CPU a KERNEL (puerto Dispatch)
     INTERRUPCION,
-    IO,
-    HILO_JOIN,
-    HILO_CANCEL,
-    HILO_EXIT,
-    CREAR_MUTEX,
-    BLOQUEAR_MUTEX,
-    DESBLOQUEAR_MUTEX,
+    // CPU a KERNEL (puerto Dispatch)
+    SYSCALL_MEMORY_DUMP,
+    SYSCALL_IO,
+    SYSCALL_CREAR_PROCESO,
+    SYSCALL_CREAR_HILO,
+    SYSCALL_JOIN_HILO,
+    SYSCALL_FINALIZAR_ALGUN_HILO,
+    SYSCALL_FINALIZAR_ESTE_HILO,
+    SYSCALL_CREAR_MUTEX,
+    SYSCALL_BLOQUEAR_MUTEX,
+    SYSCALL_DESBLOQUEAR_MUTEX,
+    SYSCALL_FINALIZAR_PROCESO,
 
-    // CPU-MEMORIA
+    // CPU a MEMORIA
     CONTEXTO_EJECUCION,
     ACTUALIZAR_CONTEXTO_EJECUCION,
     OBTENER_INSTRUCCION,
     ACCESO_LECTURA, // READ_MEM
     ACCESO_ESCRITURA, // WRITE_MEM
 
-    // KERNEL-MEMORIA (y FS) (y syscalls de cpu)
+    // KERNEL a MEMORIA
     CREAR_PROCESO,
     FINALIZAR_PROCESO,
     CREAR_HILO,
     FINALIZAR_HILO,
-    MEMORY_DUMP, // tambien para FS
+    // KERNEL a MEMORIA  y  MEMORIA a FS
+    MEMORY_DUMP
     
 } op_code;
-
-typedef enum {
-    NINGUNA,
-    DESALOJO,
-    // SYSCALL, son manejadas x instrucciones?
-    SEG_FAULT
-} t_tipo_interrupcion;
 
 typedef enum
 {   

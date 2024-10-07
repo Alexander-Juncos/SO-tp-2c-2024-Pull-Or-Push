@@ -52,9 +52,6 @@ int main(int argc, char* argv[]) {
     if (pthread_create(hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
         log_error(log_cpu_gral, "Error al crear hilo interrupcion");
 
-    /*
-        usar valor tipo_interrupcion para saber si hay q recibir contexto o no
-    */
     rutina_main_cpu();
 
     terminar_programa();
@@ -77,11 +74,14 @@ void* rutina_hilo_interrupcion (void*)
 
     // lo tome del tp anterior, aunque no se su funcion bien...
     // (comentario tp anterior) agregué esto para que el recv() de check interrupt no se quede esperando
+    // Alexis 1: Esta función lo que permite es que el socket especificado permita hacer recv()'s NO bloqueantes.
+    //           Así se chequea por interrupciones, y si no hay bytes por recibir, simplemente avanza.
     fcntl(socket_kernel_interrupt, F_SETFL, O_NONBLOCK); 
 
     /*
         logica recepcion de interrupciones
-        actualizar tipo_interrupcion para q cuando se checkee se pueda atender
+        El pid y tid recibido en la comunicacion va a ser usado para comprobar si Kernel le mandó interrupcion al 
+        tid en ejecucion, o no (en este caso la desestima).
         tiene mutex -> mutex_interrupcion
     */
 }
@@ -98,5 +98,5 @@ void rutina_main_cpu(void)
         // swith para llamar a cada instruccion segun corresponda... (exec)
         // las instrucciones no concideran q haya instruccion desconocida
 
-        // revisar interrupcion (de var global q actualiza el hilo interrupcion)
+        // check interrupt
 }
