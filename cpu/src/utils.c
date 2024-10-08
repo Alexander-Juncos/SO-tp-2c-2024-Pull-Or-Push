@@ -472,6 +472,7 @@ void syscall_dump_memory (void)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_MEMORY_DUMP);
@@ -494,6 +495,7 @@ void syscall_io (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_IO);
@@ -524,6 +526,7 @@ void syscall_process_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_PROCESO);
@@ -562,6 +565,7 @@ void syscall_thread_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_HILO);
@@ -595,6 +599,7 @@ void syscall_thread_join (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_JOIN_HILO);
@@ -624,6 +629,7 @@ void syscall_thread_cancel (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_ALGUN_HILO);
@@ -653,6 +659,7 @@ void syscall_mutex_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_MUTEX);
@@ -682,6 +689,7 @@ void syscall_mutex_lock (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_BLOQUEAR_MUTEX);
@@ -711,6 +719,7 @@ void syscall_mutex_unlock (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_DESBLOQUEAR_MUTEX);
@@ -736,6 +745,7 @@ void syscall_thread_exit (void)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_ESTE_HILO);
@@ -758,6 +768,7 @@ void syscall_process_exit (bool exitoso)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_PROCESO);
