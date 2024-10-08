@@ -112,9 +112,9 @@ void rutina_main_cpu(void)
         }
 
         // para no crear una SC enorme para nada
-        phtread_mutex_lock(mutex_interrupcion);
+        pthread_mutex_lock(&mutex_interrupcion);
         interrupcion_previa = hay_interrupcion;
-        pthread_mutex_unlock(mutex_interrupcion);
+        pthread_mutex_unlock(&mutex_interrupcion);
 
         if (interrupcion_previa)
         {
@@ -205,7 +205,7 @@ void rutina_main_cpu(void)
             list_clean_and_destroy_elements(instruccion_procesada, free);
             break;
         case THREAD_EXIT:
-            syscall_thread_exit(instruccion_procesada);
+            syscall_thread_exit();
             list_clean_and_destroy_elements(instruccion_procesada, free);
             break;
         case PROCESS_EXIT:
@@ -220,10 +220,10 @@ void rutina_main_cpu(void)
         }
 
         // si hay interrupcion y la estoy gestionando no me interesa q entre otra
-        pthread_mutex_lock(mutex_interrupcion);
+        pthread_mutex_lock(&mutex_interrupcion);
         if (hay_interrupcion)
             interrupcion(INTERRUPCION);
-        pthread_mutex_unlock(mutex_interrupcion);
+        pthread_mutex_unlock(&mutex_interrupcion);
 
         free(instruccion_raw);
 

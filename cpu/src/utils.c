@@ -279,21 +279,21 @@ void recibir_pedido_ejecucion()
 
     if (ciclo_corto) // Kernel quiere q se interrumpa, se asume q no se cambio el pid-tid
     {
-        pthread_mutex_lock(mutex_interrupcion);
+        pthread_mutex_lock(&mutex_interrupcion);
         hay_interrupcion = true;
-        pthread_mutex_unlock(mutex_interrupcion);
+        pthread_mutex_unlock(&mutex_interrupcion);
     }
     else // se sobreescribe interrupcion, ya q kernel considero q no se requiere o se cambio el pid-tid(se asume)
     {
-        pthread_mutex_lock(mutex_interrupcion);
+        pthread_mutex_lock(&mutex_interrupcion);
         hay_interrupcion = false;
-        pthread_mutex_unlock(mutex_interrupcion);
+        pthread_mutex_unlock(&mutex_interrupcion);
         resultado_contexto = obtener_contexto_ejecucion(pid, tid);
     }
 
     if (!resultado_contexto)
     {
-        log_error(log_cpu_gral, "No hay contexto cargado abortando ejecución cpu"):
+        log_error(log_cpu_gral, "No hay contexto cargado abortando ejecución cpu");
         exit(3);
     }
 
