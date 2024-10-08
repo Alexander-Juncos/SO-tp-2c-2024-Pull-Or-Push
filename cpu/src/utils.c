@@ -268,6 +268,7 @@ void instruccion_read_mem (t_list* param)
     if (segmentation_fault)
     {
         free(valor);
+        syscall_process_exit(false);
         return;
     }
 	
@@ -314,9 +315,13 @@ void instruccion_write_mem (t_list* param)
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
 
     // MMU
-    *dir_fis = mmu((uint32_t*)registro_dir);
+    dir_fis = mmu((uint32_t*)registro_dir);
     if (segmentation_fault)
+    {
+        free(dir_fis);
+        syscall_process_exit(false);
         return;
+    }        
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
