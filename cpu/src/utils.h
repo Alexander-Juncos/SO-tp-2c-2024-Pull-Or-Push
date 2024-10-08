@@ -38,6 +38,7 @@ extern t_config* config;
 
 typedef enum {
     DESCONOCIDA,
+    INTERRUPCION_PENDIENTE,
 
     // instrucciones (solo cpu)
     SET, // (registro, valor)

@@ -297,6 +297,7 @@ void recibir_pedido_ejecucion()
         exit(3);
     }
 
+    desalojado = false; // como ya estoy seguro q tengo contexto
     list_clean_and_destroy_elements(pedido, free);
 }
 
@@ -823,6 +824,7 @@ void interrupcion (op_code tipo_interrupcion)
 
     free(str_interrupcion);
     desalojado = true;
+    hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
 
     // En teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
     // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
