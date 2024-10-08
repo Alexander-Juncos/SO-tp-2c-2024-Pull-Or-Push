@@ -92,15 +92,24 @@ void* rutina_hilo_interrupcion (void*)
 
 void rutina_main_cpu(void)
 {
+    /************************* VARIABLES  ****************************************************/
+    char* instruccion_raw;
+    t_list* mensaje_kernel;
+    int operacion;
+
     diccionario_reg = crear_diccionario_reg(&contexto_exec);
+
     // bucle
-        // segmentation_fault = false;
+        
+        // desalojado indica: cambio de contexto, posible ciclo corto (syscall)
+        // "ciclo corto": caso en q al ejecutar syscall llegara interrupcion (esperar respuesta kernel
+        //  y despues saltarse fetch y pasar directamente a interrupcion )
 
         // revisar si hay q cargar nuevo pid, si hay cargarlo y desalojado = false
         // si hay q cargarlo emitir:
-        // Obtención de Contexto de Ejecución: “## TID: <TID> - Solicito Contexto Ejecución”.
+        // Obtención de Contexto de Ejecución: .
 
-        // fetch
+        // fetch [ si hay_interrupcion entonces no hacer fetch / sobreescribirlo ]
 
         // decode (cargar instruccion a un valor para switch)
 

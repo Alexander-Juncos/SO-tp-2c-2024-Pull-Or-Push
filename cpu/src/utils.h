@@ -104,6 +104,8 @@ void instruccion_log (t_list* param); // revisar formato al loguear registro
 // ==========================================================================
 
 char* fetch (void);
+void recibir_pedido_ejecucion(void);
+bool obtener_contexto_ejecucion(int pid, int tid);
 
 // instrucciones lecto-escritura memoria
 void instruccion_read_mem (t_list* param);  /* PENDIENTE IMPLEMENTAR USO MMU*/
@@ -132,6 +134,10 @@ void syscall_process_exit (bool exitoso);
 *         indicándole que se ha interrumpido la ejecución (por fin de quantum).
 *
 *         Comprobaciones se hicieron previamente (al llamarla protegerla con mutex).
+*         
+*         REVISAR: si hay q simplificar (si emite de más x desalado). 
+*         si x syscall tiene q esperar a q vuelva la ejecución, la interrupción se debe tratar
+*         cuando vuelva (es decir, esperar y no gestionarla)
 */
 void interrupcion (op_code tipo_interrupcion);
 
