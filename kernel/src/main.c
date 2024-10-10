@@ -55,6 +55,10 @@ int main(int argc, char* argv[]) {
     enviar_handshake(KERNEL_I, socket_cpu_interrupt);
     recibir_y_manejar_rta_handshake(log_kernel_gral, "CPU puerto Interrupt", socket_cpu_interrupt);
 
+    /****** Carga datos para conexiones Memoria ********/
+    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+
     /******************* Cuerpo Main *******************/
     imprimir_mensaje("pude completar check 1");
 

@@ -40,8 +40,9 @@ typedef struct
 typedef struct 
 {
     int tid;
+    int pid_pertenencia; // agrego este campo para facilidad de implementación
     int prioridad;
-    char* nombre_archivo_instrucciones;
+    char* path_relativo_archivo_instrucciones;
 } t_tcb;
 
 typedef struct
@@ -49,7 +50,7 @@ typedef struct
     int pid;
     int tamanio;
     t_list* tids_asociados;
-    t_list* mutex_asignados;
+    t_list* mutex_creados;
     int sig_tid_a_asignar;
     t_tcb* hilo_main;
 } t_pcb;

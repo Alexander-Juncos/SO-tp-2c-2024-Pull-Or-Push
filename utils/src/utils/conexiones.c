@@ -116,7 +116,7 @@ void liberar_conexion(t_log* log, char* nombre_conexion, int socket)
 		log_error(log, "error en funcion close() al intentar cerrar la conexion con %s.", nombre_conexion);
 	}
 	else {
-		log_debug(log, "La conexion con %s fue cerrada.", nombre_conexion);
+		log_trace(log, "La conexion con %s fue cerrada.", nombre_conexion);
 	}
 }
 

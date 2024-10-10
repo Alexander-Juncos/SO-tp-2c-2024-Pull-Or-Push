@@ -4,23 +4,38 @@
 // ====  Variables globales:  ===============================================
 // ==========================================================================
 
+char* ip_memoria = NULL;
+char* puerto_memoria = NULL;
 int socket_cpu_dispatch = 1;
 int socket_cpu_interrupt = 1;
 
+bool new_puede_intentar_crear_proceso = true;
+
 t_list* cola_new = NULL;
 t_list* cola_ready = NULL;
-t_pcb* proceso_exec = NULL;
 t_tcb* hilo_exec = NULL;
 t_list* cola_blocked = NULL;
 t_list* cola_exit = NULL;
 
+t_pcb* proceso_exec = NULL;
 t_list* procesos_activos = NULL;
+t_list* procesos_exit = NULL;
 
 t_config *config = NULL;
 int quantum_de_config;
 
 t_log* log_kernel_oblig = NULL;
 t_log* log_kernel_gral = NULL;
+
+// ==========================================================================
+// ====  Semáforos globales:  ===============================================
+// ==========================================================================
+
+sem_t sem_cola_new;
+sem_t sem_cola_exit;
+
+sem_t sem_sincro_new_exit;
+pthread_mutex_t mutex_sincro_new_exit;
 
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================
@@ -44,6 +59,23 @@ bool enviar_nuevo_hilo_a_memoria() {
 
 void crear_hilo(int pid) {
 	// DESARROLLANDO
+}
+
+void asociar_tid(t_pcb* pcb, t_tcb* tcb) {
+	int* tid_a_asociar = malloc(sizeof(int));
+	*tid_a_asociar = tcb->tid;
+	list_add(pcb->tids_asociados, tid_a_asociar);
+}
+
+t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid) {
+
+	bool _es_el_pcb_buscado(t_pcb* pcb) {
+		return pcb->pid == pid;
+	}
+
+	t_pcb* pcb_encontrado = NULL;
+	pcb_encontrado = list_find(lista_de_pcb, (void*)_es_el_pcb_buscado);
+	return pcb_encontrado;
 }
 
 void iniciar_logs(bool testeo)
