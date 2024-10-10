@@ -243,6 +243,132 @@ char* fetch (void)
     return instruccion;
 }
 
+void recibir_pedido_ejecucion()
+{
+    t_list* pedido;
+    int codigo;
+    void* data;
+    int pid;
+    int tid;
+    bool ciclo_corto = false;
+    bool resultado_contexto = true;
+    log_debug(log_cpu_gral, "Esperando pedido ejecución");
+
+    codigo = recibir_codigo(socket_kernel_dispatch);
+
+    switch (codigo)
+    {
+    case -1:
+        log_error(log_cpu_gral, "Kernel se desconecto, finalizando modulo cpu");
+        exit(3);
+        break;
+    
+    default:
+        log_error(log_cpu_gral, "Error al recibir contexto de ejecucion");
+        exit(3);
+        break;
+    }
+
+    pedido = recibir_paquete(socket_kernel_dispatch);
+    data = list_get(pedido, 0);
+    pid = *(int*)data;
+    data = list_get(pedido, 1);
+    tid = *(int*)data;
+    data = list_get(pedido, 2);
+    ciclo_corto = *(bool*)data;
+
+    if (ciclo_corto) // Kernel quiere q se interrumpa, se asume q no se cambio el pid-tid
+    {
+        pthread_mutex_lock(&mutex_interrupcion);
+        hay_interrupcion = true;
+        pthread_mutex_unlock(&mutex_interrupcion);
+    }
+    else // se sobreescribe interrupcion, ya q kernel considero q no se requiere o se cambio el pid-tid(se asume)
+    {
+        pthread_mutex_lock(&mutex_interrupcion);
+        hay_interrupcion = false;
+        pthread_mutex_unlock(&mutex_interrupcion);
+        resultado_contexto = obtener_contexto_ejecucion(pid, tid);
+    }
+
+    if (!resultado_contexto)
+    {
+        log_error(log_cpu_gral, "No hay contexto cargado abortando ejecución cpu");
+        exit(3);
+    }
+
+    desalojado = false; // como ya estoy seguro q tengo contexto
+    list_clean_and_destroy_elements(pedido, free);
+}
+
+bool obtener_contexto_ejecucion(int pid, int tid)
+{
+    t_paquete* paquete;
+    int codigo;
+    t_list* recibido;
+    void* data;
+
+    // si no cambio pid y tid entonces el contexto ya esta en CPU
+    if (contexto_exec.pid == pid && contexto_exec.tid == tid)
+    {
+        log_trace(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
+        return true;
+    }
+    log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
+
+    // pido contexto
+    paquete = crear_paquete(CONTEXTO_EJECUCION);
+    agregar_a_paquete(paquete, &pid, sizeof(int));
+    agregar_a_paquete(paquete, &tid, sizeof(int));
+    enviar_paquete(paquete, socket_memoria);
+
+    codigo = recibir_codigo(socket_memoria);
+    if(codigo != CONTEXTO_EJECUCION)
+        return false;
+    
+    // cargo contexto
+    recibido = recibir_paquete(socket_memoria);
+    contexto_exec.pid = pid;
+    contexto_exec.tid = tid;
+    data = list_get(recibido, 0);
+    contexto_exec.PC = *(uint32_t*)data;
+    data = list_get(recibido, 1);
+    contexto_exec.registros.AX = *(uint32_t*)data;
+    data = list_get(recibido, 2);
+    contexto_exec.registros.BX = *(uint32_t*)data;
+    data = list_get(recibido, 3);
+    contexto_exec.registros.CX = *(uint32_t*)data;
+    data = list_get(recibido, 4);
+    contexto_exec.registros.DX = *(uint32_t*)data;
+    data = list_get(recibido, 5);
+    contexto_exec.registros.EX = *(uint32_t*)data;
+    data = list_get(recibido, 6);
+    contexto_exec.registros.FX = *(uint32_t*)data;
+    data = list_get(recibido, 7);
+    contexto_exec.registros.GX = *(uint32_t*)data;
+    data = list_get(recibido, 8);
+    contexto_exec.registros.HX = *(uint32_t*)data;
+    data = list_get(recibido, 9);
+    contexto_exec.Base= *(uint32_t*)data;
+    data = list_get(recibido, 10);
+    contexto_exec.Limite = *(uint32_t*)data;
+
+    log_trace(log_cpu_gral, "Contexto Cargado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d - BASE: %d - LIMITE: %d",
+        pid, tid, contexto_exec.PC,
+        contexto_exec.registros.AX,
+        contexto_exec.registros.BX,
+        contexto_exec.registros.CX,
+        contexto_exec.registros.DX,
+        contexto_exec.registros.EX,
+        contexto_exec.registros.FX,
+        contexto_exec.registros.GX,
+        contexto_exec.registros.HX,
+        contexto_exec.Base,
+        contexto_exec.Limite);
+
+    return true;
+}
+
 // instrucciones lecto-escritura memoria
 
 void instruccion_read_mem (t_list* param)
@@ -268,6 +394,7 @@ void instruccion_read_mem (t_list* param)
     if (segmentation_fault)
     {
         free(valor);
+        syscall_process_exit(false);
         return;
     }
 	
@@ -314,9 +441,13 @@ void instruccion_write_mem (t_list* param)
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
 
     // MMU
-    *dir_fis = mmu((uint32_t*)registro_dir);
+    dir_fis = mmu((uint32_t*)registro_dir);
     if (segmentation_fault)
+    {
+        free(dir_fis);
+        syscall_process_exit(false);
         return;
+    }        
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_LECTURA);
@@ -342,6 +473,7 @@ void syscall_dump_memory (void)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_MEMORY_DUMP);
@@ -349,6 +481,7 @@ void syscall_dump_memory (void)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "DUMP_MEMORY");
+    desalojado = true;
 }
 
 void syscall_io (t_list* param)
@@ -363,6 +496,7 @@ void syscall_io (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_IO);
@@ -375,6 +509,7 @@ void syscall_io (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "IO", *(int*)var_aux);
+    desalojado = true;
 }
 
 void syscall_process_create (t_list* param)
@@ -392,6 +527,7 @@ void syscall_process_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_PROCESO);
@@ -413,6 +549,7 @@ void syscall_process_create (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, *tamanio, *prioridad);
+    desalojado = true;
 }
 
 void syscall_thread_create (t_list* param)
@@ -429,6 +566,7 @@ void syscall_thread_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_HILO);
@@ -446,6 +584,7 @@ void syscall_thread_create (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, *prioridad);
+    desalojado = true;
 }
 
 void syscall_thread_join (t_list* param)
@@ -461,6 +600,7 @@ void syscall_thread_join (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_JOIN_HILO);
@@ -474,6 +614,7 @@ void syscall_thread_join (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_JOIN", *tid);
+    desalojado = true;
 }
 
 void syscall_thread_cancel (t_list* param)
@@ -489,6 +630,7 @@ void syscall_thread_cancel (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_ALGUN_HILO);
@@ -502,6 +644,7 @@ void syscall_thread_cancel (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_CANCEL", *tid);
+    desalojado = true;
 }
 
 void syscall_mutex_create (t_list* param)
@@ -517,6 +660,7 @@ void syscall_mutex_create (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_CREAR_MUTEX);
@@ -530,6 +674,7 @@ void syscall_mutex_create (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_CREATE", recurso);
+    desalojado = true;
 }
 
 void syscall_mutex_lock (t_list* param)
@@ -545,6 +690,7 @@ void syscall_mutex_lock (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_BLOQUEAR_MUTEX);
@@ -558,6 +704,7 @@ void syscall_mutex_lock (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_LOCK", recurso);
+    desalojado = true;
 }
 
 void syscall_mutex_unlock (t_list* param)
@@ -573,6 +720,7 @@ void syscall_mutex_unlock (t_list* param)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_DESBLOQUEAR_MUTEX);
@@ -586,6 +734,7 @@ void syscall_mutex_unlock (t_list* param)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s", contexto_exec.tid, "MUTEX_UNLOCK", recurso);
+    desalojado = true;
 }
 
 void syscall_thread_exit (void)
@@ -597,6 +746,7 @@ void syscall_thread_exit (void)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_ESTE_HILO);
@@ -604,6 +754,7 @@ void syscall_thread_exit (void)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "THREAD_EXIT");
+    desalojado = true;
 }
 
 void syscall_process_exit (bool exitoso)
@@ -618,6 +769,7 @@ void syscall_process_exit (bool exitoso)
     t_paquete* paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_memoria);
     eliminar_paquete(paquete);
+    log_info(log_cpu_oblig, "## TID: %d - Actualizo Contexto Ejecución", contexto_exec.tid);
 
     // devuelvo control a kernel junto con parametros q requiera
     paquete = crear_paquete(SYSCALL_FINALIZAR_PROCESO);
@@ -626,6 +778,8 @@ void syscall_process_exit (bool exitoso)
     eliminar_paquete(paquete);
 
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s", contexto_exec.tid, "PROCESS_EXIT");
+    desalojado = true;
+    segmentation_fault = false; // limpio segfault x las dudas
 }
 
 void interrupcion (op_code tipo_interrupcion)
@@ -643,9 +797,9 @@ void interrupcion (op_code tipo_interrupcion)
     case INTERRUPCION:
         string_append(str_interrupcion, "INTERRUPCION");
         break;
-    case SEGMENTATION_FAULT:
-        string_append(str_interrupcion, "SEGMENTATION_FAULT");
-        break;
+    // case SEGMENTATION_FAULT:
+    //     string_append(str_interrupcion, "SEGMENTATION_FAULT");
+    //     break;
     default:
         log_debug(log_cpu_gral, "PID: %d - TID: %d - tipo interrupcion invalida, continuando ejecucion.", 
                                 contexto_exec.pid, contexto_exec.tid);
@@ -669,6 +823,8 @@ void interrupcion (op_code tipo_interrupcion)
     eliminar_paquete(paquete);
 
     free(str_interrupcion);
+    desalojado = true;
+    hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
 
     // En teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
     // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
