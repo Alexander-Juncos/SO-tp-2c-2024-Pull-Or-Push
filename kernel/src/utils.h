@@ -12,15 +12,16 @@
 #include <string.h>
 #include <assert.h>
 #include <readline/readline.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <utils/general.h>
 #include <utils/conexiones.h>
-//#include <hilos.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include <new.h>
+#include <exit.h>
 
 // ==========================================================================
 // ====  Variables globales:  ===============================================
@@ -31,6 +32,7 @@ extern char* puerto_memoria;
 extern int socket_cpu_dispatch;
 extern int socket_cpu_interrupt;
 
+extern char* algoritmo_plani;
 extern bool new_puede_intentar_crear_proceso;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).

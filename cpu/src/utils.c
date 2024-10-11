@@ -243,7 +243,7 @@ char* fetch (void)
     return instruccion;
 }
 
-void recibir_pedido_ejecucion()
+void recibir_pedido_ejecucion(void)
 {
     t_list* pedido;
     int codigo;

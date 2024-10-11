@@ -9,6 +9,7 @@ char* puerto_memoria = NULL;
 int socket_cpu_dispatch = 1;
 int socket_cpu_interrupt = 1;
 
+char* algoritmo_plani = NULL;
 bool new_puede_intentar_crear_proceso = true;
 
 t_list* cola_new = NULL;

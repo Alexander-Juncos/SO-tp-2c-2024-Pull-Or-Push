@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
 
     bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
 
-    char*   ip;
-    char*   puerto;
+    char* ip;
+    char* puerto;
 
     /****************** Inicialización *****************/
     
@@ -59,9 +59,22 @@ int main(int argc, char* argv[]) {
     ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
 
-    /******************* Cuerpo Main *******************/
+    /******************* Logica de Kernel *******************/
+    algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+
+    pthread_t thread_new;
+    pthread_t thread_exit;
+
+    pthread_create(&thread_new, NULL, rutina_new, NULL);
+    pthread_create(&thread_exit, NULL, rutina_exit, NULL);
+
+    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
+    
+    // poner a correr el planificador.
+
+
     imprimir_mensaje("pude completar check 1");
 
-    terminar_programa();
+    //terminar_programa();
     return 0;
 }
