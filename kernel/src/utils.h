@@ -32,7 +32,6 @@ extern char* puerto_memoria;
 extern int socket_cpu_dispatch;
 extern int socket_cpu_interrupt;
 
-extern char* algoritmo_plani;
 extern bool new_puede_intentar_crear_proceso;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).
@@ -46,6 +45,7 @@ extern t_list* procesos_activos; // Es una lista de t_pcb* (Procesos). Son los q
 extern t_list* procesos_exit; // Es una lista de t_pcb* (Procesos). Son los que están en EXIT.
 
 extern t_config *config;
+extern char* algoritmo_plani;
 extern int quantum_de_config;
 
 extern t_log* log_kernel_oblig; // logger para los logs obligatorios

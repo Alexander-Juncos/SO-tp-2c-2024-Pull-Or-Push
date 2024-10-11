@@ -1,7 +1,7 @@
 #include "quantum.h"
 
 t_temporal* timer;
-int ms_transcurridos;
+int ms_transcurridos = 0;
 
 pthread_mutex_t mutex_rutina_quantum;
 
@@ -11,7 +11,17 @@ pthread_mutex_t mutex_rutina_quantum;
 
 void* rutina_quantum(void *puntero_null) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-    unsigned int quantum_en_microsegs = (proceso_exec->quantum)*MILISEG_A_MICROSEG;
+
+    // ESTOY VIENDOO ESTO -------
+    unsigned int quantum_en_microsegs;
+    if(ms_transcurridos < quantum_en_microsegs) {
+        quantum_en_microsegs = quantum_de_config*MILISEG_A_MICROSEG;
+    }
+    else {
+
+    }
+    // -------------------------
+
     usleep(quantum_en_microsegs);
 
     pthread_mutex_lock(&mutex_rutina_quantum);

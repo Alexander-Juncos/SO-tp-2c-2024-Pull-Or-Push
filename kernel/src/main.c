@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 
     /******************* Logica de Kernel *******************/
     algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+    quantum_de_config = config_get_int_value(config, "QUANTUM");
 
     pthread_t thread_new;
     pthread_t thread_exit;

@@ -9,7 +9,6 @@ char* puerto_memoria = NULL;
 int socket_cpu_dispatch = 1;
 int socket_cpu_interrupt = 1;
 
-char* algoritmo_plani = NULL;
 bool new_puede_intentar_crear_proceso = true;
 
 t_list* cola_new = NULL;
@@ -23,6 +22,7 @@ t_list* procesos_activos = NULL;
 t_list* procesos_exit = NULL;
 
 t_config *config = NULL;
+char* algoritmo_plani = NULL;
 int quantum_de_config;
 
 t_log* log_kernel_oblig = NULL;
