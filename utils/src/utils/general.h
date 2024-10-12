@@ -28,15 +28,6 @@ typedef struct
     uint32_t HX;
 } t_reg_cpu;
 
-// typedef struct
-// {
-//     int pid;
-//     int tid;
-//     uint32_t PC;
-//     t_reg_cpu reg_cpu;
-// } t_contexto_de_ejecucion;
-// lo comento, porque cpu y memoria tendran sus propias estructuras
-
 typedef struct 
 {
     int tid;
@@ -54,6 +45,14 @@ typedef struct
     int sig_tid_a_asignar;
     t_tcb* hilo_main;
 } t_pcb;
+
+typedef struct
+{
+    bool asignado;
+    int tid_asignado;
+    t_tcb* bloqueados_esperando;
+} t_mutex;
+
 
 typedef enum // son los posibles mensajes q puede recibir por interrupción CPU
 {

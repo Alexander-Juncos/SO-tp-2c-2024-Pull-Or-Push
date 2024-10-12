@@ -22,6 +22,7 @@
 #include <utils/conexiones.h>
 #include <new.h>
 #include <exit.h>
+#include <io.h>
 #include <planificador.h>
 
 // ==========================================================================
@@ -36,10 +37,14 @@ extern int socket_cpu_interrupt;
 extern bool new_puede_intentar_crear_proceso;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).
-extern t_list* cola_ready; // Estado READY. Es una lista de t_tcb* (Hilos).
+extern t_list* lista_de_colas_ready; // Estado READY. Es una lista de listas de t_tcb* (Hilos).
 extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo).
-extern t_list* cola_blocked; // Estado BLOCKED. Es una lista de t_tcb* (Hilos).
+extern t_tcb* hilo_usando_io; // Estado BLOCKED (usando IO). Es un t_tcb* (Hilo).
+extern t_list* cola_blocked_io; // Estado BLOCKED (esperando para usar IO). Es una lista de t_tcb* (Hilos).
+extern t_list* cola_blocked_join; // Estado BLOCKED (por Join). Es una lista de t_tcb* (Hilos).
 extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos).
+
+// Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
 extern t_pcb* proceso_exec; // Estado EXEC. Es un t_pcb* (Proceso).
 extern t_list* procesos_activos; // Es una lista de t_pcb* (Procesos). Son los que están en READY, EXEC, o BLOCKED.
@@ -57,6 +62,7 @@ extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con cri
 // ==========================================================================
 
 extern sem_t sem_cola_new;
+extern sem_t sem_cola_blocked_io;
 extern sem_t sem_cola_exit;
 
 extern sem_t sem_sincro_new_exit;

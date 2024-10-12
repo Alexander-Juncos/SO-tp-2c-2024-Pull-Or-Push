@@ -12,10 +12,14 @@ int socket_cpu_interrupt = 1;
 bool new_puede_intentar_crear_proceso = true;
 
 t_list* cola_new = NULL;
-t_list* cola_ready = NULL;
+t_list* lista_de_colas_ready = NULL;
 t_tcb* hilo_exec = NULL;
-t_list* cola_blocked = NULL;
+t_tcb* hilo_usando_io = NULL;
+t_list* cola_blocked_io = NULL;
+t_list* cola_blocked_join = NULL;
 t_list* cola_exit = NULL;
+
+// Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
 t_pcb* proceso_exec = NULL;
 t_list* procesos_activos = NULL;
@@ -33,6 +37,7 @@ t_log* log_kernel_gral = NULL;
 // ==========================================================================
 
 sem_t sem_cola_new;
+sem_t sem_cola_blocked_io;
 sem_t sem_cola_exit;
 
 sem_t sem_sincro_new_exit;

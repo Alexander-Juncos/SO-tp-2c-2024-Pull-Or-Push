@@ -6,8 +6,6 @@ bool interrumpir_inmediatamente = false;
 
 pthread_mutex_t mutex_rutina_quantum;
 
-/* TODO SACADO DEL TP ANTERIOR!! */
-
 //////////////////////////////////////
 
 void* rutina_quantum(void *puntero_null) {
@@ -28,17 +26,17 @@ void* rutina_quantum(void *puntero_null) {
 
 void esperar_cpu_rr(void) {
     pthread_mutex_init(&mutex_rutina_quantum, NULL);
-    pthread_t hilo_quantum;
+    pthread_t thread_quantum;
     timer = temporal_create();
-    pthread_create(&hilo_quantum, NULL, rutina_quantum, NULL);
-    pthread_detach(hilo_quantum);
+    pthread_create(&thread_quantum, NULL, rutina_quantum, NULL);
+    pthread_detach(thread_quantum);
 
     // Falta definir esta funcion.
     recibir_de_cpu(socket_cpu_dispatch, , );
 
     temporal_stop(timer);
     pthread_mutex_lock(&mutex_rutina_quantum);
-    pthread_cancel(hilo_quantum);
+    pthread_cancel(thread_quantum);
     ms_transcurridos += temporal_gettime(timer);
     if(ms_transcurridos >= quantum_de_config) {
         interrumpir_inmediatamente = true;
