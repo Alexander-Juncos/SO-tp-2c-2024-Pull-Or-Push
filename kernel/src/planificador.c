@@ -1,28 +1,26 @@
 #include "planificador.h"
 #include "quantum.h"
 
-/* TODO SACADO DEL TP ANTERIOR!! */
+void iniciar_planificador(void) {
 
-void* rutina_planificador(void* puntero_null) {
+    log_debug(log_kernel_gral, "Planificador corto plazo iniciado.");
 
-    char* algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
-    hay_algun_proceso_en_exec = false;
-
-    log_debug(log_kernel_gral, "Hilo de Planificador corto plazo iniciado.");
-
-    if (strcmp(algoritmo_planificacion, "FIFO") == 0) {
+    if (strcmp(algoritmo_plani, "FIFO") == 0) {
         planific_corto_fifo();
     }
-    else if (strcmp(algoritmo_planificacion, "PRIORIDADES") == 0) {
+    else if (strcmp(algoritmo_plani, "PRIORIDADES") == 0) {
         planific_corto_prioridades();
     }
-    else if (strcmp(algoritmo_planificacion, "MULTINIVEL") == 0) {
+    else if (strcmp(algoritmo_plani, "CMN") == 0) {
         planific_corto_multinivel();
     }
     
-    return NULL;
 }
 
+/////////////////////////////////////////////////////
+// -----------------------------------------------
+//---  TRABAJANDO EN LOS ALGORITMOS...
+// -----------------------------------------------
 /////////////////////////////////////////////////////
 
 void planific_corto_fifo(void) {

@@ -42,10 +42,10 @@ pthread_mutex_t mutex_sincro_new_exit;
 // ====  Funciones Comunicación:  ===========================================
 // ==========================================================================
 
-void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code) {
+void enviar_orden_de_interrupcion(void) {
 	t_paquete* paquete = crear_paquete(INTERRUPCION);
-	agregar_a_paquete(paquete, &interrupt_code, sizeof(t_interrupt_code));
-	// agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int)); // Segun como hagamos protocolo creo q tendria q tener pid y tid
+	agregar_a_paquete(paquete, (void*)&(hilo_exec->pid_pertenencia), sizeof(int));
+	agregar_a_paquete(paquete, (void*)&(hilo_exec->tid), sizeof(int));
 	enviar_paquete(paquete, socket_cpu_interrupt);
 	eliminar_paquete(paquete);
 }

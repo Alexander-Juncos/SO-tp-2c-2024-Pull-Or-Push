@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
     // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
     
-    // poner a correr el planificador.
+    iniciar_planificador();
 
 
     imprimir_mensaje("pude completar check 1");

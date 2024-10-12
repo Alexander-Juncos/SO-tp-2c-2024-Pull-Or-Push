@@ -22,6 +22,7 @@
 #include <utils/conexiones.h>
 #include <new.h>
 #include <exit.h>
+#include <planificador.h>
 
 // ==========================================================================
 // ====  Variables globales:  ===============================================
@@ -65,10 +66,9 @@ extern pthread_mutex_t mutex_sincro_new_exit;
 // ====  Funciones Comunicación:  ===========================================
 // ==========================================================================
 /**
-* @brief Envía una orden de interrupción a CPU.
-* @param interrupt_code : El código de la interrupción.
+* @brief Envía una orden de interrupción a CPU, con datos del PID y TID.
 */
-void enviar_orden_de_interrupcion(t_interrupt_code interrupt_code);
+void enviar_orden_de_interrupcion(void);
 /**
 * @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
 *         hilo, recibe la respuesta, y se desconecta.

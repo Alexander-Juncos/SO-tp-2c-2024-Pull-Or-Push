@@ -7,8 +7,10 @@
 
 /* TODO SACADO DEL TP ANTERIOR!! */
 
-// esta se pasa al crear el hilo
-void* rutina_planificador(void* puntero_null);
+/**
+* @brief Inicia el Planificador de corto plazo.
+*/
+void iniciar_planificador(void);
 
 ////////////////////////////////////////////
 
