@@ -62,6 +62,9 @@ void* rutina_hilo_interrupcion (void*)
 {
     int operacion;
     t_list* recibido;
+    int pid,
+        tid;
+    void* aux_recibido;
 
     char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
@@ -78,15 +81,36 @@ void* rutina_hilo_interrupcion (void*)
     //           Así se chequea por interrupciones, y si no hay bytes por recibir, simplemente avanza.
     fcntl(socket_kernel_interrupt, F_SETFL, O_NONBLOCK); 
 
-    /*
-        logica recepcion de interrupciones
-        El pid y tid recibido en la comunicacion va a ser usado para comprobar si Kernel le mandó interrupcion al 
-        tid en ejecucion, o no (en este caso la desestima).
-        tiene mutex -> mutex_interrupcion
+    do
+    {
+        operacion = recibir_codigo(socket_kernel_interrupt);
+        if (operacion != INTERRUPCION)
+        {
+            log_error(log_cpu_gral, "ERROR: se recibio un operacion desconocida al esperar interrupcion, valor: %d", operacion);
+            exit(3); // no se si seria correcto para el hilo
+        }
+        log_info(log_cpu_oblig, "## Llega interrupción al puerto Interrupt");
+        
+        recibido = recibir_paquete(socket_escucha_puerto_interrupt);
+        aux_recibido = list_get(recibido, 0);
+        pid = *(int*)aux_recibido;
+        aux_recibido = list_get(recibido, 1);
+        tid = *(int*)aux_recibido;
 
-        Interrupción Recibida: “## Llega interrupción al puerto Interrupt”.
+        if (pid == contexto_exec.pid && tid == contexto_exec.tid){
+            pthread_mutex_lock(&mutex_interrupcion);
+            hay_interrupcion = true;
+            pthread_mutex_unlock(&mutex_interrupcion);
+            log_debug(log_cpu_gral, "PID: %d - TID: %d - Interrupcion Aceptada", pid, tid);
+        } else
+        {
+            log_debug(log_cpu_gral, "Interrupcion ignorada - PID: %d - TID: %d - no coincide con contexto ejecucion (PID: %d - TID: %d).",
+                                    pid, tid, contexto_exec.pid, contexto_exec.tid);
+        }
 
-    */
+        list_clean_and_destroy_elements(recibido, free);
+    } while (operacion > 0);
+    
     return;
 }
 

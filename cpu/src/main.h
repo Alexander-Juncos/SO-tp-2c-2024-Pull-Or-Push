@@ -8,7 +8,7 @@
 // ====  Funciones :  =======================================================
 // ==========================================================================
 
-void* rutina_hilo_interrupcion (void*);
-void rutina_main_cpu(void);
+void* rutina_hilo_interrupcion (void*); // Completada
+void rutina_main_cpu(void); // modificar tema interrupcion
 
 #endif /* MAIN_CPU_H_ */
