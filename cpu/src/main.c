@@ -110,7 +110,7 @@ void* rutina_hilo_interrupcion (void*)
 
         list_clean_and_destroy_elements(recibido, free);
     } while (operacion > 0);
-    
+
     return;
 }
 
@@ -122,7 +122,6 @@ void rutina_main_cpu(void)
     void* auxiliar_op;
     int operacion;
     desalojado = true;
-    bool interrupcion_previa;
 
     diccionario_reg = crear_diccionario_reg(&contexto_exec);
 
@@ -130,37 +129,26 @@ void rutina_main_cpu(void)
     /************************* CICLO EJECUCION ***********************************************/
     while(true)
     {
+        // reseteo interrupcion, kernel se va a encargar de enviar siempre un pedido q pueda ejecutarse
+        // gestionara casos de syscalls y esas cosas
+        pthread_mutex_lock(&mutex_interrupcion);
+        hay_interrupcion = false;
+        pthread_mutex_unlock(&mutex_interrupcion);
+
         if (desalojado)
         {
             recibir_pedido_ejecucion();
         }
 
-        // para no crear una SC enorme para nada
-        pthread_mutex_lock(&mutex_interrupcion);
-        interrupcion_previa = hay_interrupcion;
-        pthread_mutex_unlock(&mutex_interrupcion);
-
-        if (interrupcion_previa)
+        // FETCH + DECODE
+        instruccion_raw = fetch();
+        instruccion_procesada = decode(instruccion_raw);
+        auxiliar_op = list_remove(instruccion_procesada, 0);
+        operacion = *(int*)auxiliar_op;
+        free(auxiliar_op);
+        
+        switch (operacion) // EXECUTE
         {
-            operacion = INTERRUPCION_PENDIENTE; // si desp de recibir_pedido sigue, salteo el fetch
-            instruccion_raw = string_new(); // lo inicio xq es mas facil q poner mas condiciones para evitar doble free
-        }
-        else
-        {
-            instruccion_raw = fetch();
-            instruccion_procesada = decode(instruccion_raw);
-            auxiliar_op = list_remove(instruccion_procesada, 0);
-            operacion = *(int*)auxiliar_op;
-            free(auxiliar_op);
-        }
-
-        switch (operacion)
-        {
-        /********************************** INTERRUPCION ************************************/
-        case INTERRUPCION_PENDIENTE:
-            // no hago nada y salgo de switch
-            break;
-
         /********************************** INSTRUCCIONES **********************************/
         case SET:
             instruccion_set(instruccion_procesada);
@@ -237,13 +225,12 @@ void rutina_main_cpu(void)
             list_clean_and_destroy_elements(instruccion_procesada, free);
             break;
 
-        
         default:
             log_error(log_cpu_gral, "Operacion desconocida, codigo recibido: %d", operacion);
             break;
         }
 
-        // si hay interrupcion y la estoy gestionando no me interesa q entre otra
+        // CHECK INTERRUPT
         pthread_mutex_lock(&mutex_interrupcion);
         if (hay_interrupcion)
             interrupcion(INTERRUPCION);

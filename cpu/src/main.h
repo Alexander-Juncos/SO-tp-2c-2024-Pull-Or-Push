@@ -9,6 +9,6 @@
 // ==========================================================================
 
 void* rutina_hilo_interrupcion (void*); // Completada
-void rutina_main_cpu(void); // modificar tema interrupcion
+void rutina_main_cpu(void); // Completada
 
 #endif /* MAIN_CPU_H_ */

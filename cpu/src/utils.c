@@ -250,9 +250,8 @@ void recibir_pedido_ejecucion(void)
     void* data;
     int pid;
     int tid;
-    bool ciclo_corto = false;
     bool resultado_contexto = true;
-    log_debug(log_cpu_gral, "Esperando pedido ejecución");
+    log_trace(log_cpu_gral, "Esperando pedido ejecución");
 
     codigo = recibir_codigo(socket_kernel_dispatch);
 
@@ -274,22 +273,8 @@ void recibir_pedido_ejecucion(void)
     pid = *(int*)data;
     data = list_get(pedido, 1);
     tid = *(int*)data;
-    data = list_get(pedido, 2);
-    ciclo_corto = *(bool*)data;
 
-    if (ciclo_corto) // Kernel quiere q se interrumpa, se asume q no se cambio el pid-tid
-    {
-        pthread_mutex_lock(&mutex_interrupcion);
-        hay_interrupcion = true;
-        pthread_mutex_unlock(&mutex_interrupcion);
-    }
-    else // se sobreescribe interrupcion, ya q kernel considero q no se requiere o se cambio el pid-tid(se asume)
-    {
-        pthread_mutex_lock(&mutex_interrupcion);
-        hay_interrupcion = false;
-        pthread_mutex_unlock(&mutex_interrupcion);
-        resultado_contexto = obtener_contexto_ejecucion(pid, tid);
-    }
+    resultado_contexto = obtener_contexto_ejecucion(pid, tid);
 
     if (!resultado_contexto)
     {
@@ -466,6 +451,8 @@ void instruccion_write_mem (t_list* param)
 
 void syscall_dump_memory (void)
 {
+    bool respuesta_kernel;
+
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "DUMP_MEMORY");
 
@@ -824,12 +811,8 @@ void interrupcion (op_code tipo_interrupcion)
 
     free(str_interrupcion);
     desalojado = true;
-    hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
-
-    // En teoria las syscall se podrian/tendrian q manejar x esta funcion... pero medio al dope
-    // ya q no lo piden x consigna... ademas complicaria mas considerar como enviar de forma general
-    // todos los parametros de las syscall (ya q varian de 0 a 3) y complicaria tambien la recepcion.
-    // Asi que mejor, cada syscall se maneja por su propia funcion.
+    // hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
+    // la comento xq la interrupcion se resetea forzadamente al inicio de cada ciclo
 }
 
 // ==========================================================================
