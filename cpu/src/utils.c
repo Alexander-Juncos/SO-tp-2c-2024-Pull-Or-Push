@@ -309,7 +309,11 @@ bool obtener_contexto_ejecucion(int pid, int tid)
 
     codigo = recibir_codigo(socket_memoria);
     if(codigo != CONTEXTO_EJECUCION)
+    {
+        recibido = recibir_paquete(socket_memoria);
+        list_clean_and_destroy_elements(recibido, free);
         return false;
+    }
     
     // cargo contexto
     recibido = recibir_paquete(socket_memoria);

@@ -90,8 +90,8 @@ extern t_memoria_particionada* memoria;
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
 t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0);
-bool cargar_contexto_ejecucion(int pid, int tid);
-bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // EN DESARROLLO
+bool cargar_contexto_ejecucion(int pid, int tid); 
+bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); 
 char* obtener_instruccion(uint32_t num_instruccion);
 
 // ==========================================================================
@@ -99,6 +99,7 @@ char* obtener_instruccion(uint32_t num_instruccion);
 // ==========================================================================
 
 bool memory_dump_fs (t_list* pedido);
+void rutina_contexto_ejecucion(t_list* param);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
@@ -110,6 +111,7 @@ t_particion* particion_libre (int tamanio); // PENDIENTE HASTA DESARROLLO ESPACI
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
+t_paquete* empaquetar_contexto (void);
 void iniciar_logs(bool testeo);
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 

@@ -198,9 +198,45 @@ bool cargar_contexto_ejecucion(int pid, int tid)
 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
 {
-    // como actualizar un contexto de ejecucion implica q previamente lo pidio no se necesita chequear nada
-    // por lo tanto simplemente descargamos el pedido y lo cargamos en el contexto de ejecucion (es decir en el pcb y tcb segun corresponda)
-    // NECESARIO DEFINIR EL PROTOCOLO ANTES DE DESARROLLAR
+    void* data;
+
+    // actualizo contexto
+    data = list_get(nuevo_pedido_raw, 0);
+    contexto_ejecucion->tcb->PC = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 1);
+    contexto_ejecucion->tcb->registros.AX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 2);
+    contexto_ejecucion->tcb->registros.BX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 3);
+    contexto_ejecucion->tcb->registros.CX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 4);
+    contexto_ejecucion->tcb->registros.DX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 5);
+    contexto_ejecucion->tcb->registros.EX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 6);
+    contexto_ejecucion->tcb->registros.FX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 7);
+    contexto_ejecucion->tcb->registros.GX = *(uint32_t*)data;
+    data = list_get(nuevo_pedido_raw, 8);
+    contexto_ejecucion->tcb->registros.HX = *(uint32_t*)data;
+
+    log_trace(log_memoria_gral, "Contexto Actualizado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d",
+        contexto_ejecucion->pcb->pid,
+        contexto_ejecucion->tcb->tid,
+        contexto_ejecucion->tcb->PC,
+        contexto_ejecucion->tcb->registros.AX,
+        contexto_ejecucion->tcb->registros.BX,
+        contexto_ejecucion->tcb->registros.CX,
+        contexto_ejecucion->tcb->registros.DX,
+        contexto_ejecucion->tcb->registros.EX,
+        contexto_ejecucion->tcb->registros.FX,
+        contexto_ejecucion->tcb->registros.GX,
+        contexto_ejecucion->tcb->registros.HX);
+
+    log_info(log_memoria_oblig, "## Contexto Actualizado - (PID:TID) - (%d:%d)",
+    contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
+    
+    return true;
 }
 
 char* obtener_instruccion(uint32_t num_instruccion)
@@ -246,6 +282,37 @@ bool memory_dump_fs (t_list* pedido)
     // if (correcta) return true else return false
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
     return true;
+}
+
+void rutina_contexto_ejecucion(t_list* param)
+{
+    void* data;
+    int pid;
+    int tid;
+    bool resultado;
+    t_paquete* paquete;
+
+    data = list_get(param, 0);
+    pid = *(int*)data;
+    data = list_get(param, 0);
+    tid = *(int*)data;
+
+    resultado = cargar_contexto_ejecucion(pid, tid);
+    if(!resultado)
+    {
+        paquete = crear_paquete(MENSAJE_ERROR);
+        enviar_paquete(paquete, socket_cpu);
+        eliminar_paquete(paquete);
+        return;
+    }
+
+    // como es valida logueo.
+    log_info(log_memoria_oblig, "## Contexto Solicitado - (PID:TID) - (%d:%d)",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
+
+    paquete = empaquetar_contexto();
+    enviar_paquete(paquete, socket_cpu);
+    eliminar_paquete(paquete);
 }
 
 // ==========================================================================
@@ -397,6 +464,24 @@ t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
     if (!coincidencia)
         tcb = NULL;
     return tcb;
+}
+
+t_paquete* empaquetar_contexto (void)
+{
+    t_paquete* p = crear_paquete(CONTEXTO_EJECUCION);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->PC);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.AX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.BX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.CX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.DX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.EX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.FX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.GX);
+    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.HX);
+    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->base);
+    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->limite);
+    
+    return p;
 }
 
 void iniciar_logs(bool testeo)
