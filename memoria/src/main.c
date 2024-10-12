@@ -92,39 +92,23 @@ void atender_cpu()
         operacion = recibir_codigo(socket_cpu);
         switch (operacion)
         {
-        case CONTEXTO_EJECUCION:
+        case CONTEXTO_EJECUCION: // COMPLETA
             pedido = recibir_paquete(socket_cpu);
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: CONTEXTO_EJECUCION", socket_cpu);
-            log_debug(log_memoria_gral, "Operacion: CONTEXTO_EJECUCION");
-
-            // REQUIERE DEFINIR PROTOCOLO DE COMUNICACION
-            // obtener_contexto_ejecucion(pid, tid); // carga en variable global el contexto
-            // devolver contexto_ejecucion segun protocolo
-            // devuelve bool para verificar si operacion fue exitosa o no
-            // requeriria una funcion q devuelva el paquete ya armado para cpu
+            rutina_contexto_ejecucion(pedido);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
 
-        case ACTUALIZAR_CONTEXTO_EJECUCION:
+        case ACTUALIZAR_CONTEXTO_EJECUCION: // COMPLETA
             pedido = recibir_paquete(socket_cpu);
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: ACTUALIZAR_CONTEXTO_EJECUCION", socket_cpu);
-            log_debug(log_memoria_gral, "Operacion: ACTUALIZAR_CONTEXTO_EJECUCION");
-
-            // REQUIERE DEFINIR PROTOCOLO DE COMUNICACION
-            // actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); // actualiza en variable global el contexto
-            // avisar a cpu segun resultado
-            // devuelve bool para verificar si operacion fue exitosa o no
-            // requeriria una funcion q devuelva el paquete ya armado para cpu
+            actualizar_contexto_ejecucion(pedido);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
 
-        case OBTENER_INSTRUCCION:
+        case OBTENER_INSTRUCCION: // COMPLETA
             pedido = recibir_paquete(socket_cpu);
 
             log_debug(log_memoria_gral, 
@@ -137,7 +121,8 @@ void atender_cpu()
             
             enviar_mensaje((char*)aux_datos_paquete, socket_cpu);
 
-            // revisar el tema del log obligatorio...
+            log_info(log_memoria_oblig, "## Obtener instrucción - (PID:TID) - (%d:%d) - Instrucción: %s",
+            contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid, (char*)aux_datos_paquete);
 
             list_destroy_and_destroy_elements(pedido, free);
             // no hay q liberar aux_datos_paquete ya q apunta a la instruccion en el tcb
@@ -145,7 +130,7 @@ void atender_cpu()
             aux_datos_paquete = NULL;
             break;
         
-        case ACCESO_LECTURA:
+        case ACCESO_LECTURA: // PENDIENTE - ESPACIO USUARIO
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
@@ -157,7 +142,7 @@ void atender_cpu()
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case ACCESO_ESCRITURA:
+        case ACCESO_ESCRITURA: // PENDIENTE - ESPACIO USUARIO
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
