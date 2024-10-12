@@ -12,7 +12,8 @@ int socket_cpu_interrupt = 1;
 bool new_puede_intentar_crear_proceso = true;
 
 t_list* cola_new = NULL;
-t_list* lista_de_colas_ready = NULL;
+t_list* cola_ready_unica = NULL;
+t_dictionary* diccionario_ready_multinivel;
 t_tcb* hilo_exec = NULL;
 t_tcb* hilo_usando_io = NULL;
 t_list* cola_blocked_io = NULL;

@@ -19,15 +19,13 @@ void iniciar_planificador(void) {
 
 /////////////////////////////////////////////////////
 // -----------------------------------------------
-//---  PENSANDO/TRABAJANDO EN LOS ALGORITMOS...
+//---  TRABAJANDO EN LOS ALGORITMOS...
 // -----------------------------------------------
 /////////////////////////////////////////////////////
 
 void planific_corto_fifo(void) {
 
-    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
-    t_list* desalojo_y_argumentos = NULL;
-
+    // DEL TP ANTERIOR: /////////////////////////////////////////////////
     // variables que defino acá porque las repito en varios case del switch
     t_paquete* paquete = NULL;
     char* nombre_interfaz = NULL;
@@ -40,30 +38,17 @@ void planific_corto_fifo(void) {
     char* nombre_recurso = NULL;
     t_recurso_blocked* recurso_blocked = NULL;
     t_recurso_ocupado* recurso_ocupado = NULL;
+    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
+    t_list* desalojo_y_argumentos = NULL;
+    //////////////////////////////////////////////////////////////////////
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
 
-    while(1) {
+    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
 
-        if(proceso_exec == NULL) {
-            sem_wait(&sem_procesos_ready);
-            
-            pthread_mutex_lock(&mutex_proceso_exec);
-            pthread_mutex_lock(&mutex_cola_ready);
-            // pone proceso de estado READY a estado EXEC. Y envia contexto de ejecucion al cpu.
-            ejecutar_sig_proceso();
-            log_info(log_kernel_oblig, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso_exec->pid);
-            hay_algun_proceso_en_exec = true;
-            pthread_mutex_unlock(&mutex_cola_ready);
-            pthread_mutex_unlock(&mutex_proceso_exec);
-        }
-        // Este es el caso en que vuelve a cpu el mismo proceso luego de un WAIT/SIGNAL exitoso:
-        else {
-            // solo se envia contexto de ejecucion al cpu.
-            t_contexto_de_ejecucion contexto_de_ejecucion = contexto_de_ejecucion_de_pcb(proceso_exec);
-            enviar_contexto_de_ejecucion(contexto_de_ejecucion, socket_cpu_dispatch);
-            hay_algun_proceso_en_exec = true;
-        }
+    while(true) {
+
+
 
         // Se queda esperando el desalojo del proceso.
         recibir_y_verificar_codigo(socket_cpu_dispatch, , );
@@ -76,7 +61,7 @@ void planific_corto_fifo(void) {
 		t_desalojo desalojo = deserializar_desalojo(list_get(desalojo_y_argumentos, 0));
         actualizar_contexto_de_ejecucion_de_pcb(desalojo.contexto, proceso_exec);
 
-        // falta adaptar los nuevos motivos de desalojo ya que en este caso no hay consola
+        // EN DESARROLLO... Casi todo del TP viejo
 		switch (desalojo.motiv) {
 			case SUCCESS:
             pthread_mutex_lock(&mutex_procesos_activos);
@@ -251,9 +236,7 @@ void planific_corto_fifo(void) {
 
 void planific_corto_prioridades(void) {
 
-    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
-    t_list* desalojo_y_argumentos = NULL;
-
+    // DEL TP ANTERIOR: /////////////////////////////////////////////////
     // variables que defino acá porque las repito en varios case del switch
     t_paquete* paquete = NULL;
     char* nombre_interfaz = NULL;
@@ -266,10 +249,16 @@ void planific_corto_prioridades(void) {
     char* nombre_recurso = NULL;
     t_recurso_blocked* recurso_blocked = NULL;
     t_recurso_ocupado* recurso_ocupado = NULL;
+    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
+    t_list* desalojo_y_argumentos = NULL;
+    //////////////////////////////////////////////////////////////////////
 
-    log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
+    log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo PRIORIDADES.");
 
-    while(1) {
+    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
+
+    // EN DESARROLLO... Casi todo del TP viejo
+    while(true) {
 
         if(proceso_exec == NULL) {
             sem_wait(&sem_procesos_ready);
@@ -475,12 +464,10 @@ void planific_corto_prioridades(void) {
 	}
 }
 
-// Este faltaría adaptarlo bien a las colas, la idea es crear una cola nueva de ready por cada nivel de prioridad que se va conociendo.
+// La idea es crear una cola nueva de ready por cada nivel de prioridad que se va conociendo.
 void planific_corto_multinivel(void) {
 
-    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
-    t_list* desalojo_y_argumentos = NULL;
-
+    // DEL TP ANTERIOR: /////////////////////////////////////////////////
     // variables que defino acá porque las repito en varios case del switch
     t_paquete* paquete = NULL;
     char* nombre_interfaz = NULL;
@@ -493,10 +480,19 @@ void planific_corto_multinivel(void) {
     char* nombre_recurso = NULL;
     t_recurso_blocked* recurso_blocked = NULL;
     t_recurso_ocupado* recurso_ocupado = NULL;
+    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
+    t_list* desalojo_y_argumentos = NULL;
+    //////////////////////////////////////////////////////////////////////
 
-    log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
+    diccionario_ready_multinivel = dictionary_create();
 
-    while(1) {
+
+    log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo COLAS MULTINIVEL.");
+
+    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
+
+    // EN DESARROLLO... Casi todo del TP viejo
+    while(true) {
 
         if(proceso_exec == NULL) {
             sem_wait(&sem_procesos_ready);
@@ -702,6 +698,8 @@ void planific_corto_multinivel(void) {
 	}
 }
 
+// DEL TP VIEJO, COMO REFERENCIA
+/*
 void planific_corto_rr(void) {
 
     // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
@@ -967,26 +965,81 @@ void planific_corto_rr(void) {
 	}
 
 }
+*/
 
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
+// ==========================================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
 
-void ejecutar_sig_proceso(void) {
+void ejecutar_siguiente_hilo(t_list* cola_ready) {
 
-    proceso_exec = list_remove(cola_ready, 0);
-    
-    t_contexto_de_ejecucion contexto_de_ejecucion = contexto_de_ejecucion_de_pcb(proceso_exec);
-    enviar_contexto_de_ejecucion(contexto_de_ejecucion, socket_cpu_dispatch);
+    hilo_exec = list_remove(cola_ready, 0);
+    enviar_orden_de_ejecucion_al_cpu(hilo_exec, socket_cpu_dispatch);
+    log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO", hilo_exec->pid_pertenencia, hilo_exec->tid);
 }
 
 void recibir_y_verificar_codigo(int socket, op_code cod, char* traduccion_de_cod) {
-    if (recibir_codigo(socket) != cod) {
-        log_error(log_kernel_gral, "Codigo erroneo. Se esperaba %s.", traduccion_de_cod);
-    }
+    //if (recibir_codigo(socket) != cod) {
+    //    log_error(log_kernel_gral, "Codigo erroneo. Se esperaba %s.", traduccion_de_cod);
+    //}
 }
 
-/* OBSOLETO. SE PUEDE SACAR
+// ==========================================================================
+// ====  Funciones Internas:  ===============================================
+// ==========================================================================
+
+void ingresar_a_ready_fifo(t_tcb* tcb) {
+    list_add(cola_ready_unica, tcb);
+}
+
+void ingresar_a_ready_prioridades(t_tcb* tcb) {
+    bool _hilo_tiene_menor_prioridad(t_tcb* tcb1, t_tcb* tcb2) {
+        return tcb1->prioridad < tcb2->prioridad;
+    }
+
+    list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
+}
+
+void ingresar_a_ready_multinivel(t_tcb* tcb) {
+
+    t_cola_ready* estructura_ready_correspondiente = NULL;
+    char* key = string_itoa(tcb->prioridad);
+    estructura_ready_correspondiente = dictionary_get(diccionario_ready_multinivel, key);
+
+    if(estructura_ready_correspondiente == NULL) { // if (no existe cola para esa prioridad)
+        estructura_ready_correspondiente = crear_ready_multinivel();
+        dictionary_put(diccionario_ready_multinivel, key, estructura_ready_correspondiente);
+    }
+
+    list_add(estructura_ready_correspondiente->cola_ready, tcb);
+}
+
+void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb, int socket) {
+    t_paquete* paquete = crear_paquete(EJECUCION);
+    agregar_a_paquete(paquete, (void*)&(tcb->pid_pertenencia), sizeof(int));
+    agregar_a_paquete(paquete, (void*)&(tcb->tid), sizeof(int));
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+
+// ==========================================================================
+// ====  Funciones Auxiliares:  =============================================
+// ==========================================================================
+
+t_cola_ready* crear_ready_multinivel() {
+    t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
+    nueva_estructura_cola_ready->cola_ready = list_create();
+    nueva_estructura_cola_ready->cantidad_de_hilos_activos = 0;
+    return nueva_estructura_cola_ready;
+}
+
+
+
+/* OBSOLETO. SE PUEDE SACAR ---------------------------------
 t_recurso* encontrar_recurso_del_sistema(char* nombre) {
 
 	bool _es_mi_recurso(t_recurso* recurso) {
@@ -995,7 +1048,6 @@ t_recurso* encontrar_recurso_del_sistema(char* nombre) {
 
     return list_find(recursos_del_sistema, (void*)_es_mi_recurso);
 }
-*/
 
 t_recurso_ocupado* encontrar_recurso_ocupado(t_list* lista_de_recursos_ocupados, char* nombre) {
 
@@ -1027,3 +1079,5 @@ void asignar_recurso_ocupado(t_pcb* pcb, char* nombre_recurso) {
         list_add(proceso_exec->recursos_ocupados, recurso_ocupado);
     }
 }
+----------------------------------------------------------------
+*/

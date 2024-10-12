@@ -70,8 +70,6 @@ int main(int argc, char* argv[]) {
     pthread_create(&thread_new, NULL, rutina_new, NULL);
     pthread_create(&thread_exit, NULL, rutina_exit, NULL);
     pthread_create(&thread_io, NULL, rutina_io, NULL);
-
-    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
     
     iniciar_planificador();
 

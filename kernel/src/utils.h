@@ -37,7 +37,8 @@ extern int socket_cpu_interrupt;
 extern bool new_puede_intentar_crear_proceso;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).
-extern t_list* lista_de_colas_ready; // Estado READY. Es una lista de listas de t_tcb* (Hilos).
+extern t_list* cola_ready_unica; // Estado READY (para FIFO y PRIORIDADES). Es una lista de t_tcb* (Hilos).
+extern t_dictionary* diccionario_ready_multinivel; // Estado READY (para MULTINIVEL). Contiene elementos de t_cola_ready*. La key es la prioridad.
 extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo).
 extern t_tcb* hilo_usando_io; // Estado BLOCKED (usando IO). Es un t_tcb* (Hilo).
 extern t_list* cola_blocked_io; // Estado BLOCKED (esperando para usar IO). Es una lista de t_tcb* (Hilos).

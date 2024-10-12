@@ -46,6 +46,13 @@ typedef struct
     t_tcb* hilo_main;
 } t_pcb;
 
+// Estructura para usar con el diccionario de colas Ready, en algoritmo MULTINIVEL.
+typedef struct
+{
+    int cantidad_de_hilos_activos;
+    t_list* cola_ready;
+} t_cola_ready;
+
 typedef struct
 {
     bool asignado;
