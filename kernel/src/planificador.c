@@ -89,7 +89,7 @@ void planific_corto_fifo(void) {
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
-            case GEN_SLEEP:
+            case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
@@ -114,7 +114,7 @@ void planific_corto_fifo(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -140,7 +140,7 @@ void planific_corto_fifo(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -181,7 +181,7 @@ void planific_corto_fifo(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -266,7 +266,7 @@ void planific_corto_prioridades(void) {
             pthread_mutex_lock(&mutex_proceso_exec);
             pthread_mutex_lock(&mutex_cola_ready);
             // pone proceso de estado READY a estado EXEC. Y envia contexto de ejecucion al cpu.
-            ejecutar_sig_proceso();
+            ejecutar_siguiente_hilo(cola_ready_unica);
             log_info(log_kernel_oblig, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso_exec->pid);
             hay_algun_proceso_en_exec = true;
             pthread_mutex_unlock(&mutex_cola_ready);
@@ -319,7 +319,8 @@ void planific_corto_prioridades(void) {
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
-            case GEN_SLEEP:
+            // Del TP viejo. Hay que adaptarlo a este, sólo tiene que hacer un sleep.
+            case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
@@ -344,7 +345,7 @@ void planific_corto_prioridades(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -370,7 +371,7 @@ void planific_corto_prioridades(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -411,7 +412,7 @@ void planific_corto_prioridades(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -500,7 +501,7 @@ void planific_corto_multinivel(void) {
             pthread_mutex_lock(&mutex_proceso_exec);
             pthread_mutex_lock(&mutex_cola_ready);
             // pone proceso de estado READY a estado EXEC. Y envia contexto de ejecucion al cpu.
-            ejecutar_sig_proceso();
+            ejecutar_siguiente_hilo(diccionario_ready_multinivel);
             log_info(log_kernel_oblig, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso_exec->pid);
             hay_algun_proceso_en_exec = true;
             pthread_mutex_unlock(&mutex_cola_ready);
@@ -553,7 +554,7 @@ void planific_corto_multinivel(void) {
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
-            case GEN_SLEEP:
+            case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
@@ -578,7 +579,7 @@ void planific_corto_multinivel(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -604,7 +605,7 @@ void planific_corto_multinivel(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;
@@ -645,7 +646,7 @@ void planific_corto_multinivel(void) {
                 pthread_mutex_lock(&mutex_cola_exit);
                 list_add(cola_exit, proceso_exec);
                 procesos_activos--;
-                sem_post(&sem_procesos_exit);
+                sem_post(&sem_cola_exit);
                 log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_RESOURCE", proceso_exec->pid); // log Obligatorio
                 log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
                 proceso_exec = NULL;

@@ -29,6 +29,19 @@
 // ====  Variables globales:  ===============================================
 // ==========================================================================
 
+typedef enum
+{
+    FIFO,
+    PRIORIDADES,
+    CMN
+} algoritmo_corto_code;
+
+extern algoritmo_corto_code cod_algoritmo_planif_corto; // cod algoritmo planif. Obtenido del diccionario con la key del archivo config
+extern int grado_multiprogramacion; // Viene del archivo config
+extern int procesos_activos; // Cantidad de procesos en READY, BLOCKED, o EXEC
+extern int contador_pid; // Contador. Para asignar diferente pid a cada nuevo proceso.
+extern bool hay_algun_proceso_en_exec;
+
 extern char* ip_memoria;
 extern char* puerto_memoria;
 extern int socket_cpu_dispatch;
@@ -63,8 +76,21 @@ extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con cri
 // ==========================================================================
 
 extern sem_t sem_cola_new;
+extern sem_t sem_procesos_ready; // Cantidad de procesos en estado READY. incluye procesos tanto en cola_ready como en cola_ready_plus
 extern sem_t sem_cola_blocked_io;
 extern sem_t sem_cola_exit;
+
+// Sacados del tp anterior
+extern pthread_mutex_t mutex_proceso_exec;
+extern pthread_mutex_t mutex_grado_multiprogramacion;
+extern pthread_mutex_t mutex_procesos_activos;
+extern pthread_mutex_t mutex_cola_new; 
+extern pthread_mutex_t mutex_cola_ready;
+extern pthread_mutex_t mutex_cola_ready_plus;
+extern pthread_mutex_t mutex_lista_io_blocked;
+extern pthread_mutex_t mutex_lista_recurso_blocked;
+extern pthread_mutex_t mutex_cola_exit;
+// FIN Sacados del tp anterior
 
 extern sem_t sem_sincro_new_exit;
 extern pthread_mutex_t mutex_sincro_new_exit;
