@@ -134,7 +134,7 @@ void atender_cpu()
             aux_datos_paquete = NULL;
             break;
         
-        case ACCESO_LECTURA: // PENDIENTE - ESPACIO USUARIO
+        case ACCESO_LECTURA: // PENDIENTE - ESPACIO USUARIO + FUNCIONES
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
@@ -147,7 +147,7 @@ void atender_cpu()
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case ACCESO_ESCRITURA: // PENDIENTE - ESPACIO USUARIO
+        case ACCESO_ESCRITURA: // PENDIENTE - ESPACIO USUARIO + FUNCIONES
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal

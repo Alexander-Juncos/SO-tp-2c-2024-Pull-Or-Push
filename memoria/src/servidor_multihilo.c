@@ -54,7 +54,7 @@ void* rutina_ejecucion (void* nada)
     operacion = recibir_codigo(socket_cliente);
     switch (operacion)
     {
-        case CREAR_PROCESO:
+        case CREAR_PROCESO: // PENDIENTE IMPLEMENTAR
             pedido = recibir_paquete(socket_cliente);
 
             // Stub temporal
@@ -69,7 +69,7 @@ void* rutina_ejecucion (void* nada)
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case FINALIZAR_PROCESO:
+        case FINALIZAR_PROCESO: // PENDIENTE IMPLEMENTAR + FUNCIONES
             pedido = recibir_paquete(socket_cliente);
 
             // Stub temporal
@@ -79,7 +79,7 @@ void* rutina_ejecucion (void* nada)
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case CREAR_HILO:
+        case CREAR_HILO: // PENDIENTE IMPLEMENTAR
             pedido = recibir_paquete(socket_cliente);
 
             // Stub temporal
@@ -97,7 +97,7 @@ void* rutina_ejecucion (void* nada)
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case FINALIZAR_HILO:
+        case FINALIZAR_HILO: // PENDIENTE IMPLEMENTAR + FUNCIONES
             pedido = recibir_paquete(socket_cliente);
 
             // Stub temporal
