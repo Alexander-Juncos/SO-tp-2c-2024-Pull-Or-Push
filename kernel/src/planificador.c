@@ -1,6 +1,16 @@
 #include "planificador.h"
 #include "quantum.h"
 
+// ==========================================================================
+// ====  Variables globales (exclusivas del planificador):  =================
+// ==========================================================================
+
+int contador_pid = 0;
+
+// ==========================================================================
+// ====  Función principal (que inicia el planificador):  ===================
+// ==========================================================================
+
 void iniciar_planificador(void) {
 
     log_debug(log_kernel_gral, "Planificador corto plazo iniciado.");
@@ -36,22 +46,24 @@ void planific_corto_fifo(void) {
     int fs_codigo;
     char* nombre_archivo = NULL;
     char* nombre_recurso = NULL;
-    t_recurso_blocked* recurso_blocked = NULL;
-    t_recurso_ocupado* recurso_ocupado = NULL;
-    // Lista con data del paquete recibido desde cpu. El elemento 0 es el t_desalojo, el resto son argumentos.
-    t_list* desalojo_y_argumentos = NULL;
     //////////////////////////////////////////////////////////////////////
+
+    int codigo_recibido = -1;
+    // Lista con data del paquete recibido desde cpu.
+    t_list* argumentos_recibidos = NULL;
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
 
-    // crear proceso inicial, (con su hilo main), y mandarlo a NEW.
+    sem_wait(&sem_cola_ready_unica);
+    ejecutar_siguiente_hilo(cola_ready_unica);
 
     while(true) {
 
+        // Se queda esperando el "desalojo" del proceso.
+        argumentos_recibidos = recibir_de_cpu(&codigo_recibido);
 
-
-        // Se queda esperando el desalojo del proceso.
-        recibir_y_verificar_codigo(socket_cpu_dispatch, , );
+        // -!!!!--- ACÁ ESTOY TRABAJANDO ---!!!!-
+        // -----   ----!!----   -----   -------
 
         hay_algun_proceso_en_exec = false;
 
@@ -978,22 +990,49 @@ void planific_corto_rr(void) {
 void ejecutar_siguiente_hilo(t_list* cola_ready) {
 
     hilo_exec = list_remove(cola_ready, 0);
-    enviar_orden_de_ejecucion_al_cpu(hilo_exec, socket_cpu_dispatch);
+    enviar_orden_de_ejecucion_al_cpu(hilo_exec);
     log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO", hilo_exec->pid_pertenencia, hilo_exec->tid);
 }
 
-void recibir_y_verificar_codigo(int socket, op_code cod, char* traduccion_de_cod) {
-    //if (recibir_codigo(socket) != cod) {
-    //    log_error(log_kernel_gral, "Codigo erroneo. Se esperaba %s.", traduccion_de_cod);
-    //}
+t_list* recibir_de_cpu(int* codigo_operacion) {
+    t_list* argumentos_recibidos = NULL;
+    *codigo_operacion = recibir_codigo(socket_cpu_dispatch);
+    if (*codigo_operacion >= 0) {
+        argumentos_recibidos = recibir_paquete(socket_cpu_dispatch);
+    }
+    else {
+        log_error(log_kernel_gral, "No se pudo recibir el codigo de operacion enviado por CPU.");
+    }
+    return argumentos_recibidos;
 }
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
 
+t_pcb* nuevo_proceso(int tamanio, int prioridad_hilo_main, char* path_instruc_hilo_main) {
+    t_pcb* nuevo_pcb = crear_pcb(contador_pid, tamanio);
+    contador_pid++;
+    t_tcb* nuevo_tcb = nuevo_hilo(nuevo_pcb, prioridad_hilo_main, path_instruc_hilo_main);
+    nuevo_pcb->hilo_main = nuevo_tcb;
+    return nuevo_pcb;
+}
+
+void ingresar_a_new(t_pcb* pcb) {
+    list_add(cola_new, pcb);
+    sem_post(&sem_cola_new);
+}
+
+t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
+    t_tcb* nuevo_tcb = crear_tcb(pcb_creador->pid, pcb_creador->sig_tid_a_asignar, prioridad, path_instrucciones);
+    pcb_creador->sig_tid_a_asignar++;
+    asociar_tid(pcb_creador, nuevo_tcb);
+    return nuevo_tcb;
+}
+
 void ingresar_a_ready_fifo(t_tcb* tcb) {
     list_add(cola_ready_unica, tcb);
+    sem_post(&sem_cola_ready_unica);
 }
 
 void ingresar_a_ready_prioridades(t_tcb* tcb) {
@@ -1002,6 +1041,7 @@ void ingresar_a_ready_prioridades(t_tcb* tcb) {
     }
 
     list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
+    sem_post(&sem_cola_ready_unica);
 }
 
 void ingresar_a_ready_multinivel(t_tcb* tcb) {
@@ -1016,31 +1056,42 @@ void ingresar_a_ready_multinivel(t_tcb* tcb) {
     }
 
     list_add(estructura_ready_correspondiente->cola_ready, tcb);
+    sem_post(&(estructura_ready_correspondiente->sem_cola_ready));
 }
 
-void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb, int socket) {
+void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
     t_paquete* paquete = crear_paquete(EJECUCION);
     agregar_a_paquete(paquete, (void*)&(tcb->pid_pertenencia), sizeof(int));
     agregar_a_paquete(paquete, (void*)&(tcb->tid), sizeof(int));
-    enviar_paquete(paquete, socket);
+    enviar_paquete(paquete, socket_cpu_dispatch);
     eliminar_paquete(paquete);
 }
-
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
+t_pcb* crear_pcb(int pid, int tamanio) {
+    t_pcb* pcb = malloc(sizeof(t_pcb));
+    pcb->pid = pid;
+    pcb->tamanio = tamanio;
+    pcb->tids_asociados = list_create();
+    pcb->mutex_creados = list_create();
+    pcb->sig_tid_a_asignar = 0;
+    pcb->hilo_main = NULL;
+    return pcb;
+}
+
 t_cola_ready* crear_ready_multinivel() {
     t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
     nueva_estructura_cola_ready->cola_ready = list_create();
-    nueva_estructura_cola_ready->cantidad_de_hilos_activos = 0;
+    sem_init(&(nueva_estructura_cola_ready->sem_cola_ready), 0, 0);
     return nueva_estructura_cola_ready;
 }
 
 
 
-/* OBSOLETO. SE PUEDE SACAR ---------------------------------
+/* OBSOLETO. LO DEJO POR LAS DUDAS ==================================
 t_recurso* encontrar_recurso_del_sistema(char* nombre) {
 
 	bool _es_mi_recurso(t_recurso* recurso) {
@@ -1080,5 +1131,5 @@ void asignar_recurso_ocupado(t_pcb* pcb, char* nombre_recurso) {
         list_add(proceso_exec->recursos_ocupados, recurso_ocupado);
     }
 }
-----------------------------------------------------------------
+=====================================================================
 */

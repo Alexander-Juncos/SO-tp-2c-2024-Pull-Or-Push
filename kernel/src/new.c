@@ -1,41 +1,38 @@
 #include <new.h>
 
-// variables globales para este hilo:
-// ----------------------------------
+// variables globales para este pthread:
+// -------------------------------------
 // por ahora ninguna...
-// ----------------------------------
+// -------------------------------------
 
 void* rutina_new(void* puntero_null) {
 
-    t_pcb* pcb = NULL;
-    bool exito_al_inicializar_proceso = true;
+    t_tcb* tcb_hilo_main = NULL;
     log_debug(log_kernel_gral, "Hilo responsable de cola NEW listo.");
 
-    while(true) {
+    // Hago este 'if' por las diferentes posibilidades de "ingresar_a_ready()"
+    // según el algoritmo de planificación.
+    if (strcmp(algoritmo_plani, "FIFO") == 0) {
+        while(true) {
 
-        sem_wait(&sem_cola_new);
-        pcb = list_remove(cola_new, 0);
-        exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
-
-        while(!exito_al_inicializar_proceso) {
-
-            pthread_mutex_lock(&mutex_sincro_new_exit);
-            new_puede_intentar_crear_proceso = false;
-            pthread_mutex_unlock(&mutex_sincro_new_exit);
-            // Espera que EXIT avise la finalización de algún proceso.
-            sem_wait(&sem_sincro_new_exit);
-
-            // Reintento de nuevo proceso.
-            exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
+            tcb_hilo_main = inicializacion_de_proceso();
+            ingresar_a_ready_fifo(tcb_hilo_main);
         }
-
-        asociar_tid(pcb, pcb->hilo_main);
-        // ingresar_a_ready(pcb->hilo_main); // CONOCE EL ALGORITMO DE PLANIF.
-
-        pcb = NULL;
-
     }
+    else if (strcmp(algoritmo_plani, "PRIORIDADES") == 0) {
+        while(true) {
 
+            tcb_hilo_main = inicializacion_de_proceso();
+            ingresar_a_ready_prioridades(tcb_hilo_main);
+        }
+    }
+    else if (strcmp(algoritmo_plani, "CMN") == 0) {
+        while(true) {
+
+            tcb_hilo_main = inicializacion_de_proceso();
+            ingresar_a_ready_multinivel(tcb_hilo_main);
+        }
+    }
 
     return NULL;
 }
@@ -44,18 +41,56 @@ void* rutina_new(void* puntero_null) {
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
+t_tcb* inicializacion_de_proceso(void) {
+    t_pcb* pcb = NULL;
+    bool exito_al_inicializar_proceso = true;
+    
+    // Espera hasta saber que hay algún proceso en la cola NEW.
+    sem_wait(&sem_cola_new);
+    pcb = list_remove(cola_new, 0);
+
+    exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
+
+    while(!exito_al_inicializar_proceso) {
+
+        // Reintento de nuevo proceso.
+        exito_al_inicializar_proceso = reintentar_creacion_proceso(pcb);
+    }
+
+    asociar_tid(pcb, pcb->hilo_main);
+    pthread_mutex_lock(&mutex_procesos_activos);
+    list_add(procesos_activos, pcb);
+    pthread_mutex_unlock(&mutex_procesos_activos);
+    return pcb->hilo_main;
+}
+
+// ==========================================================================
+// ====  Funciones Internas:  ===============================================
+// ==========================================================================
+
 bool enviar_nuevo_proceso_a_memoria(t_pcb* pcb) {
     bool exito_al_crear_proceso_en_memoria;
     int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
     enviar_nuevo_proceso(pcb, socket_memoria);
     exito_al_crear_proceso_en_memoria = recibir_mensaje_de_rta(log_kernel_gral, "CREAR PROCESO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria (en Hilo NEW)", socket_memoria);
-
     return exito_al_crear_proceso_en_memoria;
 }
 
+bool reintentar_creacion_proceso(t_pcb* pcb) {
+    bool exito_creacion_proceso;
+    pthread_mutex_lock(&mutex_sincro_new_exit);
+    new_puede_intentar_crear_proceso = false;
+    pthread_mutex_unlock(&mutex_sincro_new_exit);
+    // Espera que EXIT avise la finalización de algún proceso.
+    sem_wait(&sem_sincro_new_exit);
+    // Reintenta la creación del proceso.
+    exito_creacion_proceso = enviar_nuevo_proceso_a_memoria(pcb);
+    return exito_creacion_proceso;
+}
+
 // ==========================================================================
-// ====  Funciones Internas:  ===============================================
+// ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
 void enviar_nuevo_proceso(t_pcb* pcb, int socket) {
@@ -67,9 +102,4 @@ void enviar_nuevo_proceso(t_pcb* pcb, int socket) {
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
-
-// ==========================================================================
-// ====  Funciones Auxiliares:  =============================================
-// ==========================================================================
-
 

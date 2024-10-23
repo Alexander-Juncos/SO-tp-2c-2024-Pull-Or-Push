@@ -5,9 +5,8 @@
 // ==========================================================================
 
 algoritmo_corto_code cod_algoritmo_planif_corto;
-int grado_multiprogramacion;
-int procesos_activos = 0;
-int contador_pid = 0;
+//int grado_multiprogramacion;
+//int procesos_activos = 0;
 bool hay_algun_proceso_en_exec = false;
 
 char* ip_memoria = NULL;
@@ -44,19 +43,20 @@ t_log* log_kernel_gral = NULL;
 // ==========================================================================
 
 sem_t sem_cola_new;
-sem_t sem_procesos_ready;
+sem_t sem_cola_ready_unica;
 sem_t sem_cola_blocked_io;
 sem_t sem_cola_exit;
-// Sacados del tp anterior
+/* Sacados del tp anterior
+----------------------------------------------
 pthread_mutex_t mutex_proceso_exec;
 pthread_mutex_t mutex_grado_multiprogramacion;
-pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_cola_ready;
-pthread_mutex_t mutex_cola_ready_plus;
-pthread_mutex_t mutex_lista_recurso_blocked;
-// FIN Sacados del tp anterior
+pthread_mutex_t mutex_cola_exit;
+----------------------------------------------
+*/
 sem_t sem_sincro_new_exit;
+pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_sincro_new_exit;
 
 // ==========================================================================
@@ -79,8 +79,13 @@ bool enviar_nuevo_hilo_a_memoria() {
 // ====  Funciones Utils:  ==================================================
 // ==========================================================================
 
-void crear_hilo(int pid) {
-	// DESARROLLANDO
+t_tcb* crear_tcb(int pid_pertenencia, int tid, int prioridad, char* path_instrucciones) {
+	t_tcb* tcb = malloc(sizeof(t_tcb));
+	tcb->tid = tid;
+	tcb->pid_pertenencia = pid_pertenencia;
+	tcb->prioridad = prioridad;
+	tcb->path_relativo_archivo_instrucciones = path_instrucciones;
+	return tcb;
 }
 
 void asociar_tid(t_pcb* pcb, t_tcb* tcb) {

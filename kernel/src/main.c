@@ -16,22 +16,27 @@ int main(int argc, char* argv[]) {
 
     /****************** Inicialización *****************/
     
-    if (argc == 3) // si no recibe ruta para archivo config
-    {
-        config = iniciar_config("default"); 
-    } 
-    else if (argc == 4) // si recibe ruta para archivo config
+    if (argc == 4) // si recibe ruta para archivo config
     {
         config = config_create(argv[3]);
-    } 
-    else
+    }
+    else if (argc == 3) // si no recibe ruta para archivo config
     {
-        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES.
+        config = iniciar_config("default"); 
+    }
+    else if (argc == 2)
+    {
+        imprimir_mensaje("Error: Debe ingresar tambien el [tamanio_proceso]");
+    }
+    else if (argc <= 1)
+    {
+        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
 
         /* COMENTO ESTO POR AHORA, PARA PROBAR LOS HANDSHAKES.
-        *
-        * imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
-        * exit(3);
+        -------------------------------------------------------
+        imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
+        exit(3);
+        -------------------------------------------------------
         */
     }
 
@@ -60,6 +65,8 @@ int main(int argc, char* argv[]) {
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
 
     /******************* Logica de Kernel *******************/
+    t_pcb* proceso_inicial = NULL;
+
     algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
     quantum_de_config = config_get_int_value(config, "QUANTUM");
 
@@ -71,10 +78,15 @@ int main(int argc, char* argv[]) {
     pthread_create(&thread_exit, NULL, rutina_exit, NULL);
     pthread_create(&thread_io, NULL, rutina_io, NULL);
     
+    // El Proceso inicial.
+    proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, argv[1]);
+    ingresar_a_new(proceso_inicial);
+
+
     iniciar_planificador();
 
 
-    imprimir_mensaje("pude completar check 1");
+    imprimir_mensaje("pude completar check 3");
 
     //terminar_programa();
     return 0;

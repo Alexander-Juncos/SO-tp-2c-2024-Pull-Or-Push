@@ -12,56 +12,8 @@
 #include <commons/config.h>
 #include <commons/collections/list.h>
 
-// Cambié el uso de sleep(), por el uso de usleep(), que usa MICROSEG en vez de SEG.
-// Esto nos permite ser más exactos en los tiempos de espera, y no tener que usar "div_t".
-// Cambié el uso de sleep(), por el uso de usleep(), que usa MICROSEG en vez de SEG.
-// Esto nos permite ser más exactos en los tiempos de espera, y no tener que usar "div_t".
+// para el uso de usleep(), que usa MICROSEG en vez de MILISEG.
 #define MILISEG_A_MICROSEG 1000
-
-typedef enum
-{
-/* -------------------------------------------------------------------------------------------- */
-/* ------ Motivos que siempre indican FIN DE PROCESO (mueven el proceso al estado EXIT). ------ */
-/* -------------------------------------------------------------------------------------------- */
-    // Se leyó la "instrucción EXIT".
-	SUCCESS,
-    // Memoria no pudo asignar más tamanio al proceso (falló la "instrucción RESIZE").
-    OUT_OF_MEMORY,
-/* ------------------------------------------------------------------------------------------------------------------------------- */
-/* ------ Motivos que siempre indican que el PROCESO ESTÁ LISTO PARA SEGUIR EJECUTANDO (mueven el proceso al estado READY). ------ */
-/* ------------------------------------------------------------------------------------------------------------------------------- */
-    // En RR o VRR, se consumió todo el quantum.
-    INTERRUPTED_BY_QUANTUM,
-
-/* -------------------------------------------------------------------------------------------------------------------------- */
-/* ------ Motivos que indican un BLOQUEO DE PROCESO (mueven el proceso al estado BLOCKED), siempre que la interfaz ---------- */
-/* ------ solicitada existe y acepta la operación. Caso contrario, se realiza un FIN DE PROCESO por INVALID_INTERFACE. ------ */
-/* -------------------------------------------------------------------------------------------------------------------------- */
-    // Se leyó la "instrucción IO_GEN_SLEEP".
-    IO,
-    // Se leyó la "instrucción IO_FS_CREATE".
-    FS_CREATE,
-    // Se leyó la "instrucción IO_FS_DELETE".
-    FS_DELETE,
-    // Se leyó la "instrucción IO_FS_TRUNCATE".
-    FS_TRUNCATE,
-    // Se leyó la "instrucción IO_FS_WRITE".
-    FS_WRITE,
-    // Se leyó la "instrucción IO_FS_READ".
-    FS_READ,
-
-/* ------------------------------------------------------------------------------------------------------------------------- */
-/* ------ Motivos que indican que el PROCESO SIGUE EJECUTANDO (permanece en el estado EXEC), siempre que el recurso -------- */
-/* ------ solicitado existe y dispone de instancias disponibles. ----------------------------------------------------------- */
-/* ------ Si no existe se realiza un FIN DE PROCESO por INVALID_RESOURCE. -------------------------------------------------- */
-/* ------ Por su parte, si no hay instancias disponibles (solo en el caso del WAIT) se realiza un BLOQUEO DE PROCESO. ------ */
-/* ------------------------------------------------------------------------------------------------------------------------- */
-    // Se leyó la "instrucción WAIT", que solicita retener una instancia de un recurso.
-    WAIT,
-    // Se leyó la "instrucción SIGNAL", que solicita liberar una instancia de un recurso.
-    SIGNAL
-
-} motivo_desalojo_code;
 
 typedef struct
 {
@@ -75,17 +27,13 @@ typedef struct
     uint32_t HX;
 } t_reg_cpu;
 
+// Memoria capaz use esto? No lo sé.
 typedef struct
 {
     int pid;
     uint32_t PC;
-    t_reg_cpu_uso_general reg_cpu_uso_general;
+    t_reg_cpu registros_cpu;
 } t_contexto_de_ejecucion;
-
-typedef struct {
-    t_contexto_de_ejecucion contexto;
-    motivo_desalojo_code motiv;
-} t_desalojo;
 
 typedef struct 
 {
@@ -108,8 +56,9 @@ typedef struct
 // Estructura para usar con el diccionario de colas Ready, en algoritmo MULTINIVEL.
 typedef struct
 {
-    int cantidad_de_hilos_activos;
+    //int cantidad_de_hilos_activos;
     t_list* cola_ready;
+    sem_t sem_cola_ready;
 } t_cola_ready;
 
 typedef struct
@@ -119,6 +68,7 @@ typedef struct
     t_tcb* bloqueados_esperando;
 } t_mutex;
 
+/* ==========  OBSOLETO  ====================================================
 typedef struct
 {
     char* nombre;
@@ -151,6 +101,7 @@ typedef enum // son los posibles mensajes q puede recibir por interrupción CPU
     FINALIZAR, // interrumpido de forma "manual". NO SÉ SI ES NECESARIO TENER ESTE COD. EN ESTE TP
     DESALOJAR // por fin de quantum
 } t_interrupt_code; // revisar si no requiere modificación, por la consigna de este TP
+*/ // =======================================================================
 
 /**
 * @brief Imprime un saludo por consola
