@@ -107,6 +107,7 @@ void instruccion_log (t_list* param); // revisar formato al loguear registro
 char* fetch (void);
 void recibir_pedido_ejecucion(void);
 bool obtener_contexto_ejecucion(int pid, int tid);
+void actualizar_contexto_ejecucion(void);
 
 // instrucciones lecto-escritura memoria
 void instruccion_read_mem (t_list* param);  /* PENDIENTE IMPLEMENTAR USO MMU*/
