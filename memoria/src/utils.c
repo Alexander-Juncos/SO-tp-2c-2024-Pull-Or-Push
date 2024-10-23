@@ -17,6 +17,7 @@ t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 pthread_mutex_t mutex_procesos_cargados;
 
 t_memoria_particionada* memoria;
+pthread_mutex_t mutex_memoria;
 
 t_contexto_de_ejecucion* contexto_ejecucion;
 // pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
@@ -72,6 +73,7 @@ bool iniciar_memoria()
 
     // reservo espacio usuario
     memoria->espacio_usuario = malloc(memoria->tamano_memoria);
+    pthread_mutex_init(&mutex_memoria, NULL);
 
     // inicio lista procesos y su mutex
     procesos_cargados = list_create();
@@ -116,8 +118,10 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     t_pcb_mem* pcb_new = NULL;
     t_tcb_mem* tcb_0 = NULL;
 
-    // busca si hay particion libre (din-fijas) - x ahora STUB afirmativo
+    // busca si hay particion libre (din-fijas) - deja protegida la memoria mientras busca particiones (revisar si no es "Mucha" SC)
+    pthread_mutex_lock(&mutex_memoria);
     pcb_new->particion = particion_libre(tamanio);
+    pthread_mutex_unlock(&mutex_memoria);
 
     if (pcb_new->particion == NULL) // si no hay particion aborto
     {
@@ -368,13 +372,138 @@ t_list* crear_lista_de_particiones()
 
 t_particion* particion_libre (int tamanio) // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
 {
-    t_particion* particion = malloc(t_particion);
+    t_particion* particion;
+    char* algoritmo = string_new();
 
-    // no verifica nada
-    particion->base = 0;
-    particion->limite = tamanio - 1;
+    // Primero buscamos una particion que cumpla lo requerido
+    switch (memoria->algorit_busq)
+    {
+    case FIRST_FIT:
+        string_append(algoritmo, "FIRST_FIT");
+        particion = alg_first_fit(tamanio);
+        break;
+    case BEST_FIT:
+        string_append(algoritmo, "BEST_FIT");
+        particion = alg_best_fit(tamanio);
+        break;
+    case WORST_FIT:
+        string_append(algoritmo, "WORST_FIT");
+        particion = alg_worst_fit(tamanio);
+        break;
+    }
 
-    return particion;
+    // Si no encontro particion retorno NULL
+    if (particion == NULL)
+    {
+        log_trace(log_memoria_gral, "No hay particion de tamaño <%d bytes> disponible.", tamanio);
+        free(algoritmo);
+        return particion;
+    }
+
+    // Si hay particiones fijas devolvemos la particion hallada
+    if (memoria->particiones_dinamicas == false)
+    {
+        log_trace(log_memoria_gral, "Particion Fija hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, particion->limite);
+        particion->ocupada = true;
+        free(algoritmo);
+        return particion;
+    }
+
+    // Si las particiones son dinamicas recortamos solo lo necesario
+    log_trace(log_memoria_gral, "Particion Dinamica hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, (particion->base + tamanio - 1));
+    free(algoritmo);
+    return recortar_particion(particion, tamanio);
+}
+
+t_particion* alg_first_fit(int tamanio) // devuelve directamente la referencia a una particion de la lista
+{
+    t_particion* particion = NULL;
+    t_particion* aux;
+    unsigned int tam_aux;
+    
+    for (int i=0; i < list_size(memoria->lista_particiones); i++)
+    {
+        aux = list_get(memoria->lista_particiones, i);
+        tam_aux = aux->limite - aux->base +1;
+        // si no esta ocupada y su tamaño es suficiente o sobra (la primera q encuentre)
+        if (aux->ocupada == false && tam_aux >= tamanio)
+        {
+            particion = aux;
+            return particion;
+        }
+        log_trace(log_memoria_gral, "Particion ocupada [FIRST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+    }
+
+    return particion; // si no encontro va a retornar NULL
+}
+
+t_particion* alg_best_fit(int tamanio) // devuelve directamente la referencia a una particion de la lista
+{
+    t_particion* particion = NULL;
+    t_particion* aux;
+    unsigned int tam_aux;
+    unsigned int tam_part_elegida = memoria->tamano_memoria + 1; 
+    // un valor q asegura q sea remplazado aunque solo haya una particion dinamica q ocupe toda la memoria
+    
+    for (int i=0; i < list_size(memoria->lista_particiones); i++)
+    {
+        aux = list_get(memoria->lista_particiones, i);
+        tam_aux = aux->limite - aux->base +1;
+        // si no esta ocupada, su tamaño es suficiente o sobra y ademas "su tamaño" es menor a la ultima encontrada
+        if (aux->ocupada == false && tam_aux >= tamanio && tam_aux < tam_part_elegida)
+        {
+            tam_part_elegida = tam_aux;
+            particion = aux;
+            log_trace(log_memoria_gral, "Particion posible [BEST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+        }
+        log_trace(log_memoria_gral, "Particion ocupada [BEST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+    }
+
+    return particion; // si no encontro va a retornar NULL
+}
+
+t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a una particion de la lista
+{
+    t_particion* particion = NULL;
+    t_particion* aux;
+    unsigned int tam_aux;
+    unsigned int tam_part_elegida = 0; // asegura q la primera valida entre
+    
+    for (int i=0; i < list_size(memoria->lista_particiones); i++)
+    {
+        aux = list_get(memoria->lista_particiones, i);
+        tam_aux = aux->limite - aux->base +1;
+        // si no esta ocupada, su tamaño es suficiente o sobra y ademas "su tamaño" es menor a la ultima encontrada
+        if (aux->ocupada == false && tam_aux >= tamanio && tam_aux > tam_part_elegida)
+        {
+            tam_part_elegida = tam_aux;
+            particion = aux;
+            log_trace(log_memoria_gral, "Particion posible [WORST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+        }
+        log_trace(log_memoria_gral, "Particion ocupada [WORST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+    }
+
+    return particion; // si no encontro va a retornar NULL
+}
+
+t_particion* recortar_particion(t_particion* p, int tamanio)
+{
+    // creo nuevo elemento de la lista (nueva particion)
+    t_particion* p_new = malloc(sizeof(t_particion));
+    p_new->base = p->base;
+    p_new->limite = tamanio -1;
+    p_new->ocupada = true;
+
+    // agrega el nuevo elemento
+    list_add(memoria->lista_particiones, p_new);
+    
+    // como la referencia ya apunta a un elemento existente lo modifico
+    p->base = p_new->limite + 1;
+    /*
+        la particion recibida sigue estando libre, solo q su base se adelanto al final
+        de la nueva particion creada...
+    */
+    return p_new;
 }
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid)

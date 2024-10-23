@@ -46,6 +46,7 @@ typedef enum {
 typedef struct {
     unsigned int base;
     unsigned int limite;
+    bool ocupada;
 } t_particion;
 
 typedef struct {
@@ -82,6 +83,7 @@ typedef struct {
     hay q generar metodos para q la lista_particiones se mantenga ordenada
 */
 extern t_memoria_particionada* memoria;
+extern pthread_mutex_t mutex_memoria;
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
@@ -89,7 +91,7 @@ extern t_memoria_particionada* memoria;
 
 bool iniciar_memoria();
 t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script);
-t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0);
+t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0); // REVISAR TEMA DE Zona Critica al buscar particion
 bool cargar_contexto_ejecucion(int pid, int tid); 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); 
 char* obtener_instruccion(uint32_t num_instruccion);
@@ -107,7 +109,21 @@ void rutina_contexto_ejecucion(t_list* param);
 
 void retardo_operacion(void);
 t_list* crear_lista_de_particiones(void);
-t_particion* particion_libre (int tamanio); // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
+
+/// @brief Segun el algoritmo halla una particion valida, si no hay particion din la marca como ocupada antes de retornar.
+/// @param tamanio      tamanio de la particion requerida.
+/// @return Si no hay particion valida retorna NULL, si hay y usa particiones estaticas retorna la hallada. Si hay particion dinamica retornara 
+///         la funcion recortar_particion.
+t_particion* particion_libre (int tamanio); // PENDIENTE REVISAR retorno en particiones dinamicas
+
+// Devuelven referencias a la lista de particiones (no la modifican)
+t_particion* alg_first_fit(int tamanio);
+t_particion* alg_best_fit(int tamanio);
+t_particion* alg_worst_fit(int tamanio);
+
+// Crea un nuevo elemento de la lista particiones (ocupado) y modifica el recibido (su base sigue al limite del nuevo elem)
+void recortar_particion(t_particion* part, int tamanio); // PENDIENTE
+
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
