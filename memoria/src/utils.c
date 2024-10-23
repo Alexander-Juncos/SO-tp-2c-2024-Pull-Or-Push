@@ -77,7 +77,6 @@ bool iniciar_memoria()
     procesos_cargados = list_create();
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
     // inicio contexto_ejecucion
-    pthread_mutex_init(&mutex_contexto_ejecucion, NULL);
     contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion));
     
     log_debug(log_memoria_gral, "Memoria iniciada correctamente");
@@ -236,6 +235,7 @@ bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
     log_info(log_memoria_oblig, "## Contexto Actualizado - (PID:TID) - (%d:%d)",
     contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
     
+    retardo_operacion();
     return true;
 }
 
@@ -310,6 +310,7 @@ void rutina_contexto_ejecucion(t_list* param)
     log_info(log_memoria_oblig, "## Contexto Solicitado - (PID:TID) - (%d:%d)",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
 
+    retardo_operacion();
     paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_cpu);
     eliminar_paquete(paquete);

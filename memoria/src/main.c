@@ -105,6 +105,8 @@ void atender_cpu()
 
             actualizar_contexto_ejecucion(pedido);
 
+            enviar_mensaje("OK",socket_cpu); // faltaba agregarlo
+
             list_destroy_and_destroy_elements(pedido, free);
             break;
 
@@ -118,6 +120,8 @@ void atender_cpu()
 
             aux_datos_pedido = list_get(pedido, 0);
             aux_datos_paquete = obtener_instruccion(*(uint32_t*)aux_datos_pedido);
+
+            retardo_operacion();
             
             enviar_mensaje((char*)aux_datos_paquete, socket_cpu);
 
@@ -134,6 +138,7 @@ void atender_cpu()
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
+            retardo_operacion();
             enviar_mensaje("Recibi operación: ACCESO_LECTURA", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: ACCESO_LECTURA");
             
@@ -146,6 +151,7 @@ void atender_cpu()
             pedido = recibir_paquete(socket_cpu);
 
             // Stub temporal
+            retardo_operacion();
             enviar_mensaje("Recibi operación: ACCESO_ESCRITURA", socket_cpu);
             log_debug(log_memoria_gral, "Operacion: ACCESO_ESCRITURA");
 
