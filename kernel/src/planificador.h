@@ -40,8 +40,12 @@ void planific_corto_rr(void);
 * @note  Asume que en ese momento no hay Hilo en ejecución (el CPU está esperando).
 */
 void ejecutar_siguiente_hilo(t_list* cola_ready);
-
-
+/**
+* @brief Espera hasta que CPU devuelva el control a Kernel. Se recibe la syscall
+*        o interrupción, para luego atenderla.
+* @param codigo_operacion : La variable donde se guarda el op_code recibido.
+* @return : Una lista con los valores (elementos) del paquete recibido.
+*/
 t_list* recibir_de_cpu(int* codigo_operacion);
 
 
@@ -104,6 +108,8 @@ void ingresar_a_ready_multinivel(t_tcb* tcb);
 */
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb);
 
+void enviar_pedido_de_dump_a_memoria(t_tcb* tcb);
+
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
@@ -111,6 +117,8 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb);
 t_pcb* crear_pcb(int pid, int tamanio);
 
 t_cola_ready* crear_ready_multinivel();
+
+void enviar_pedido_de_dump(int pid, int tid, int socket);
 
 /* OBSOLETO. --------------
 t_recurso* encontrar_recurso_del_sistema(char* nombre);

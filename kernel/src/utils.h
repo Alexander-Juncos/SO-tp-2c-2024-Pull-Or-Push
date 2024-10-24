@@ -59,7 +59,7 @@ extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos).
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
-extern t_pcb* proceso_exec; // Estado EXEC. Es un t_pcb* (Proceso).
+//extern t_pcb* proceso_exec; // Estado EXEC. Es un t_pcb* (Proceso).
 extern t_list* procesos_activos; // Es una lista de t_pcb* (Procesos). Son los que están en READY, EXEC, o BLOCKED.
 extern t_list* procesos_exit; // Es una lista de t_pcb* (Procesos). Son los que están en EXIT.
 
@@ -88,6 +88,7 @@ extern pthread_mutex_t mutex_cola_exit;
 ----------------------------------------------
 */
 extern sem_t sem_sincro_new_exit;
+extern pthread_mutex_t mutex_hilo_exec;
 extern pthread_mutex_t mutex_procesos_activos;
 extern pthread_mutex_t mutex_sincro_new_exit;
 
@@ -99,9 +100,10 @@ extern pthread_mutex_t mutex_sincro_new_exit;
 */
 void enviar_orden_de_interrupcion(void);
 /**
-* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
+* @brief  DESARROLLANDO !!! Se conecta con memoria, le envía el pedido de creación de nuevo
 *         hilo, recibe la respuesta, y se desconecta.
 * @return Exito al inicializar el nuevo hilo.
+* @note   DESARROLLANDO !!!!!!!!!
 */
 bool enviar_nuevo_hilo_a_memoria(); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

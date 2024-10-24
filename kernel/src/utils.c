@@ -27,7 +27,7 @@ t_list* cola_exit = NULL;
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
-t_pcb* proceso_exec = NULL;
+//t_pcb* proceso_exec = NULL;
 t_list* procesos_activos = NULL;
 t_list* procesos_exit = NULL;
 
@@ -56,6 +56,7 @@ pthread_mutex_t mutex_cola_exit;
 ----------------------------------------------
 */
 sem_t sem_sincro_new_exit;
+pthread_mutex_t mutex_hilo_exec;
 pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_sincro_new_exit;
 

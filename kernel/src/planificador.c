@@ -1,5 +1,6 @@
 #include "planificador.h"
 #include "quantum.h"
+#include "respuesta_memory_dump.h"
 
 // ==========================================================================
 // ====  Variables globales (exclusivas del planificador):  =================
@@ -55,26 +56,29 @@ void planific_corto_fifo(void) {
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
 
     sem_wait(&sem_cola_ready_unica);
+    pthread_mutex_lock(&mutex_hilo_exec);
     ejecutar_siguiente_hilo(cola_ready_unica);
+    pthread_mutex_unlock(&mutex_hilo_exec);
 
     while(true) {
 
         // Se queda esperando el "desalojo" del proceso.
         argumentos_recibidos = recibir_de_cpu(&codigo_recibido);
 
-        // -!!!!--- ACÁ ESTOY TRABAJANDO ---!!!!-
-        // -----   ----!!----   -----   -------
+        //hay_algun_proceso_en_exec = false;
 
-        hay_algun_proceso_en_exec = false;
+        //pthread_mutex_lock(&mutex_proceso_exec);
 
-        pthread_mutex_lock(&mutex_proceso_exec);
-
-        desalojo_y_argumentos = recibir_paquete(socket_cpu_dispatch);
-		t_desalojo desalojo = deserializar_desalojo(list_get(desalojo_y_argumentos, 0));
-        actualizar_contexto_de_ejecucion_de_pcb(desalojo.contexto, proceso_exec);
 
         // EN DESARROLLO... Casi todo del TP viejo
-		switch (desalojo.motiv) {
+		switch (codigo_recibido) {
+
+        // -!!!!--- ACÁ ESTOY TRABAJANDO ---!!!!-
+        // -----   ----!!----   -----   -------!!!!!!!!
+            case SYSCALL_MEMORY_DUMP:
+
+            break;
+
 			case SUCCESS:
             pthread_mutex_lock(&mutex_procesos_activos);
             pthread_mutex_lock(&mutex_cola_exit);
@@ -82,19 +86,6 @@ void planific_corto_fifo(void) {
             sem_post(&sem_procesos_exit);
             procesos_activos--;
             log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: SUCCESS", proceso_exec->pid); // log Obligatorio.
-            log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio.
-            proceso_exec = NULL;
-            pthread_mutex_unlock(&mutex_cola_exit);
-            pthread_mutex_unlock(&mutex_procesos_activos);
-            break;
-
-            case OUT_OF_MEMORY:
-            pthread_mutex_lock(&mutex_procesos_activos);
-            pthread_mutex_lock(&mutex_cola_exit);
-            list_add(cola_exit, proceso_exec);
-            sem_post(&sem_procesos_exit);
-            procesos_activos--;
-            log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: OUT_OF_MEMORY", proceso_exec->pid); // log Obligatorio.
             log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio.
             proceso_exec = NULL;
             pthread_mutex_unlock(&mutex_cola_exit);
@@ -241,7 +232,7 @@ void planific_corto_fifo(void) {
         }
 
 
-        pthread_mutex_unlock(&mutex_proceso_exec);
+        //pthread_mutex_unlock(&mutex_proceso_exec);
         list_destroy_and_destroy_elements(desalojo_y_argumentos, (void*)free);
 	}
 }
@@ -988,7 +979,6 @@ void planific_corto_rr(void) {
 // ==========================================================================
 
 void ejecutar_siguiente_hilo(t_list* cola_ready) {
-
     hilo_exec = list_remove(cola_ready, 0);
     enviar_orden_de_ejecucion_al_cpu(hilo_exec);
     log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO", hilo_exec->pid_pertenencia, hilo_exec->tid);
@@ -1067,6 +1057,17 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
     eliminar_paquete(paquete);
 }
 
+void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
+    int* socket_memoria = malloc(sizeof(int));
+    *socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    enviar_pedido_de_dump(tcb->pid_pertenencia, tcb->tid, *socket_memoria);
+
+    // acá no debería haber problema de memory leak, pues al terminar el hilo detacheado, lo liberaría.
+    pthread_t* thread_respuesta_memory_dump = malloc(sizeof(pthread_t));
+    pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)socket_memoria);
+    pthread_detach(*thread_respuesta_memory_dump);
+}
+
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
@@ -1089,6 +1090,13 @@ t_cola_ready* crear_ready_multinivel() {
     return nueva_estructura_cola_ready;
 }
 
+void enviar_pedido_de_dump(int pid, int tid, int socket) {
+    t_paquete* paquete = crear_paquete(MEMORY_DUMP);
+    agregar_a_paquete(paquete, (void*)&pid, sizeof(int));
+    agregar_a_paquete(paquete, (void*)&tid, sizeof(int));
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
 
 
 /* OBSOLETO. LO DEJO POR LAS DUDAS ==================================

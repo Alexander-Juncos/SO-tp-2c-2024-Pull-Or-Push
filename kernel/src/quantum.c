@@ -17,22 +17,24 @@ void* rutina_quantum(void *puntero_null) {
         usleep(quantum_en_microsegs);
 
         pthread_mutex_lock(&mutex_rutina_quantum);
+        pthread_mutex_lock(&mutex_hilo_exec);
         enviar_orden_de_interrupcion();
+        pthread_mutex_unlock(&mutex_hilo_exec);
         pthread_mutex_unlock(&mutex_rutina_quantum);
     }
     
     return NULL;
 }
 
-void esperar_cpu_rr(void) {
+t_list* esperar_cpu_rr(int* codigo_operacion) {
     pthread_mutex_init(&mutex_rutina_quantum, NULL);
     pthread_t thread_quantum;
     timer = temporal_create();
     pthread_create(&thread_quantum, NULL, rutina_quantum, NULL);
     pthread_detach(thread_quantum);
 
-    // Falta definir esta funcion.
-    recibir_de_cpu(socket_cpu_dispatch, , );
+    t_list* argumentos_recibidos = NULL;
+    argumentos_recibidos = recibir_de_cpu(codigo_operacion);
 
     temporal_stop(timer);
     pthread_mutex_lock(&mutex_rutina_quantum);
