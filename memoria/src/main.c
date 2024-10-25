@@ -81,7 +81,7 @@ void atender_cpu()
 {
     int operacion;
     t_list* pedido;
-    t_paquete* paquete;
+    // t_paquete* paquete; // no lo termine usando
     void* aux_datos_pedido = NULL;
     void* aux_datos_paquete = NULL;
 
@@ -134,28 +134,18 @@ void atender_cpu()
             aux_datos_paquete = NULL;
             break;
         
-        case ACCESO_LECTURA: // PENDIENTE - ESPACIO USUARIO + FUNCIONES
+        case ACCESO_LECTURA:
             pedido = recibir_paquete(socket_cpu);
 
-            // Stub temporal
-            retardo_operacion();
-            enviar_mensaje("Recibi operación: ACCESO_LECTURA", socket_cpu);
-            log_debug(log_memoria_gral, "Operacion: ACCESO_LECTURA");
-            
-            // pendiente hasta desarrollo de espacio usuario
+            rutina_acceso_lectura(pedido);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
         
-        case ACCESO_ESCRITURA: // PENDIENTE - ESPACIO USUARIO + FUNCIONES
+        case ACCESO_ESCRITURA:
             pedido = recibir_paquete(socket_cpu);
 
-            // Stub temporal
-            retardo_operacion();
-            enviar_mensaje("Recibi operación: ACCESO_ESCRITURA", socket_cpu);
-            log_debug(log_memoria_gral, "Operacion: ACCESO_ESCRITURA");
-
-            // pendiente hasta desarrollo de espacio usuario
+            rutina_acceso_escritura(pedido);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

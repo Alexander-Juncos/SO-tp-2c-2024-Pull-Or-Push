@@ -3,6 +3,7 @@
 // ==========================================================================
 // ====  Variables globales:  ===============================================
 // ==========================================================================
+const int BYTES_ACCESO = 4;
 
 int socket_cpu = 1;
 int socket_escucha = 1;
@@ -19,7 +20,7 @@ pthread_mutex_t mutex_procesos_cargados;
 t_memoria_particionada* memoria;
 pthread_mutex_t mutex_memoria;
 
-t_contexto_de_ejecucion* contexto_ejecucion;
+t_contexto_de_ejecucion_mem* contexto_ejecucion;
 // pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 // ==========================================================================
@@ -79,7 +80,7 @@ bool iniciar_memoria()
     procesos_cargados = list_create();
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
     // inicio contexto_ejecucion
-    contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion));
+    contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion_mem));
     
     log_debug(log_memoria_gral, "Memoria iniciada correctamente");
     return true;
@@ -133,6 +134,7 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     // inicializo resto del pcb
     pcb_new->pid = pid;
     pcb_new->lista_tcb = list_create();
+    pthread_mutex_init(&(pcb_new->sem_p_mutex), NULL);
 
     // inicializo el tcb-> tid=0
     tcb_0 = iniciar_tcb(pid, 0, ruta_script_tid_0);
@@ -140,12 +142,15 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     if (tcb_0 == NULL)
     {
         free(pcb_new->lista_tcb);
+        pthread_mutex_destroy(&(pcb_new->sem_p_mutex));
         free(pcb_new->particion);
         free(pcb_new);
         log_error(log_memoria_gral, 
                     "ERROR: thread 0 del proceso %d no pudo ser iniciado. Abortando creacion de pcb",pid);
         return NULL;
     }
+
+    list_add(pcb_new->lista_tcb, tcb_0);
 
     // este log luego deberia cambiarse por un log obligatorio
     log_debug(log_memoria_gral, 
@@ -258,11 +263,176 @@ char* obtener_instruccion(uint32_t num_instruccion)
     return instruccion;
 }
 
+char* mem_lectura (unsigned int desplazamiento)
+{
+    char* data = malloc (BYTES_ACCESO);// bytes de lectura
+
+    // apunto al espacio de usuario
+    void* aux_direccion = memoria->espacio_usuario; 
+    // me muevo a la particion del proceso en ejecucion
+    aux_direccion += contexto_ejecucion->pcb->particion->base;
+
+    // Lo siguiente es solo a motivo de debug 
+    void* base_part = aux_direccion;
+    void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
+
+    // me desplazo al byte solicitado
+    aux_direccion += desplazamiento;
+
+    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+                                desplazamiento);
+    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+                                memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
+                                base_part, limite_part, aux_direccion);
+    
+    
+    memcpy(data, aux_direccion, BYTES_ACCESO);
+
+
+    log_debug(log_memoria_gral, "Resultado ACCESO_LECTURA: %s", data);
+    
+    // LOG OBLIGATORIO
+    log_info(log_memoria_oblig, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                BYTES_ACCESO);
+
+    retardo_operacion();
+    return data;
+}
+
+bool mem_escritura (unsigned int desplazamiento, void* data)
+{
+    // apunto al espacio de usuario
+    void* aux_direccion = memoria->espacio_usuario; 
+    // me muevo a la particion del proceso en ejecucion
+    aux_direccion += contexto_ejecucion->pcb->particion->base;
+
+    // Lo siguiente es solo a motivo de debug 
+    void* base_part = aux_direccion;
+    void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
+
+    // me desplazo al byte solicitado
+    aux_direccion += desplazamiento;
+
+    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+                                desplazamiento);
+    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+                                memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
+                                base_part, limite_part, aux_direccion);
+
+
+    memcpy(aux_direccion, data, BYTES_ACCESO);
+
+
+    log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                BYTES_ACCESO);
+
+    retardo_operacion();
+    return true;
+}
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
-bool memory_dump_fs (t_list* pedido)
+// Kernel - Memoria
+
+void rutina_crear_proceso(t_list* param, int socket_cliente)
+{
+    void* aux;
+    int pid;
+    int tamanio;
+    char* ruta;
+
+    // descargo parametros
+    aux = list_get(param, 0);
+    int pid = *(int*) aux;
+    aux = list_get(param, 1);
+    tamanio = *(int*) aux;
+    aux = list_get(param, 2);
+    ruta = aux;
+
+    t_pcb_mem* pcb_new = iniciar_pcb(pid, tamanio, ruta);
+
+    if (pcb_new == NULL) {
+        enviar_mensaje("INSUFICIENTE/ERROR", socket_cliente);
+    } else {
+        // agrego pcb a la lista
+        pthread_mutex_lock(mutex_procesos_cargados);
+        list_add(procesos_cargados, pcb_new);
+        pthread_mutex_unlock(mutex_procesos_cargados);
+
+        enviar_mensaje("OK", socket_cliente);
+        
+        log_info(log_memoria_oblig, "## Proceso Creado-  PID: %d - Tamaño: %d", pid, tamanio);
+    }
+}
+
+void rutina_finalizar_proceso(t_list* param, int socket_cliente); // PENDIENTE
+
+void rutina_crear_hilo(t_list* param, int socket_cliente)
+{
+    void* aux;
+    int tid;
+    char* ruta;
+
+    // descargo parametros
+    // aux = list_get(param, 0);
+    // int pid = *(int*) aux;
+    aux = list_get(param, 0);
+    tid = *(int*) aux;
+    aux = list_get(param, 1);
+    ruta = aux;
+
+    t_pcb_mem* tcb_new = iniciar_tcb(contexto_ejecucion->pcb->pid, tid, ruta);
+
+    if (tcb_new == NULL) {
+        enviar_mensaje("ERROR", socket_cliente);
+    } else {
+        // agrego tcb a la lista del proceso
+        pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
+        list_add(contexto_ejecucion->pcb->lista_tcb, tcb_new);
+        pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
+
+        enviar_mensaje("OK", socket_cliente);
+
+        log_info(log_memoria_oblig, "## Hilo Creado - (PID:TID) - (%d:%d)", contexto_ejecucion->pcb->pid, tid);
+    }
+}
+
+void rutina_finalizar_hilo(t_list* param, int socket_cliente)
+{
+    void* aux;
+    int tid;
+    char* ruta;
+
+    // descargo parametros
+    // aux = list_get(param, 0);
+    // int pid = *(int*) aux;
+    aux = list_get(param, 0);
+    tid = *(int*) aux;
+    aux = list_get(param, 1);
+    ruta = aux;
+
+    t_pcb_mem* tcb_new = iniciar_tcb(contexto_ejecucion->pcb->pid, tid, ruta);
+
+    pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
+    eliminar_tcb(contexto_ejecucion->pcb->lista_tcb, tid);
+    pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
+
+    log_info(log_memoria_oblig, "## Hilo Destruido - (PID:TID) - (%d:%d)", contexto_ejecucion->pcb->pid, tid);
+
+    enviar_mensaje("OK", socket_cliente);
+}
+
+void memory_dump_fs (t_list* pedido, int socket_cliente) // PENDIENTE
 {
     char* ip;
     char* puerto;
@@ -287,6 +457,8 @@ bool memory_dump_fs (t_list* pedido)
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
     return true;
 }
+
+// CPU - Memoria
 
 void rutina_contexto_ejecucion(t_list* param)
 {
@@ -318,6 +490,41 @@ void rutina_contexto_ejecucion(t_list* param)
     paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_cpu);
     eliminar_paquete(paquete);
+}
+
+void rutina_acceso_lectura(t_list* param)
+{
+    unsigned int direccion;
+    void* data;
+    t_paquete* paquete;
+
+    data = list_get(param, 0);
+    direccion = *(unsigned int*) data;
+
+    data = mem_lectura(direccion);
+
+    paquete = crear_paquete(ACCESO_LECTURA);
+    agregar_a_paquete(paquete, data, BYTES_ACCESO);
+    enviar_paquete(paquete, socket_cpu);
+    eliminar_paquete(paquete);
+    free(data);
+}
+
+void rutina_acceso_escritura(t_list* param)
+{
+    unsigned int direccion;
+    void* data;
+    t_paquete* paquete;
+
+    data = list_get(param, 0);
+    direccion = *(unsigned int*) data;
+
+    data = list_get(param, 1);
+
+    mem_escritura(direccion, data);
+
+    // podria ponerse un checkeo aca ya q mem_escritura podria devolver bool (si se hiciera captacion de errores)
+    enviar_mensaje("OK", socket_cpu); 
 }
 
 // ==========================================================================
@@ -373,21 +580,21 @@ t_list* crear_lista_de_particiones()
 t_particion* particion_libre (int tamanio) // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
 {
     t_particion* particion;
-    char* algoritmo = string_new();
+    char* algoritmo;
 
     // Primero buscamos una particion que cumpla lo requerido
     switch (memoria->algorit_busq)
     {
     case FIRST_FIT:
-        string_append(algoritmo, "FIRST_FIT");
+        algoritmo = string_from_format("FIRST_FIT");
         particion = alg_first_fit(tamanio);
         break;
     case BEST_FIT:
-        string_append(algoritmo, "BEST_FIT");
+        algoritmo = string_from_format("BEST_FIT");
         particion = alg_best_fit(tamanio);
         break;
     case WORST_FIT:
-        string_append(algoritmo, "WORST_FIT");
+        algoritmo = string_from_format("WORST_FIT");
         particion = alg_worst_fit(tamanio);
         break;
     }
@@ -579,16 +786,15 @@ t_pcb_mem* obtener_pcb (int pid)
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
 {
     int i;
-    bool coincidencia = true;
+    bool coincidencia = false;
     t_tcb_mem* tcb;
 
     i = 0;
-    coincidencia = false;
     while (!coincidencia && i < list_size(lista_tcb) )
     {
-        tcb = (t_tcb_mem*) list_get(lista_tcbs, i);
+        tcb = (t_tcb_mem*) list_get(lista_tcb, i);
         i++; 
-        if (pcb->pid == tid)
+        if (tcb->tid == tid)
             coincidencia = true;
     }
     if (!coincidencia)
@@ -599,19 +805,46 @@ t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
 t_paquete* empaquetar_contexto (void)
 {
     t_paquete* p = crear_paquete(CONTEXTO_EJECUCION);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->PC);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.AX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.BX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.CX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.DX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.EX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.FX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.GX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.HX);
-    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->base);
-    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->limite);
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->PC), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.AX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.BX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.CX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.DX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.EX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.FX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.GX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.HX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->base), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->limite), sizeof(uint32_t));
     
     return p;
+}
+
+void eliminar_tcb( t_list* lista, int tid)
+{
+    int i;
+    bool coincidencia = false;
+    t_tcb_mem* tcb;
+
+    i = 0;
+    while (!coincidencia && i < list_size(lista) )
+    {
+        tcb = (t_tcb_mem*) list_get(lista, i);
+        i++; 
+        if (tcb->tid == tid)
+            coincidencia = true;
+    }
+    if (!coincidencia){
+        tcb = NULL;
+        log_error(log_memoria_gral, "ERROR - TID: %d - no se encuentra para PID: %d - Imposible finalizarlo",
+                                    tid, contexto_ejecucion->pcb->pid);
+        return;
+    }
+    i--; // lo vuelvo al anterior
+
+    tcb = list_remove(lista, i -1);
+    list_clean_and_destroy_elements(tcb->instrucciones, free);
+    free(tcb);
 }
 
 void iniciar_logs(bool testeo)

@@ -1,4 +1,8 @@
 #include <servidor_multihilo.h>
+
+pthread_mutex_t mutex_socket_cliente_temp;
+int socket_cliente_temp = 1;
+
 // ==========================================================================
 // ====  Funciones Servidor:  ===============================================
 // ==========================================================================
@@ -57,14 +61,7 @@ void* rutina_ejecucion (void* nada)
         case CREAR_PROCESO: // PENDIENTE IMPLEMENTAR
             pedido = recibir_paquete(socket_cliente);
 
-            // Stub temporal
-            enviar_mensaje("OK", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: CREAR_PROCESO");
-
-            // t_pcb_mem* pcb_new = iniciar_pcb(pid, tamanio, ruta_tid_0);
-            // si es pcb = NULL entonces no hay particiones disponibles o hubo error al crear tid 0
-            // avisa a kernel INSUFICIENTE
-            // de otra forma le dice que OK
+            rutina_crear_proceso(pedido, socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -82,17 +79,7 @@ void* rutina_ejecucion (void* nada)
         case CREAR_HILO: // PENDIENTE IMPLEMENTAR
             pedido = recibir_paquete(socket_cliente);
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: CREAR_HILO", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: CREAR_HILO");
-
-            /*
-                recibe: PID, TID (creador), TID (nuevo), script
-            */
-
-            // t_tcb_mem* tcb_new = iniciar_tcb(/* pid, tid nuevo, script */);
-            // pushear a lista del pcb del contexto_ejecucion el nuevo tcb_new (ultima posicion)
-            // enviar_mensaje("OK", socket_cliente);
+            rutina_crear_hilo(pedido, socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
@@ -100,9 +87,7 @@ void* rutina_ejecucion (void* nada)
         case FINALIZAR_HILO: // PENDIENTE IMPLEMENTAR + FUNCIONES
             pedido = recibir_paquete(socket_cliente);
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: FINALIZAR_HILO", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: FINALIZAR_HILO");
+            rutina_finalizar_hilo(pedido, socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

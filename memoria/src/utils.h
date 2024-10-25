@@ -60,16 +60,17 @@ typedef struct {
     int pid;
     t_particion* particion;
     t_list* lista_tcb;
+    pthread_mutex_t sem_p_mutex;
 } t_pcb_mem;
 
 typedef struct {
     t_pcb_mem* pcb;
     t_tcb_mem* tcb;
-} t_contexto_de_ejecucion;
+} t_contexto_de_ejecucion_mem;
 
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
-extern t_contexto_de_ejecucion* contexto_ejecucion;
+extern t_contexto_de_ejecucion_mem* contexto_ejecucion;
 // extern pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 typedef struct {
@@ -95,13 +96,24 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0); // REVISA
 bool cargar_contexto_ejecucion(int pid, int tid); 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); 
 char* obtener_instruccion(uint32_t num_instruccion);
+char* mem_lectura (unsigned int desplazamiento);
+bool mem_escritura (unsigned int desplazamiento, void* data);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
-bool memory_dump_fs (t_list* pedido);
+// Kernel - Memoria
+void rutina_crear_proceso(t_list* param, int socket_cliente);
+void rutina_finalizar_proceso(t_list* param, int socket_cliente); // PENDIENTE
+void rutina_crear_hilo(t_list* param, int socket_cliente);
+void rutina_finalizar_hilo(t_list* param, int socket_cliente);
+void memory_dump_fs (t_list* pedido, int socket_cliente); // PENDIENTE
+
+// CPU - Memoria
 void rutina_contexto_ejecucion(t_list* param);
+void rutina_acceso_lectura(t_list* param);
+void rutina_acceso_escritura(t_list* param);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
@@ -122,12 +134,13 @@ t_particion* alg_best_fit(int tamanio);
 t_particion* alg_worst_fit(int tamanio);
 
 // Crea un nuevo elemento de la lista particiones (ocupado) y modifica el recibido (su base sigue al limite del nuevo elem)
-void recortar_particion(t_particion* part, int tamanio); // PENDIENTE
+t_particion* recortar_particion(t_particion* part, int tamanio); // PENDIENTE
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
 t_paquete* empaquetar_contexto (void);
+void eliminar_tcb(t_list* lista, int tid);
 void iniciar_logs(bool testeo);
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 
