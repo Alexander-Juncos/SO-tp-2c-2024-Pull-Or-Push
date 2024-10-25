@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
     t_pcb* proceso_inicial = NULL;
 
     algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+    setup_algoritmo_plani_corto_plazo(algoritmo_plani);
     quantum_de_config = config_get_int_value(config, "QUANTUM");
 
     pthread_t thread_new;
@@ -90,4 +91,25 @@ int main(int argc, char* argv[]) {
 
     //terminar_programa();
     return 0;
+}
+
+// ============================================================
+
+void setup_algoritmo_plani_corto_plazo(char* algoritmo) {
+    if(strcmp(algoritmo, "FIFO") == 0) {
+        cod_algoritmo_planif_corto = FIFO;
+        ingresar_a_ready = ingresar_a_ready_fifo;
+    }
+    else if(strcmp(algoritmo, "PRIORIDADES") == 0) {
+        cod_algoritmo_planif_corto = PRIORIDADES;
+        ingresar_a_ready = ingresar_a_ready_prioridades;
+    }
+    else if(strcmp(algoritmo, "CMN") == 0) {
+        cod_algoritmo_planif_corto = CMN;
+        ingresar_a_ready = ingresar_a_ready_multinivel;
+    }
+    else {
+        log_error(log_kernel_gral, "Algoritmo de planificación desconocido.");
+        exit(3);
+    }
 }

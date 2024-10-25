@@ -25,9 +25,18 @@
 #include <io.h>
 #include <planificador.h>
 
+typedef void (*PtrFuncionIngresoReady)(t_tcb*);
+
 // ==========================================================================
 // ====  Variables globales:  ===============================================
 // ==========================================================================
+
+typedef struct
+{
+    //int cantidad_de_hilos_activos;
+    t_list* cola_ready;
+    sem_t sem_cola_ready;
+} t_cola_ready;
 
 typedef enum
 {
@@ -55,6 +64,7 @@ extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo).
 extern t_tcb* hilo_usando_io; // Estado BLOCKED (usando IO). Es un t_tcb* (Hilo).
 extern t_list* cola_blocked_io; // Estado BLOCKED (esperando para usar IO). Es una lista de t_tcb* (Hilos).
 extern t_list* cola_blocked_join; // Estado BLOCKED (por Join). Es una lista de t_tcb* (Hilos).
+extern t_list* cola_blocked_memory_dump; // Estado BLOCKED (por esperar respuesta de Memory Dump). Es una lista de t_tcb* (Hilos).
 extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos).
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
@@ -65,6 +75,7 @@ extern t_list* procesos_exit; // Es una lista de t_pcb* (Procesos). Son los que 
 
 extern t_config *config;
 extern char* algoritmo_plani;
+extern PtrFuncionIngresoReady ingresar_a_ready; // Variable que referencia a la función de ingresar_a_ready() específica del algoritmo a usar.
 extern int quantum_de_config;
 
 extern t_log* log_kernel_oblig; // logger para los logs obligatorios
@@ -84,11 +95,12 @@ extern pthread_mutex_t mutex_proceso_exec;
 extern pthread_mutex_t mutex_grado_multiprogramacion;
 extern pthread_mutex_t mutex_cola_new; 
 extern pthread_mutex_t mutex_cola_ready;
-extern pthread_mutex_t mutex_cola_exit;
 ----------------------------------------------
 */
 extern sem_t sem_sincro_new_exit;
 extern pthread_mutex_t mutex_hilo_exec;
+extern pthread_mutex_t mutex_cola_blocked_memory_dump;
+extern pthread_mutex_t mutex_cola_exit;
 extern pthread_mutex_t mutex_procesos_activos;
 extern pthread_mutex_t mutex_sincro_new_exit;
 
@@ -120,7 +132,6 @@ t_tcb* crear_tcb(int pid_creador, int tid, int prioridad, char* path_instruccion
 * @param tcb : El TCB cuyo TID se quiere asociar.
 */
 void asociar_tid(t_pcb* pcb, t_tcb* tcb);
-
 /**
 * @brief Busca un PCB según su PID.
 * @param lista_de_pcb : Lista en la que buscar al PCB.
@@ -128,6 +139,50 @@ void asociar_tid(t_pcb* pcb, t_tcb* tcb);
 * @return             : El PCB encontrado, o NULL en caso de no encontrarlo.
 */
 t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid);
+/**
+* @brief NO INVOCAR DIRECTAMENTE. USAR "ingresar_a_ready(t_tcb*)" INDEPENDIENTEMENTE
+*        DEL ALGORITMO DE PLANIFICACIÓN.
+*
+*        Pone un Hilo en READY, replanificando según algoritmo FIFO.
+* @param tcb : El TCB del Hilo a poner en READY.
+* @note "replanificar" conceptualmente, pues en realidad ya lo ingresa
+*       ordenado en la cola.
+*/
+void ingresar_a_ready_fifo(t_tcb* tcb);
+/**
+* @brief NO INVOCAR DIRECTAMENTE. USAR "ingresar_a_ready(t_tcb*)" INDEPENDIENTEMENTE
+*        DEL ALGORITMO DE PLANIFICACIÓN.
+*
+*        Pone un Hilo en READY, replanificando según algoritmo PRIORIDADES.
+* @param tcb : El TCB del Hilo a poner en READY.
+* @note "replanificar" conceptualmente, pues en realidad ya lo ingresa
+*       ordenado en la cola.
+*/
+void ingresar_a_ready_prioridades(t_tcb* tcb);
+/**
+* @brief NO INVOCAR DIRECTAMENTE. USAR "ingresar_a_ready(t_tcb*)" INDEPENDIENTEMENTE
+*        DEL ALGORITMO DE PLANIFICACIÓN.
+*
+*        Pone un Hilo en READY, replanificando según algoritmo CMN. En caso
+*        de no existir la cola de READY correspondiente a la prioridad del Hilo
+*        a ingresar, esta es creada.
+* @param tcb : El TCB del Hilo a poner en READY.
+* @note "replanificar" conceptualmente, pues en realidad lo ingresa
+*       ordenado en la cola que corresponda.
+*/
+void ingresar_a_ready_multinivel(t_tcb* tcb);
+
+t_cola_ready* crear_ready_multinivel(void);
+
+// ========  DESARROLLANDO  ===========================
+
+void finalizar_hilo(t_tcb* tcb);
+
+void liberar_joineados(t_tcb* tcb);
+
+void liberar_mutexes(t_tcb* tcb);
+
+// ====================================================
 
 void iniciar_logs(bool testeo);
 void terminar_programa();

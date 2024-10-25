@@ -10,28 +10,10 @@ void* rutina_new(void* puntero_null) {
     t_tcb* tcb_hilo_main = NULL;
     log_debug(log_kernel_gral, "Hilo responsable de cola NEW listo.");
 
-    // Hago este 'if' por las diferentes posibilidades de "ingresar_a_ready()"
-    // según el algoritmo de planificación.
-    if (strcmp(algoritmo_plani, "FIFO") == 0) {
-        while(true) {
+    while(true) {
 
-            tcb_hilo_main = inicializacion_de_proceso();
-            ingresar_a_ready_fifo(tcb_hilo_main);
-        }
-    }
-    else if (strcmp(algoritmo_plani, "PRIORIDADES") == 0) {
-        while(true) {
-
-            tcb_hilo_main = inicializacion_de_proceso();
-            ingresar_a_ready_prioridades(tcb_hilo_main);
-        }
-    }
-    else if (strcmp(algoritmo_plani, "CMN") == 0) {
-        while(true) {
-
-            tcb_hilo_main = inicializacion_de_proceso();
-            ingresar_a_ready_multinivel(tcb_hilo_main);
-        }
+        tcb_hilo_main = inicializacion_de_proceso();
+        ingresar_a_ready(tcb_hilo_main);
     }
 
     return NULL;
@@ -53,7 +35,7 @@ t_tcb* inicializacion_de_proceso(void) {
 
     while(!exito_al_inicializar_proceso) {
 
-        // Reintento de nuevo proceso.
+        // Reintenta.
         exito_al_inicializar_proceso = reintentar_creacion_proceso(pcb);
     }
 

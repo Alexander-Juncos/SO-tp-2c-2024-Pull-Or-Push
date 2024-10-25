@@ -38,9 +38,10 @@ typedef struct
 typedef struct 
 {
     int tid;
-    int pid_pertenencia; // agrego este campo para facilidad de implementación
+    int pid_pertenencia; // Agrego este campo para facilidad de implementación
     int prioridad;
     char* path_relativo_archivo_instrucciones;
+    int tid_joined; // Para saber a qué TID hizo join. Se evalúa solo en la "cola_blocked_join".
 } t_tcb;
 
 typedef struct
@@ -54,12 +55,7 @@ typedef struct
 } t_pcb;
 
 // Estructura para usar con el diccionario de colas Ready, en algoritmo MULTINIVEL.
-typedef struct
-{
-    //int cantidad_de_hilos_activos;
-    t_list* cola_ready;
-    sem_t sem_cola_ready;
-} t_cola_ready;
+
 
 typedef struct
 {

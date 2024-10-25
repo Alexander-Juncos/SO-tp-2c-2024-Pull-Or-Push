@@ -80,29 +80,6 @@ void ingresar_a_new(t_pcb* pcb);
 t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones);
 
 /**
-* @brief Pone un Hilo en READY, replanificando según algoritmo FIFO.
-* @param tcb : El TCB del Hilo a poner en READY.
-* @note "replanificar" conceptualmente, pues en realidad ya lo ingresa
-*       ordenado en la cola.
-*/
-void ingresar_a_ready_fifo(t_tcb* tcb);
-/**
-* @brief Pone un Hilo en READY, replanificando según algoritmo PRIORIDADES.
-* @param tcb : El TCB del Hilo a poner en READY.
-* @note "replanificar" conceptualmente, pues en realidad ya lo ingresa
-*       ordenado en la cola.
-*/
-void ingresar_a_ready_prioridades(t_tcb* tcb);
-/**
-* @brief Pone un Hilo en READY, replanificando según algoritmo CMN. En caso
-*        de no existir la cola de READY correspondiente a la prioridad del Hilo
-*        a ingresar, esta es creada.
-* @param tcb : El TCB del Hilo a poner en READY.
-* @note "replanificar" conceptualmente, pues en realidad lo ingresa
-*       ordenado en la cola que corresponda.
-*/
-void ingresar_a_ready_multinivel(t_tcb* tcb);
-/**
 * @brief Envia a CPU la orden para ejecutar instrucciones de un Hilo.
 * @param tcb : El TCB del Hilo a correr.
 */
@@ -115,8 +92,6 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb);
 // ==========================================================================
 
 t_pcb* crear_pcb(int pid, int tamanio);
-
-t_cola_ready* crear_ready_multinivel();
 
 void enviar_pedido_de_dump(int pid, int tid, int socket);
 

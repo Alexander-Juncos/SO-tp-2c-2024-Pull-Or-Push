@@ -14,9 +14,11 @@ void* rutina_exit(void* puntero_null) {
     while(true) {
 
         sem_wait(&sem_cola_exit);
+        pthread_mutex_lock(&mutex_cola_exit);
         tcb = list_remove(cola_exit, 0);
+        pthread_mutex_unlock(&mutex_cola_exit);
 
-        if(tcb->tid == 0) { // (if es hilo main)
+        if(tcb->tid == 0) { // (if es Hilo main)
 
             enviar_fin_hilo_a_memoria(tcb);
             enviar_fin_proceso_a_memoria(tcb->pid_pertenencia);
@@ -81,7 +83,7 @@ void destruir_pcb(int pid) {
     else {
         list_remove_element(procesos_exit, pcb);
         list_destroy_and_destroy_elements(pcb->tids_asociados, (void*)free);
-        list_destroy_and_destroy_elements(pcb->mutex_creados, COMPLETAR);
+        list_destroy_and_destroy_elements(pcb->mutex_creados, ¡¡¡¡COMPLETAR!!!!);
         free(pcb);
     }
 }

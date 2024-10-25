@@ -32,7 +32,9 @@ void enviar_fin_proceso_a_memoria(int pid);
 */
 void destruir_tcb(t_tcb* tcb);
 /**
-* @brief Destruye el PCB de un Proceso. Se usa tras la destrucción de los
+* @brief FALTA COMPLETAR!!!
+*
+*        Destruye el PCB de un Proceso. Se usa tras la destrucción de los
 *        TCB de todos sus Hilos, y tras el OK de Memoria.
 *
 *        FALTA COMPLETAR!!!

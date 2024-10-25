@@ -1020,35 +1020,6 @@ t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
     return nuevo_tcb;
 }
 
-void ingresar_a_ready_fifo(t_tcb* tcb) {
-    list_add(cola_ready_unica, tcb);
-    sem_post(&sem_cola_ready_unica);
-}
-
-void ingresar_a_ready_prioridades(t_tcb* tcb) {
-    bool _hilo_tiene_menor_prioridad(t_tcb* tcb1, t_tcb* tcb2) {
-        return tcb1->prioridad < tcb2->prioridad;
-    }
-
-    list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
-    sem_post(&sem_cola_ready_unica);
-}
-
-void ingresar_a_ready_multinivel(t_tcb* tcb) {
-
-    t_cola_ready* estructura_ready_correspondiente = NULL;
-    char* key = string_itoa(tcb->prioridad);
-    estructura_ready_correspondiente = dictionary_get(diccionario_ready_multinivel, key);
-
-    if(estructura_ready_correspondiente == NULL) { // if (no existe cola para esa prioridad)
-        estructura_ready_correspondiente = crear_ready_multinivel();
-        dictionary_put(diccionario_ready_multinivel, key, estructura_ready_correspondiente);
-    }
-
-    list_add(estructura_ready_correspondiente->cola_ready, tcb);
-    sem_post(&(estructura_ready_correspondiente->sem_cola_ready));
-}
-
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
     t_paquete* paquete = crear_paquete(EJECUCION);
     agregar_a_paquete(paquete, (void*)&(tcb->pid_pertenencia), sizeof(int));
@@ -1058,13 +1029,18 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
 }
 
 void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
-    int* socket_memoria = malloc(sizeof(int));
-    *socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
-    enviar_pedido_de_dump(tcb->pid_pertenencia, tcb->tid, *socket_memoria);
-
+    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    enviar_pedido_de_dump(tcb->pid_pertenencia, tcb->tid, socket_memoria);
+    pthread_mutex_lock(&mutex_cola_blocked_memory_dump);
+    list_add(cola_blocked_memory_dump, tcb);
+    pthread_mutex_unlock(&mutex_cola_blocked_memory_dump);
+    
+    t_recepcion_respuesta_memory_dump* info_para_recibir_rta = malloc(sizeof(t_recepcion_respuesta_memory_dump));
+    info_para_recibir_rta->tcb = tcb;
+    info_para_recibir_rta->socket_de_la_conexion = socket_memoria;
     // acá no debería haber problema de memory leak, pues al terminar el hilo detacheado, lo liberaría.
     pthread_t* thread_respuesta_memory_dump = malloc(sizeof(pthread_t));
-    pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)socket_memoria);
+    pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)info_para_recibir_rta);
     pthread_detach(*thread_respuesta_memory_dump);
 }
 
@@ -1081,13 +1057,6 @@ t_pcb* crear_pcb(int pid, int tamanio) {
     pcb->sig_tid_a_asignar = 0;
     pcb->hilo_main = NULL;
     return pcb;
-}
-
-t_cola_ready* crear_ready_multinivel() {
-    t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
-    nueva_estructura_cola_ready->cola_ready = list_create();
-    sem_init(&(nueva_estructura_cola_ready->sem_cola_ready), 0, 0);
-    return nueva_estructura_cola_ready;
 }
 
 void enviar_pedido_de_dump(int pid, int tid, int socket) {

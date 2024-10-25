@@ -23,6 +23,7 @@ t_tcb* hilo_exec = NULL;
 t_tcb* hilo_usando_io = NULL;
 t_list* cola_blocked_io = NULL;
 t_list* cola_blocked_join = NULL;
+t_list* cola_blocked_memory_dump = NULL;
 t_list* cola_exit = NULL;
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
@@ -33,6 +34,7 @@ t_list* procesos_exit = NULL;
 
 t_config *config = NULL;
 char* algoritmo_plani = NULL;
+PtrFuncionIngresoReady ingresar_a_ready;
 int quantum_de_config;
 
 t_log* log_kernel_oblig = NULL;
@@ -52,11 +54,12 @@ pthread_mutex_t mutex_proceso_exec;
 pthread_mutex_t mutex_grado_multiprogramacion;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_cola_ready;
-pthread_mutex_t mutex_cola_exit;
 ----------------------------------------------
 */
 sem_t sem_sincro_new_exit;
 pthread_mutex_t mutex_hilo_exec;
+pthread_mutex_t mutex_cola_blocked_memory_dump;
+pthread_mutex_t mutex_cola_exit;
 pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_sincro_new_exit;
 
@@ -105,6 +108,65 @@ t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid) {
 	pcb_encontrado = list_find(lista_de_pcb, (void*)_es_el_pcb_buscado);
 	return pcb_encontrado;
 }
+
+void ingresar_a_ready_fifo(t_tcb* tcb) {
+    list_add(cola_ready_unica, tcb);
+    sem_post(&sem_cola_ready_unica);
+}
+
+void ingresar_a_ready_prioridades(t_tcb* tcb) {
+    bool _hilo_tiene_menor_prioridad(t_tcb* tcb1, t_tcb* tcb2) {
+        return tcb1->prioridad < tcb2->prioridad;
+    }
+
+    list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
+    sem_post(&sem_cola_ready_unica);
+}
+
+void ingresar_a_ready_multinivel(t_tcb* tcb) {
+
+    t_cola_ready* estructura_ready_correspondiente = NULL;
+    char* key = string_itoa(tcb->prioridad);
+    estructura_ready_correspondiente = dictionary_get(diccionario_ready_multinivel, key);
+
+    if(estructura_ready_correspondiente == NULL) { // if (no existe cola para esa prioridad)
+        estructura_ready_correspondiente = crear_ready_multinivel();
+        dictionary_put(diccionario_ready_multinivel, key, estructura_ready_correspondiente);
+    }
+
+    list_add(estructura_ready_correspondiente->cola_ready, tcb);
+    sem_post(&(estructura_ready_correspondiente->sem_cola_ready));
+}
+
+t_cola_ready* crear_ready_multinivel(void) {
+    t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
+    nueva_estructura_cola_ready->cola_ready = list_create();
+    sem_init(&(nueva_estructura_cola_ready->sem_cola_ready), 0, 0);
+    return nueva_estructura_cola_ready;
+}
+
+// ====================================================
+// =======  DESARROLLANDO  ============================
+// ====================================================
+
+void finalizar_hilo(t_tcb* tcb) {
+	if(tcb->tid == 0) { // (if es Hilo main)
+
+	} else {
+		
+	}
+}
+
+void liberar_joineados(t_tcb* tcb) {
+
+}
+
+void liberar_mutexes(t_tcb* tcb) {
+
+}
+
+// ====================================================
+// ====================================================
 
 void iniciar_logs(bool testeo)
 {
