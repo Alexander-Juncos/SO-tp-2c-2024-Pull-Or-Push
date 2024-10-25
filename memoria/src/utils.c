@@ -3,7 +3,7 @@
 // ==========================================================================
 // ====  Variables globales:  ===============================================
 // ==========================================================================
-const int BYTES_LECTURA = 4;
+const int BYTES_ACCESO = 4;
 
 int socket_cpu = 1;
 int socket_escucha = 1;
@@ -259,15 +259,80 @@ char* obtener_instruccion(uint32_t num_instruccion)
     return instruccion;
 }
 
-// char* mem_lectura (int desplazamiento)
-// {
-//     char* data = malloc (4);// bytes de lectura
-//     unsigned int base = contexto_ejecucion->pcb->particion->base;
+char* mem_lectura (unsigned int desplazamiento)
+{
+    char* data = malloc (BYTES_ACCESO);// bytes de lectura
 
-//     //memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
-// }
+    // apunto al espacio de usuario
+    void* aux_direccion = memoria->espacio_usuario; 
+    // me muevo a la particion del proceso en ejecucion
+    aux_direccion += contexto_ejecucion->pcb->particion->base;
 
-// char* mem_escritura (t_list* param);
+    // Lo siguiente es solo a motivo de debug 
+    void* base_part = aux_direccion;
+    void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
+
+    // me desplazo al byte solicitado
+    aux_direccion += desplazamiento;
+
+    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+                                desplazamiento);
+    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+                                memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
+                                base_part, limite_part, aux_direccion);
+    
+    
+    memcpy(data, aux_direccion, BYTES_ACCESO);
+
+
+    log_debug(log_memoria_gral, "Resultado ACCESO_LECTURA: %s", data);
+    
+    // LOG OBLIGATORIO
+    log_info(log_memoria_oblig, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                BYTES_ACCESO);
+
+    retardo_operacion();
+    return data;
+}
+
+bool mem_escritura (unsigned int desplazamiento, void* data)
+{
+    // apunto al espacio de usuario
+    void* aux_direccion = memoria->espacio_usuario; 
+    // me muevo a la particion del proceso en ejecucion
+    aux_direccion += contexto_ejecucion->pcb->particion->base;
+
+    // Lo siguiente es solo a motivo de debug 
+    void* base_part = aux_direccion;
+    void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
+
+    // me desplazo al byte solicitado
+    aux_direccion += desplazamiento;
+
+    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+                                desplazamiento);
+    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+                                memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
+                                base_part, limite_part, aux_direccion);
+
+
+    memcpy(aux_direccion, data, BYTES_ACCESO);
+
+
+    log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                BYTES_ACCESO);
+
+    retardo_operacion();
+    return true;
+}
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -329,6 +394,41 @@ void rutina_contexto_ejecucion(t_list* param)
     paquete = empaquetar_contexto();
     enviar_paquete(paquete, socket_cpu);
     eliminar_paquete(paquete);
+}
+
+void rutina_acceso_lectura(t_list* param)
+{
+    unsigned int direccion;
+    void* data;
+    t_paquete* paquete;
+
+    data = list_get(param, 0);
+    direccion = *(unsigned int*) data;
+
+    data = mem_lectura(direccion);
+
+    paquete = crear_paquete(ACCESO_LECTURA);
+    agregar_a_paquete(paquete, data, BYTES_ACCESO);
+    enviar_paquete(paquete, socket_cpu);
+    eliminar_paquete(paquete);
+    free(data);
+}
+
+void rutina_acceso_escritura(t_list* param)
+{
+    unsigned int direccion;
+    void* data;
+    t_paquete* paquete;
+
+    data = list_get(param, 0);
+    direccion = *(unsigned int*) data;
+
+    data = list_get(param, 1);
+
+    mem_escritura(direccion, data);
+
+    // podria ponerse un checkeo aca ya q mem_escritura podria devolver bool (si se hiciera captacion de errores)
+    enviar_mensaje("OK", socket_cpu); 
 }
 
 // ==========================================================================

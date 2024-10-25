@@ -95,8 +95,8 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0); // REVISA
 bool cargar_contexto_ejecucion(int pid, int tid); 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); 
 char* obtener_instruccion(uint32_t num_instruccion);
-char* mem_lectura (t_list* param);
-char* mem_escritura (t_list* param);
+char* mem_lectura (unsigned int desplazamiento);
+bool mem_escritura (unsigned int desplazamiento, void* data);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -104,6 +104,8 @@ char* mem_escritura (t_list* param);
 
 bool memory_dump_fs (t_list* pedido);
 void rutina_contexto_ejecucion(t_list* param);
+void rutina_acceso_lectura(t_list* param);
+void rutina_acceso_escritura(t_list* param);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
