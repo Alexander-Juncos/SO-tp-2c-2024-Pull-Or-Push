@@ -3,6 +3,7 @@
 // ==========================================================================
 // ====  Variables globales:  ===============================================
 // ==========================================================================
+const int BYTES_LECTURA = 4;
 
 int socket_cpu = 1;
 int socket_escucha = 1;
@@ -19,7 +20,7 @@ pthread_mutex_t mutex_procesos_cargados;
 t_memoria_particionada* memoria;
 pthread_mutex_t mutex_memoria;
 
-t_contexto_de_ejecucion* contexto_ejecucion;
+t_contexto_de_ejecucion_mem* contexto_ejecucion;
 // pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 // ==========================================================================
@@ -79,7 +80,7 @@ bool iniciar_memoria()
     procesos_cargados = list_create();
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
     // inicio contexto_ejecucion
-    contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion));
+    contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion_mem));
     
     log_debug(log_memoria_gral, "Memoria iniciada correctamente");
     return true;
@@ -258,6 +259,16 @@ char* obtener_instruccion(uint32_t num_instruccion)
     return instruccion;
 }
 
+// char* mem_lectura (int desplazamiento)
+// {
+//     char* data = malloc (4);// bytes de lectura
+//     unsigned int base = contexto_ejecucion->pcb->particion->base;
+
+//     //memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
+// }
+
+// char* mem_escritura (t_list* param);
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
@@ -373,21 +384,21 @@ t_list* crear_lista_de_particiones()
 t_particion* particion_libre (int tamanio) // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
 {
     t_particion* particion;
-    char* algoritmo = string_new();
+    char* algoritmo;
 
     // Primero buscamos una particion que cumpla lo requerido
     switch (memoria->algorit_busq)
     {
     case FIRST_FIT:
-        string_append(algoritmo, "FIRST_FIT");
+        algoritmo = string_from_format("FIRST_FIT");
         particion = alg_first_fit(tamanio);
         break;
     case BEST_FIT:
-        string_append(algoritmo, "BEST_FIT");
+        algoritmo = string_from_format("BEST_FIT");
         particion = alg_best_fit(tamanio);
         break;
     case WORST_FIT:
-        string_append(algoritmo, "WORST_FIT");
+        algoritmo = string_from_format("WORST_FIT");
         particion = alg_worst_fit(tamanio);
         break;
     }
@@ -586,9 +597,9 @@ t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
     coincidencia = false;
     while (!coincidencia && i < list_size(lista_tcb) )
     {
-        tcb = (t_tcb_mem*) list_get(lista_tcbs, i);
+        tcb = (t_tcb_mem*) list_get(lista_tcb, i);
         i++; 
-        if (pcb->pid == tid)
+        if (tcb->tid == tid)
             coincidencia = true;
     }
     if (!coincidencia)
@@ -599,17 +610,17 @@ t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
 t_paquete* empaquetar_contexto (void)
 {
     t_paquete* p = crear_paquete(CONTEXTO_EJECUCION);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->PC);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.AX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.BX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.CX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.DX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.EX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.FX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.GX);
-    agregar_a_paquete(p, contexto_ejecucion->tcb->registros.HX);
-    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->base);
-    agregar_a_paquete(p, contexto_ejecucion->pcb->particion->limite);
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->PC), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.AX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.BX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.CX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.DX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.EX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.FX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.GX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.HX), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->base), sizeof(uint32_t));
+    agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->limite), sizeof(uint32_t));
     
     return p;
 }

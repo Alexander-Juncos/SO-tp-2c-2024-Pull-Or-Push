@@ -65,11 +65,11 @@ typedef struct {
 typedef struct {
     t_pcb_mem* pcb;
     t_tcb_mem* tcb;
-} t_contexto_de_ejecucion;
+} t_contexto_de_ejecucion_mem;
 
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
-extern t_contexto_de_ejecucion* contexto_ejecucion;
+extern t_contexto_de_ejecucion_mem* contexto_ejecucion;
 // extern pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 typedef struct {
@@ -95,6 +95,8 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0); // REVISA
 bool cargar_contexto_ejecucion(int pid, int tid); 
 bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw); 
 char* obtener_instruccion(uint32_t num_instruccion);
+char* mem_lectura (t_list* param);
+char* mem_escritura (t_list* param);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -122,7 +124,7 @@ t_particion* alg_best_fit(int tamanio);
 t_particion* alg_worst_fit(int tamanio);
 
 // Crea un nuevo elemento de la lista particiones (ocupado) y modifica el recibido (su base sigue al limite del nuevo elem)
-void recortar_particion(t_particion* part, int tamanio); // PENDIENTE
+t_particion* recortar_particion(t_particion* part, int tamanio); // PENDIENTE
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);
