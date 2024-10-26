@@ -338,6 +338,11 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
     return true;
 }
 
+void consolidar_particion (int indice) // PENDIENTE
+{
+
+}
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
@@ -364,7 +369,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
     if (pcb_new != NULL) {
         // agrego pcb a la lista
         pthread_mutex_lock(mutex_procesos_cargados);
-        list_add_in_index(procesos_cargados, , pcb_new);
+        list_add(procesos_cargados, pcb_new);
         pthread_mutex_unlock(mutex_procesos_cargados);
 
         enviar_mensaje("OK", socket_cliente);
@@ -375,11 +380,11 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
     }
 }
 
-void rutina_finalizar_proceso(int socket_cliente) // PENDIENTE
+void rutina_finalizar_proceso(int socket_cliente)
 {
     // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     t_tcb_mem* tcb;
-    t_particion* particion_liberada;
+    t_particion* particion_liberada = NULL;
     int pid;
 
 
@@ -419,8 +424,13 @@ void rutina_finalizar_proceso(int socket_cliente) // PENDIENTE
     if (memoria->particiones_dinamicas == false)
         return; // si hay particiones fijas ya terminamos x lo q salimos
 
-    // PARTICIONES DINAMICAS
-    log_info(log_memoria_gral, "Consolidación de particiones dinamicas no disponible");
+    /****************************** PARTICIONES DINAMICAS ***********************************************/
+
+    // Listado de particiones actuales
+    listar_particiones();
+
+    // envio pedido de consolidacion (solo se hace de ser valido)
+    consolidar_particion(obtener_indice_particion(particion_liberada->base));
 }
 
 void rutina_crear_hilo(t_list* param, int socket_cliente)
@@ -625,7 +635,7 @@ t_list* crear_lista_de_particiones()
 	return lista_particiones;
 }
 
-t_particion* particion_libre (int tamanio) // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
+t_particion* particion_libre (int tamanio)
 {
     t_particion* particion;
     char* algoritmo;
@@ -741,7 +751,7 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
     return particion; // si no encontro va a retornar NULL
 }
 
-t_particion* recortar_particion(t_particion* p, int tamanio) // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
+t_particion* recortar_particion(t_particion* p, int tamanio)
 {
     // creo nuevo elemento de la lista (nueva particion)
     t_particion* p_new = malloc(sizeof(t_particion));
@@ -755,9 +765,13 @@ t_particion* recortar_particion(t_particion* p, int tamanio) // PENDIENTE ver li
         la particion recibida sigue estando libre, solo q su base se adelanto al final
         de la nueva particion creada...
     */
-   
-    // agrega el nuevo elemento (MAL, tiene q agregarla en lugar adecuado)
-    // list_add(memoria->lista_particiones, p_new);
+
+    // agrego el nuevo elemento en indice adecuado
+    list_add_in_index(memoria->lista_particiones, obtener_indice_particion(p_new->base), p_new);
+    /*
+        como la particion recibida fue actualizada el indice obtenido va a ser el q le correspondia...
+        x lo q su lugar en la lista sera tomado x p_new y pasando al siguiente indice.
+    */
     
     return p_new;
 }
@@ -851,6 +865,36 @@ t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb)
     return tcb;
 }
 
+int obtener_indice_particion(int base_objetivo)
+{
+    t_particion* p_aux;
+    int indice;
+    bool encontrada = false;
+
+    indice = 0;
+
+    // si la particion objetivo va a ser la primera no necesitamos chequear, su indice ES 0.
+    if (base_objetivo == 0)
+        encontrada = true;
+
+    // en cuanto lo encuentre indice va a apuntar al indice que deberia tener la base_objetivo
+    while (!encontrada && indice < list_size(memoria->lista_particiones))
+    {
+        p_aux = list_get(memoria->lista_particiones, indice);
+        // Si actual->limite + 1 == nuevo->base => que actual es el indice previo al q buscamos
+        if((p_aux->limite + 1) == base_objetivo)
+            encontrada = true;   
+        indice++;
+    }
+    return indice;
+
+    /* PRUEBA ESCRITORIO
+    - base_objetivo = 0   y limite anterior [ind = X](q tiene q haber sido modificada) = XX > ==> indice = 0
+    - base_objetivo = 234 y limite anterior [ind = 4]("...") = 233 ==> indice = 5
+    - base_objetivo = 455 y limite anterior [ind = 11] ("...") = 454 ==> indice = 12
+    */
+}
+
 t_paquete* empaquetar_contexto (void)
 {
     t_paquete* p = crear_paquete(CONTEXTO_EJECUCION);
@@ -936,6 +980,20 @@ void iniciar_logs(bool testeo)
     */
 
     free(nivel);		
+}
+
+void listar_particiones()
+{
+    t_particion* p;
+
+    for (int i=0; i < list_size(memoria->lista_particiones); i++)
+    {
+        p = list_get(memoria->lista_particiones, i);
+        if (p->ocupada)
+            log_trace(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Ocupada", i, p->base, p->limite);
+        else
+            log_trace(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Libre", i, p->base, p->limite);
+    }
 }
 
 void terminar_programa()

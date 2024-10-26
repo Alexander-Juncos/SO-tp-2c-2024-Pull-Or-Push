@@ -99,13 +99,17 @@ char* obtener_instruccion(uint32_t num_instruccion);
 char* mem_lectura (unsigned int desplazamiento);
 bool mem_escritura (unsigned int desplazamiento, void* data);
 
+/// @brief Combina particiones continuas a la particion objetivo  de ser posible.
+/// @param indice       Indice de la particion objetivo/centro de la consolidacion
+void consolidar_particion (int indice); // PENDIENTE
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
 
 // Kernel - Memoria
 void rutina_crear_proceso(t_list* param, int socket_cliente);
-void rutina_finalizar_proceso(int socket_cliente); // PENDIENTE
+void rutina_finalizar_proceso(int socket_cliente);
 void rutina_crear_hilo(t_list* param, int socket_cliente);
 void rutina_finalizar_hilo(t_list* param, int socket_cliente);
 void memory_dump_fs (t_list* pedido, int socket_cliente); // PENDIENTE
@@ -126,7 +130,7 @@ t_list* crear_lista_de_particiones(void);
 /// @param tamanio      tamanio de la particion requerida.
 /// @return Si no hay particion valida retorna NULL, si hay y usa particiones estaticas retorna la hallada. Si hay particion dinamica retornara 
 ///         la funcion recortar_particion.
-t_particion* particion_libre (int tamanio); // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
+t_particion* particion_libre (int tamanio);
 
 // Devuelven referencias a la lista de particiones (no la modifican)
 t_particion* alg_first_fit(int tamanio);
@@ -134,15 +138,17 @@ t_particion* alg_best_fit(int tamanio);
 t_particion* alg_worst_fit(int tamanio);
 
 // Crea un nuevo elemento de la lista particiones (ocupado) y modifica el recibido (su base sigue al limite del nuevo elem)
-t_particion* recortar_particion(t_particion* part, int tamanio); // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
+t_particion* recortar_particion(t_particion* part, int tamanio);
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
+int obtener_indice_particion(int base_objetivo); // devuelve el indice de la lista donde deberia meterse la particion
 t_paquete* empaquetar_contexto (void);
 void eliminar_tcb(t_list* lista, int tid);
 void eliminar_pcb(t_list* lista, int pid);
 void iniciar_logs(bool testeo);
+void listar_particiones();
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 
 #endif /* UTILS_H_ */
