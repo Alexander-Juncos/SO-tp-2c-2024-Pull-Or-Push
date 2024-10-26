@@ -105,7 +105,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data);
 
 // Kernel - Memoria
 void rutina_crear_proceso(t_list* param, int socket_cliente);
-void rutina_finalizar_proceso(t_list* param, int socket_cliente); // PENDIENTE
+void rutina_finalizar_proceso(int socket_cliente); // PENDIENTE
 void rutina_crear_hilo(t_list* param, int socket_cliente);
 void rutina_finalizar_hilo(t_list* param, int socket_cliente);
 void memory_dump_fs (t_list* pedido, int socket_cliente); // PENDIENTE
@@ -141,6 +141,7 @@ t_pcb_mem* obtener_pcb (int pid);
 t_tcb_mem* obtener_tcb (int tid, t_list* lista_tcb);
 t_paquete* empaquetar_contexto (void);
 void eliminar_tcb(t_list* lista, int tid);
+void eliminar_pcb(t_list* lista, int pid);
 void iniciar_logs(bool testeo);
 void terminar_programa(void); // revisar y modificar-quizas podria liberar la memoria tambien
 

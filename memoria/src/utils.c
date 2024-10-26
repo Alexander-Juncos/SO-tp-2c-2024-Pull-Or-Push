@@ -361,9 +361,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
 
     t_pcb_mem* pcb_new = iniciar_pcb(pid, tamanio, ruta);
 
-    if (pcb_new == NULL) {
-        enviar_mensaje("INSUFICIENTE/ERROR", socket_cliente);
-    } else {
+    if (pcb_new != NULL) {
         // agrego pcb a la lista
         pthread_mutex_lock(mutex_procesos_cargados);
         list_add(procesos_cargados, pcb_new);
@@ -372,13 +370,62 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
         enviar_mensaje("OK", socket_cliente);
         
         log_info(log_memoria_oblig, "## Proceso Creado-  PID: %d - Tamaño: %d", pid, tamanio);
+    } else {
+        enviar_mensaje("INSUFICIENTE/ERROR", socket_cliente);
     }
 }
 
-void rutina_finalizar_proceso(t_list* param, int socket_cliente); // PENDIENTE
+void rutina_finalizar_proceso(int socket_cliente) // PENDIENTE
+{
+    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
+    t_tcb_mem* tcb;
+    t_particion* particion_liberada;
+    int pid;
+
+
+    // Limpiando cada TCB perteneciente al proceso y sus estrucutras
+    pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
+    
+    log_trace(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
+                                contexto_ejecucion->pcb->pid,
+                                list_size(contexto_ejecucion->pcb->lista_tcb));
+
+    for (int i=0; i< list_size(contexto_ejecucion->pcb->lista_tcb); i++)
+    {
+        tcb = list_remove(contexto_ejecucion->pcb->lista_tcb, 0);
+        list_destroy_and_destroy_elements(tcb->instrucciones, free);
+        free(tcb);
+    }
+    list_destroy_and_destroy_elements(contexto_ejecucion->pcb->lista_tcb, free); // x las dudas
+    pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));  
+    pthread_mutex_destroy(&(contexto_ejecucion->pcb->sem_p_mutex));
+    contexto_ejecucion->tcb = NULL;
+
+    // Libero la particion y la retengo en var auxiliar
+    contexto_ejecucion->pcb->particion->ocupada = false;
+    particion_liberada = contexto_ejecucion->pcb->particion;
+    contexto_ejecucion->pcb->particion = NULL;
+
+    // Saco el PCB de la lista y lo libero
+    pthread_mutex_lock(&mutex_procesos_cargados); 
+    eliminar_pcb(procesos_cargados, contexto_ejecucion->pcb->pid);
+    pthread_mutex_unlock(&mutex_procesos_cargados);
+    contexto_ejecucion->pcb = NULL;
+
+    // log obligatorio
+    log_info(log_memoria_oblig, "## Proceso Destruido -  PID: %d - Tamaño: %d",
+                                pid, (particion_liberada->limite - particion_liberada->base + 1));
+
+    if (memoria->particiones_dinamicas == false)
+        return; // si hay particiones fijas ya terminamos x lo q salimos
+
+    // PARTICIONES DINAMICAS
+    log_info(log_memoria_gral, "Consolidación de particiones dinamicas no disponible");
+}
 
 void rutina_crear_hilo(t_list* param, int socket_cliente)
 {
+    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     void* aux;
     int tid;
     char* ruta;
@@ -409,6 +456,7 @@ void rutina_crear_hilo(t_list* param, int socket_cliente)
 
 void rutina_finalizar_hilo(t_list* param, int socket_cliente)
 {
+    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     void* aux;
     int tid;
     char* ruta;
@@ -836,15 +884,41 @@ void eliminar_tcb( t_list* lista, int tid)
     }
     if (!coincidencia){
         tcb = NULL;
-        log_error(log_memoria_gral, "ERROR - TID: %d - no se encuentra para PID: %d - Imposible finalizarlo",
+        log_error(log_memoria_gral, "ERROR - TID: %d - No se encuentra para PID: %d - Imposible finalizarlo",
                                     tid, contexto_ejecucion->pcb->pid);
         return;
     }
     i--; // lo vuelvo al anterior
 
-    tcb = list_remove(lista, i -1);
+    tcb = list_remove(lista, i);
     list_clean_and_destroy_elements(tcb->instrucciones, free);
     free(tcb);
+}
+
+void eliminar_pcb( t_list* lista, int pid)
+{
+    // ya se hicieron los free necesarios antes de esta funcion
+    int i;
+    bool coincidencia = false;
+    t_pcb_mem* pcb;
+
+    i = 0;
+    while (!coincidencia && i < list_size(lista) )
+    {
+        pcb = (t_pcb_mem*) list_get(lista, i);
+        i++; 
+        if (pcb->pid == pid)
+            coincidencia = true;
+    }
+    if (!coincidencia){
+        pcb = NULL;
+        log_error(log_memoria_gral, "ERROR - PID: %d - No se encuentra en memoria - Imposible finalizarlo", pid);
+        return;
+    }
+    i--; // lo vuelvo al anterior
+
+    pcb = list_remove(lista, i);
+    free(pcb);
 }
 
 void iniciar_logs(bool testeo)
