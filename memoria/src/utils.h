@@ -126,7 +126,7 @@ t_list* crear_lista_de_particiones(void);
 /// @param tamanio      tamanio de la particion requerida.
 /// @return Si no hay particion valida retorna NULL, si hay y usa particiones estaticas retorna la hallada. Si hay particion dinamica retornara 
 ///         la funcion recortar_particion.
-t_particion* particion_libre (int tamanio); // PENDIENTE REVISAR retorno en particiones dinamicas
+t_particion* particion_libre (int tamanio); // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
 
 // Devuelven referencias a la lista de particiones (no la modifican)
 t_particion* alg_first_fit(int tamanio);
@@ -134,7 +134,7 @@ t_particion* alg_best_fit(int tamanio);
 t_particion* alg_worst_fit(int tamanio);
 
 // Crea un nuevo elemento de la lista particiones (ocupado) y modifica el recibido (su base sigue al limite del nuevo elem)
-t_particion* recortar_particion(t_particion* part, int tamanio); // PENDIENTE
+t_particion* recortar_particion(t_particion* part, int tamanio); // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
 
 t_list *cargar_instrucciones(char *directorio, int pid, int tid);
 t_pcb_mem* obtener_pcb (int pid);

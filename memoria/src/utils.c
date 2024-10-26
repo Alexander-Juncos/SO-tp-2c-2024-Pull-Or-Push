@@ -364,7 +364,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
     if (pcb_new != NULL) {
         // agrego pcb a la lista
         pthread_mutex_lock(mutex_procesos_cargados);
-        list_add(procesos_cargados, pcb_new);
+        list_add_in_index(procesos_cargados, , pcb_new);
         pthread_mutex_unlock(mutex_procesos_cargados);
 
         enviar_mensaje("OK", socket_cliente);
@@ -625,7 +625,7 @@ t_list* crear_lista_de_particiones()
 	return lista_particiones;
 }
 
-t_particion* particion_libre (int tamanio) // PENDIENTE HASTA DESARROLLO ESPACIO USUARIO
+t_particion* particion_libre (int tamanio) // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
 {
     t_particion* particion;
     char* algoritmo;
@@ -741,7 +741,7 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
     return particion; // si no encontro va a retornar NULL
 }
 
-t_particion* recortar_particion(t_particion* p, int tamanio)
+t_particion* recortar_particion(t_particion* p, int tamanio) // PENDIENTE ver lista particiones para poder hacer consoliacion de memoria
 {
     // creo nuevo elemento de la lista (nueva particion)
     t_particion* p_new = malloc(sizeof(t_particion));
@@ -749,15 +749,16 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     p_new->limite = tamanio -1;
     p_new->ocupada = true;
 
-    // agrega el nuevo elemento
-    list_add(memoria->lista_particiones, p_new);
-    
     // como la referencia ya apunta a un elemento existente lo modifico
     p->base = p_new->limite + 1;
     /*
         la particion recibida sigue estando libre, solo q su base se adelanto al final
         de la nueva particion creada...
     */
+   
+    // agrega el nuevo elemento (MAL, tiene q agregarla en lugar adecuado)
+    // list_add(memoria->lista_particiones, p_new);
+    
     return p_new;
 }
 
