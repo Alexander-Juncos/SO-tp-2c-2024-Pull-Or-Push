@@ -35,7 +35,6 @@ void* rutina_recepcion (void* nada)
     return NULL;
 }
 
-
 void* rutina_ejecucion (void* nada)
 {
     int socket_cliente;
@@ -70,9 +69,7 @@ void* rutina_ejecucion (void* nada)
             pedido = recibir_paquete(socket_cliente);
             // el paquete se encuentra "vacio"...
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: FINALIZAR_PROCESO", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: FINALIZAR_PROCESO");
+            rutina_finalizar_proceso(socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

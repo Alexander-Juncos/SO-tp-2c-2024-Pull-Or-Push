@@ -101,7 +101,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data);
 
 /// @brief Combina particiones continuas a la particion objetivo  de ser posible.
 /// @param indice       Indice de la particion objetivo/centro de la consolidacion
-void consolidar_particion (int indice); // PENDIENTE
+void consolidar_particion (int indice); // Tiene bastantes logs para debuguear
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -109,7 +109,7 @@ void consolidar_particion (int indice); // PENDIENTE
 
 // Kernel - Memoria
 void rutina_crear_proceso(t_list* param, int socket_cliente);
-void rutina_finalizar_proceso(int socket_cliente);
+void rutina_finalizar_proceso(int socket_cliente); // Tiene bastantes logs para debuguear
 void rutina_crear_hilo(t_list* param, int socket_cliente);
 void rutina_finalizar_hilo(t_list* param, int socket_cliente);
 void memory_dump_fs (t_list* pedido, int socket_cliente); // PENDIENTE

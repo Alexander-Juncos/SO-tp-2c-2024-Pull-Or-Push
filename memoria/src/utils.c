@@ -338,9 +338,60 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
     return true;
 }
 
-void consolidar_particion (int indice) // PENDIENTE
+void consolidar_particion (int indice) // Ya protegida x memoria
 {
+    t_particion* particion_izquierda = NULL;
+    t_particion* particion_derecha = NULL;
 
+    // chequeo la particion anterior al indice
+    particion_izquierda = list_get(memoria->lista_particiones, indice -1);
+    if (particion_izquierda->ocupada == false)
+    {
+        particion_derecha = list_remove(memoria->lista_particiones, indice);
+        
+        // log para debug
+        log_trace(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+                                     indice-1, particion_izquierda->base, particion_izquierda->limite,
+                                     indice, particion_derecha->base, particion_derecha->limite);
+
+        // paso el limite de la particion actual a la particion anterior (extendiendola hacia adelante)
+        particion_izquierda->limite = particion_derecha->limite;
+        free(particion_derecha);
+
+        // ajusto indice para el siguiente chequeo ya q la particion a la q apuntaba fue consolidada con la anterior
+        indice--;
+
+        // logueo
+        log_trace(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+                                    particion_izquierda->base, particion_izquierda->limite);
+    }
+
+    // chequeo la particion siguiente al indice
+    particion_derecha = list_get(memoria->lista_particiones, indice +1);
+    if (particion_derecha->ocupada == false)
+    {
+        particion_izquierda = list_remove(memoria->lista_particiones, indice);
+
+        // log para debug
+        log_trace(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+                                     indice, particion_izquierda->base, particion_izquierda->limite,
+                                     indice+1, particion_derecha->base, particion_derecha->limite);
+
+        // paso la base de la particion actual a la particion siguiente (extiendola hacia atras)
+        particion_derecha->base = particion_izquierda->base;
+        free(particion_izquierda);
+
+        // logueo
+        log_trace(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+                                    particion_derecha->base, particion_derecha->limite);
+    }
+
+    /* RESUMEN VISUAL:
+        P_Izq->libre y P_Der->Ocupada    ==>   P_Izq->base (=)                ||  P_Izq->limite = P_Indice->limite
+        P_Izq->Ocupada y P_Der->libre    ==>   P_Der->base = P_indice->base   ||  P_Der->limite (=)  
+        P_Izq->libre y P_Der->libre      ==>   P_Izq->base (=)                ||  P_Izq->limite = P_Der->limite 
+        P_Izq->Ocupada y P_Der->Ocupada  ==>   NADA  
+    */
 }
 
 // ==========================================================================
@@ -429,8 +480,10 @@ void rutina_finalizar_proceso(int socket_cliente)
     // Listado de particiones actuales
     listar_particiones();
 
-    // envio pedido de consolidacion (solo se hace de ser valido)
+    // envio pedido de consolidacion (solo se hace de ser valido) - memoria protegida
+    pthread_mutex_lock(&mutex_memoria);
     consolidar_particion(obtener_indice_particion(particion_liberada->base));
+    pthread_mutex_unlock(&mutex_memoria);
 }
 
 void rutina_crear_hilo(t_list* param, int socket_cliente)
