@@ -125,6 +125,7 @@ void atender_cpu()
             
             enviar_mensaje((char*)aux_datos_paquete, socket_cpu);
 
+            // LOG OBLIGATORIO
             log_info(log_memoria_oblig, "## Obtener instrucción - (PID:TID) - (%d:%d) - Instrucción: %s",
             contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid, (char*)aux_datos_paquete);
 

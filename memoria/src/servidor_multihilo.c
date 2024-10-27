@@ -52,6 +52,9 @@ void* rutina_ejecucion (void* nada)
     }
     enviar_handshake(HANDSHAKE_OK, socket_cliente);
 
+    // LOG OBLIGATORIO
+    log_info(log_memoria_oblig, "## Kernel Conectado - FD del socket: %d", socket_cliente);
+
     log_debug(log_memoria_gral, "Hilo ejecución esperando codigo");
 
     operacion = recibir_codigo(socket_cliente);

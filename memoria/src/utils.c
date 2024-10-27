@@ -242,6 +242,7 @@ bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
         contexto_ejecucion->tcb->registros.GX,
         contexto_ejecucion->tcb->registros.HX);
 
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Contexto Actualizado - (PID:TID) - (%d:%d)",
     contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
     
@@ -329,7 +330,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
 
     memcpy(aux_direccion, data, BYTES_ACCESO);
 
-
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 (contexto_ejecucion->pcb->particion->base + desplazamiento),
@@ -426,6 +427,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
 
         enviar_mensaje("OK", socket_cliente);
         
+        // LOG OBLIGATORIO
         log_info(log_memoria_oblig, "## Proceso Creado-  PID: %d - Tamaño: %d", pid, tamanio);
     } else {
         enviar_mensaje("INSUFICIENTE/ERROR", socket_cliente);
@@ -469,7 +471,7 @@ void rutina_finalizar_proceso(int socket_cliente)
     pthread_mutex_unlock(&mutex_procesos_cargados);
     contexto_ejecucion->pcb = NULL;
 
-    // log obligatorio
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Proceso Destruido -  PID: %d - Tamaño: %d",
                                 pid, (particion_liberada->limite - particion_liberada->base + 1));
 
@@ -514,6 +516,7 @@ void rutina_crear_hilo(t_list* param, int socket_cliente)
 
         enviar_mensaje("OK", socket_cliente);
 
+        // LOG OBLIGATORIO
         log_info(log_memoria_oblig, "## Hilo Creado - (PID:TID) - (%d:%d)", contexto_ejecucion->pcb->pid, tid);
     }
 }
@@ -539,6 +542,7 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     eliminar_tcb(contexto_ejecucion->pcb->lista_tcb, tid);
     pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
 
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Hilo Destruido - (PID:TID) - (%d:%d)", contexto_ejecucion->pcb->pid, tid);
 
     enviar_mensaje("OK", socket_cliente);
@@ -581,7 +585,7 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
     enviar_paquete(paquete, socket_fs);
     eliminar_paquete(paquete);
 
-    // log obligatorio
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Memory Dump solicitado - (PID:TID) - (%d:%d)",
                                 contexto_ejecucion->pcb->pid,contexto_ejecucion->tcb->tid);
 
@@ -621,7 +625,7 @@ void rutina_contexto_ejecucion(t_list* param)
         return;
     }
 
-    // como es valida logueo.
+    // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Contexto Solicitado - (PID:TID) - (%d:%d)",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid);
 
