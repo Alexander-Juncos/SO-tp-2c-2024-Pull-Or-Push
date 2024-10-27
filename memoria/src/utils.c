@@ -411,7 +411,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
 
     // descargo parametros
     aux = list_get(param, 0);
-    int pid = *(int*) aux;
+    pid = *(int*) aux;
     aux = list_get(param, 1);
     tamanio = *(int*) aux;
     aux = list_get(param, 2);
@@ -421,9 +421,9 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
 
     if (pcb_new != NULL) {
         // agrego pcb a la lista
-        pthread_mutex_lock(mutex_procesos_cargados);
+        pthread_mutex_lock(&mutex_procesos_cargados);
         list_add(procesos_cargados, pcb_new);
-        pthread_mutex_unlock(mutex_procesos_cargados);
+        pthread_mutex_unlock(&mutex_procesos_cargados);
 
         enviar_mensaje("OK", socket_cliente);
         
@@ -593,7 +593,7 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
     if (recibir_mensaje_de_rta(log_memoria_gral, "MEMORY_DUMP", socket_fs)){
         enviar_mensaje("OK", socket_cliente);
     } else {
-        enviar_mensaje("ERROR FS al realizar DUMP_MEMORY");
+        enviar_mensaje("ERROR FS al realizar DUMP_MEMORY", socket_cliente);
     }
 
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
