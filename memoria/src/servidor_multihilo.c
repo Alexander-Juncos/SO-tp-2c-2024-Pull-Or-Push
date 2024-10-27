@@ -91,16 +91,9 @@ void* rutina_ejecucion (void* nada)
             break;
 
         case MEMORY_DUMP:
-            pedido = recibir_paquete(socket_cliente);
+            pedido = recibir_paquete(socket_cliente); 
 
-            // Stub temporal
-            enviar_mensaje("Recibi operación: MEMORY_DUMP", socket_cliente);
-            log_debug(log_memoria_gral, "Operacion: MEMORY DUMP"); 
-
-            if (memory_dump_fs(pedido) == false) { // hace toda la comunicacion con fs
-                // enviar mensaje error
-            }
-            // enviar mensaje ok
+            memory_dump_fs(pedido, socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

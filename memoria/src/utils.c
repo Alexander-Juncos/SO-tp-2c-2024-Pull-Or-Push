@@ -1,5 +1,6 @@
 #include "utils.h"
 
+
 // ==========================================================================
 // ====  Variables globales:  ===============================================
 // ==========================================================================
@@ -543,30 +544,57 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     enviar_mensaje("OK", socket_cliente);
 }
 
-void memory_dump_fs (t_list* pedido, int socket_cliente) // PENDIENTE
+void memory_dump_fs (t_list* pedido, int socket_cliente)
 {
     char* ip;
     char* puerto;
     int socket_fs;
     t_paquete* paquete;
+    void* data_proceso; // va a contener todo el espacio usuario del proceso
+    void* aux_mem;
+    int tamanio_proceso;
+    char* timestamp;
 
+    // preparo la conexion
     ip = config_get_string_value(config, "IP_FILESYSTEM");
     puerto = config_get_string_value(config, "PUERTO_FILESYSTEM");
     socket_fs = crear_conexion(ip, puerto);
     enviar_handshake(MEMORIA, socket_fs);
     recibir_y_manejar_rta_handshake(log_memoria_gral, "Memoria", socket_fs);
 
+    // preparo lo que voy a enviar
+    tamanio_proceso = contexto_ejecucion->pcb->particion->limite - contexto_ejecucion->pcb->particion->base + 1;
+    data_proceso = malloc(tamanio_proceso);
+    aux_mem = memoria->espacio_usuario + contexto_ejecucion->pcb->particion->base;
+    // cargo data
+    pthread_mutex_lock(&mutex_memoria);
+    memcpy(data_proceso, aux_mem, tamanio_proceso);
+    timestamp = temporal_get_string_time("%H:%M:%S:%MS"); // revisar en libreria si hay q cambiar el formato
+    pthread_mutex_unlock(&mutex_memoria);
 
+    // creo el paquete y lo envio
     paquete = crear_paquete(MEMORY_DUMP);
-    // agregar el pid, tid, y el tiempo actual al iniciar el memory_dump?
-    // hay q agregar al paquete TODO lo contenido en la particion del proceso
-    // puede ser en un void*
+    agregar_a_paquete(paquete, &(contexto_ejecucion->pcb->pid), sizeof(int));
+    agregar_a_paquete(paquete, &(contexto_ejecucion->tcb->tid), sizeof(int));
+    agregar_a_paquete(paquete, timestamp, string_length(timestamp));
+    agregar_a_paquete(paquete, data_proceso, tamanio_proceso);       
     enviar_paquete(paquete, socket_fs);
-    recibir_mensaje(socket_fs);
-    // tendria q modificarse para sacar información
-    // if (correcta) return true else return false
+    eliminar_paquete(paquete);
+
+    // log obligatorio
+    log_info(log_memoria_oblig, "## Memory Dump solicitado - (PID:TID) - (%d:%d)",
+                                contexto_ejecucion->pcb->pid,contexto_ejecucion->tcb->tid);
+
+    // recibo respuesta y la reenvio a kernel
+    if (recibir_mensaje_de_rta(log_memoria_gral, "MEMORY_DUMP", socket_fs)){
+        enviar_mensaje("OK", socket_cliente);
+    } else {
+        enviar_mensaje("ERROR FS al realizar DUMP_MEMORY");
+    }
+
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
-    return true;
+    free(timestamp);
+    free(data_proceso);
 }
 
 // CPU - Memoria

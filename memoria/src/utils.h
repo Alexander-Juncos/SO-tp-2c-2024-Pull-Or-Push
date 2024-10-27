@@ -17,6 +17,7 @@
 #include <commons/bitarray.h>
 #include <utils/conexiones.h>
 #include <utils/general.h>
+#include <commons/temporal.h>
 
 // ==========================================================================
 // ====  Variables globales:  ===============================================
@@ -112,7 +113,7 @@ void rutina_crear_proceso(t_list* param, int socket_cliente);
 void rutina_finalizar_proceso(int socket_cliente); // Tiene bastantes logs para debuguear
 void rutina_crear_hilo(t_list* param, int socket_cliente);
 void rutina_finalizar_hilo(t_list* param, int socket_cliente);
-void memory_dump_fs (t_list* pedido, int socket_cliente); // PENDIENTE
+void memory_dump_fs (t_list* pedido, int socket_cliente); 
 
 // CPU - Memoria
 void rutina_contexto_ejecucion(t_list* param);
