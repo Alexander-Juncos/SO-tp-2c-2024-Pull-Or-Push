@@ -77,6 +77,8 @@ bool iniciar_fs()
 
 void iniciar_bitmap(char* ruta)
 {
+    bitmap = malloc(sizeof(t_bitmap));
+
     struct stat stat_buf;
     int file_desc;
     int aux_tamanio = fs->cant_bloques / 8; // convierte bytes a bits
@@ -131,7 +133,7 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
     file_desc = fileno(bitmap->f);
     fstat(file_desc, &stat_buf);
 
-    msync(bitmap->espacio_bitmap, stat_buf->st_size, MS_SYNC);
+    msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
 }
 
 void imprimir_bitmap()
@@ -139,11 +141,11 @@ void imprimir_bitmap()
     for (unsigned int i=0; i < bitarray_get_max_bit(bitmap->bitarray); i++)
     {
         if (bitarray_test_bit(bitmap->bitarray, i)){
-            printf("%i: TRUE",i);
+            printf("%i: T ",i);
         }
         else
         {
-            printf("%i: FALSE",i);
+            printf("%i: F ",i);
         }
 
         if (i > 1 && i % 20 == 0)
@@ -151,6 +153,7 @@ void imprimir_bitmap()
             printf("\n");
         }
     }
+    printf("\n");
 }
 
 void iniciar_logs(bool testeo)

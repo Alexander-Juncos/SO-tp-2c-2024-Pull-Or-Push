@@ -6,8 +6,9 @@
 // ====  Variables:  ========================================================
 // ==========================================================================
 
-pthread_mutex_t mutex_socket_cliente_temp;
-int socket_cliente_temp = 1;
+// pthread_mutex_t mutex_socket_cliente_temp;
+// int socket_cliente_temp = 1;
+// algo similar a lo q paso en memoria
 
 // ==========================================================================
 // ====  Funciones Servidor Multihilo:  =====================================
