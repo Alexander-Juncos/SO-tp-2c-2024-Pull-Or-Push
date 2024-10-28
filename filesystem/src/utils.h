@@ -19,6 +19,7 @@
 // Intento de hacer q el FS cree su propio directorio para archivos
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 
 // ==========================================================================
 // ====  Variables globales:  ===============================================
@@ -32,16 +33,20 @@ extern int socket_escucha;
 extern bool fin_programa;
 
 typedef struct {
-    FILE* f_bitmap;
     FILE* f_bloques;
     uint tam_bloques; 
     uint cant_bloques;
-    t_bitarray* bitmap;
 } t_file_system;
 
+typedef struct {
+    FILE* f;
+    t_bitarray* bitarray;
+    void *espacio_bitmap; // para funcionamiento interno bitmap
+} t_bitmap;
+
 extern t_file_system* fs;
-
-
+extern pthread_mutex_t mutex_fs;
+extern t_bitmap* bitmap;
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
@@ -59,6 +64,19 @@ bool iniciar_fs(void);
 /*
     obtener bloques libres, actualizar bitmap, obtener path absoluto, quizas algo q emita logs
 */
+
+/// @brief Abre - Crea el archivo bitmap, mapea el espacio_bitmap con el archivo y inicia el bitarray
+/// @param ruta 
+void iniciar_bitmap(char* ruta);
+
+/// @brief Sincroniza todo el mapeo de bitmap.dat, podria encontrarse forma de
+/// solo sincronizar el byte modificado, pero me parece mucho problema
+/// Solo llamarla al realizar todos los cambios ?
+void actualizar_f_bitmap();
+
+/// @brief imprime el bitmap en lineas q contienen 20 bits del bitarray c/u 
+void imprimir_bitmap();
+
 void iniciar_logs(bool testeo);
 void terminar_programa();
 void retardo_acceso(); // retardo para cada acceso a bloques de memoria
