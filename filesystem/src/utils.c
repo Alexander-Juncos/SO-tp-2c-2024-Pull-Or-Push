@@ -44,12 +44,14 @@ bool iniciar_fs()
     string_append(&ruta_aux, PATH_BASE); // como el directorio ya es valido...
 
     // Abrir - Crear archivo bloques.dat con tamaño = BLOCK_SIZE * BLOCK_COUNT 
-    string_append(&ruta_aux, "bloques.dat");
+    string_append(&ruta_aux, "/bloques.dat");
     aux_tamanio = (fs->tam_bloques * fs->cant_bloques) - 1; // tamaño en bytes 0-->tam_tot-1 
 
+    log_debug(log_fs_gral, "ruta bloques: %s", ruta_aux);
     fs->f_bloques = fopen(ruta_aux, "rb+"); // busca si existe
     if (fs->f_bloques == NULL) // si no existe hay q crearlo
     {
+        log_debug(log_fs_gral,"Creando archivo bloques");
         fs->f_bloques = fopen(ruta_aux, "wb+");
         file_desc = fileno(fs->f_bloques);
         ftruncate(file_desc, aux_tamanio); // fijamos su tamaño
@@ -84,13 +86,16 @@ void iniciar_bitmap(char* ruta)
     int aux_tamanio = fs->cant_bloques / 8; // convierte bytes a bits
     if (aux_tamanio % 8 != 0) 
         aux_tamanio++; // compenso si hubo perdida
-    string_append(&ruta, "bitmap.dat");
+    string_append(&ruta, "/bitmap.dat");
 
     // veo si existe un archivo bitmap
+    log_debug(log_fs_gral, "ruta bitmap: %s", ruta);
     bitmap->f = fopen(ruta, "rb+");
     if (bitmap->f == NULL)
     { // Si no existe lo creamos
+        log_debug(log_fs_gral,"Creando archivo bitmap");
         bitmap->f = fopen(ruta, "wb+");
+        file_desc = fileno(bitmap->f);
         ftruncate(file_desc, aux_tamanio);
     }
     file_desc = fileno(bitmap->f);
@@ -107,10 +112,10 @@ void iniciar_bitmap(char* ruta)
         file_desc = fileno(bitmap->f);
         fstat(file_desc, &stat_buf);
         ftruncate(file_desc, aux_tamanio);
-        log_trace(log_fs_gral, "bitmap.dat sobre-escrito - Creando nuevo FS.");
+        log_debug(log_fs_gral, "bitmap.dat sobre-escrito - Creando nuevo FS.");
     }
     else {
-        log_trace(log_fs_gral, "bitmap.dat coincide con config, existe FS previo - Cargando.");
+        log_debug(log_fs_gral, "bitmap.dat coincide con el esperado por config - Cargando.");
     }
 
     // hacemos el mappeo al espacio con el q se creara el bitmap
@@ -177,8 +182,13 @@ void terminar_programa()
 {
 	// Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
 	// con las funciones de las commons y del TP mencionadas en el enunciado /
+    fclose(fs->f_bloques);
+    bitarray_destroy(bitmap->bitarray);
+    fclose(bitmap->f);
+    free(bitmap);
+    free(fs);
 	liberar_conexion(log_fs_gral, "Servidor Multihilo",socket_escucha); 
-	config_destroy(config);
+	// config_destroy(config); comento para q no rompa al liberar el nivel de log
 }
 
 void retardo_acceso()
