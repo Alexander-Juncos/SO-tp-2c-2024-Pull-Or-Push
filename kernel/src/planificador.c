@@ -82,51 +82,53 @@ void planific_corto_fifo(void) {
 			case SUCCESS:
             pthread_mutex_lock(&mutex_procesos_activos);
             pthread_mutex_lock(&mutex_cola_exit);
-            list_add(cola_exit, proceso_exec);
+            list_add(cola_exit, hilo_exec);
             sem_post(&sem_procesos_exit);
             procesos_activos--;
-            log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: SUCCESS", proceso_exec->pid); // log Obligatorio.
-            log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio.
-            proceso_exec = NULL;
+            log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: SUCCESS", hilo_exec->tid); // log Obligatorio.
+            log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", hilo_exec->tid); // log Obligatorio.
+            hilo_exec = NULL;
             pthread_mutex_unlock(&mutex_cola_exit);
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
+            // Este caso es el que hay que adaptar, hay que mandarlo a blocked y ponerle un contador por el tiempo que realiza la IO. Luego, devolverlo a READY.
             case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
-            paquete = crear_paquete(IO_OPERACION);
-            agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int));
-            agregar_a_paquete(paquete, &unidades_de_trabajo, sizeof(int));
+            // paquete = crear_paquete(IO_OPERACION);
+            // agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int));
+            // agregar_a_paquete(paquete, &unidades_de_trabajo, sizeof(int));
 
-            pthread_mutex_lock(&mutex_lista_io_blocked);
-            io = encontrar_io(nombre_interfaz);
-            if(io != NULL) {
-                enviar_paquete(paquete, io->socket);
-                log_debug(log_kernel_gral, "Proceso %d empieza a usar interfaz %s", proceso_exec->pid, nombre_interfaz);
-                pthread_mutex_lock(&(proceso_exec->mutex_uso_de_io));
-                list_add(io->cola_blocked, proceso_exec);
-                log_info(log_kernel_oblig, "PID: %d - Bloqueado por: INTERFAZ", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-            }
-            else {
-                log_error(log_kernel_gral, "Interfaz %s no encontrada.", nombre_interfaz);
-                pthread_mutex_lock(&mutex_procesos_activos);
-                pthread_mutex_lock(&mutex_cola_exit);
-                list_add(cola_exit, proceso_exec);
-                procesos_activos--;
-                sem_post(&sem_cola_exit);
-                log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-                pthread_mutex_unlock(&mutex_cola_exit);
-                pthread_mutex_unlock(&mutex_procesos_activos);
-            }
-            pthread_mutex_unlock(&mutex_lista_io_blocked);
+            // pthread_mutex_lock(&mutex_lista_io_blocked);
+            // io = encontrar_io(nombre_interfaz);
+            // if(io != NULL) {
+            //     enviar_paquete(paquete, io->socket);
+            //     log_debug(log_kernel_gral, "Proceso %d empieza a usar interfaz %s", proceso_exec->pid, nombre_interfaz);
+            //     pthread_mutex_lock(&(proceso_exec->mutex_uso_de_io));
+            //     list_add(io->cola_blocked, proceso_exec);
+            //     log_info(log_kernel_oblig, "PID: %d - Bloqueado por: INTERFAZ", proceso_exec->pid); // log Obligatorio
+            //     log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso_exec->pid); // log Obligatorio
+            //     proceso_exec = NULL;
+            // }
+            // else {
+            //     log_error(log_kernel_gral, "Interfaz %s no encontrada.", nombre_interfaz);
+            //     pthread_mutex_lock(&mutex_procesos_activos);
+            //     pthread_mutex_lock(&mutex_cola_exit);
+            //     list_add(cola_exit, proceso_exec);
+            //     procesos_activos--;
+            //     sem_post(&sem_cola_exit);
+            //     log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
+            //     log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
+            //     proceso_exec = NULL;
+            //     pthread_mutex_unlock(&mutex_cola_exit);
+            //     pthread_mutex_unlock(&mutex_procesos_activos);
+            // }
+            // pthread_mutex_unlock(&mutex_lista_io_blocked);
 
-            eliminar_paquete(paquete);
+            // eliminar_paquete(paquete);
+            manejar_solicitud_io(hilo_exec, unidades_de_trabajo);
             break;
 
             case WAIT:
@@ -228,7 +230,7 @@ void planific_corto_fifo(void) {
 
         if(desalojo.motiv!=WAIT && desalojo.motiv!=SIGNAL)
         {
-            proceso_exec = NULL;
+            hilo_exec = NULL;
         }
 
 
@@ -263,11 +265,11 @@ void planific_corto_prioridades(void) {
     // EN DESARROLLO... Casi todo del TP viejo
     while(true) {
 
-        if(proceso_exec == NULL) {
+        if(hilo_exec == NULL) {
             sem_wait(&sem_procesos_ready);
             
-            pthread_mutex_lock(&mutex_proceso_exec);
-            pthread_mutex_lock(&mutex_cola_ready);
+            pthread_mutex_lock(&mutex_hilo_exec);
+            pthread_mutex_lock(&mutex_cola_ready_unica);
             // pone proceso de estado READY a estado EXEC. Y envia contexto de ejecucion al cpu.
             ejecutar_siguiente_hilo(cola_ready_unica);
             log_info(log_kernel_oblig, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso_exec->pid);
@@ -498,7 +500,7 @@ void planific_corto_multinivel(void) {
     // EN DESARROLLO... Casi todo del TP viejo
     while(true) {
 
-        if(proceso_exec == NULL) {
+        if(hilo_exec == NULL) {
             sem_wait(&sem_procesos_ready);
             
             pthread_mutex_lock(&mutex_proceso_exec);
@@ -1043,6 +1045,36 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
     pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)info_para_recibir_rta);
     pthread_detach(*thread_respuesta_memory_dump);
 }
+
+void manejar_solicitud_io(t_tcb* hilo_exec, int unidades_trabajo) {
+    log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED (IO)", hilo_exec->tid);
+
+    // Mover el hilo a la cola de BLOQUEADOS para IO
+    pthread_mutex_lock(&mutex_cola_blocked_io);
+    list_add(cola_blocked_io, hilo_exec);
+    pthread_mutex_unlock(&mutex_cola_blocked_io);
+
+    // Simular el tiempo de IO con un sleep en un hilo separado para no bloquear el planificador
+    pthread_t hilo_io;
+    pthread_create(&hilo_io, NULL, (void*) esperar_y_mover_a_ready, (void*) hilo_exec);
+    pthread_detach(hilo_io); // Desconecta el hilo para que no sea necesario join
+}
+
+void esperar_y_mover_a_ready(t_tcb* hilo_exec) {
+    // Simular IO
+    sleep(hilo_exec->unidades_trabajo);  // Tiempo en IO
+
+    // Mover el hilo de vuelta a READY
+    pthread_mutex_lock(&mutex_cola_blocked_io);
+    list_remove_by_condition(cola_blocked_io, (void*) hilo_exec);  // Eliminar de BLOCKED IO
+    pthread_mutex_unlock(&mutex_cola_blocked_io);
+
+    pthread_mutex_lock(&mutex_cola_ready_unica);
+    list_add(cola_ready_unica, hilo_exec);
+    log_info(log_kernel_oblig, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: READY", hilo_exec->tid);
+    pthread_mutex_unlock(&mutex_cola_ready_unica);
+}
+
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================

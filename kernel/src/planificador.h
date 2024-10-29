@@ -87,6 +87,10 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb);
 
 void enviar_pedido_de_dump_a_memoria(t_tcb* tcb);
 
+// Para manejos de entrada/salida
+void manejar_solicitud_io(t_tcb* hilo_exec, int unidades_trabajo);
+void esperar_y_mover_a_ready(t_tcb* hilo_exec);
+
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
