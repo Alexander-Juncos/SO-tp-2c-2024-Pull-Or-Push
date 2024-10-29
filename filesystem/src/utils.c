@@ -29,7 +29,7 @@ bool iniciar_fs()
 
     // variables
     fs = malloc(sizeof(t_file_system));
-    char *ruta_aux = string_new();
+    char *ruta_aux;
     int aux_tamanio;
     int file_desc;
 
@@ -42,10 +42,8 @@ bool iniciar_fs()
     mkdir(PATH_BASE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // En teoria esto deberia crear la carpeta del FS si no existiera
     // si existe da EERROR y no hace nada
 
-    string_append(&ruta_aux, PATH_BASE); // como el directorio ya es valido...
-
     // Abrir - Crear archivo bloques.dat con tamaño = BLOCK_SIZE * BLOCK_COUNT 
-    string_append(&ruta_aux, "/bloques.dat");
+    ruta_aux = obtener_path_absoluto("bloques.dat");
     aux_tamanio = (fs->tam_bloques * fs->cant_bloques) - 1; // tamaño en bytes 0-->tam_tot-1 
 
     log_debug(log_fs_gral, "ruta bloques: %s", ruta_aux);
@@ -58,10 +56,8 @@ bool iniciar_fs()
         ftruncate(file_desc, aux_tamanio); // fijamos su tamaño
     }
 
-    ruta_aux = string_substring_until(ruta_aux,string_length(PATH_BASE)); // me quedo nueva mente con path base
-
     // inicio el bitmap
-    iniciar_bitmap(ruta_aux);
+    iniciar_bitmap();
 
     // setear cantidad de indices que puede tener un bloque de indices
     cantidad_indices_max = fs->tam_bloques / sizeof(uint32_t);
@@ -78,7 +74,7 @@ bool iniciar_fs()
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
-void iniciar_bitmap(char* ruta)
+void iniciar_bitmap()
 {
     bitmap = malloc(sizeof(t_bitmap));
 
@@ -87,7 +83,7 @@ void iniciar_bitmap(char* ruta)
     int aux_tamanio = fs->cant_bloques / 8; // convierte bytes a bits
     if (aux_tamanio % 8 != 0) 
         aux_tamanio++; // compenso si hubo perdida
-    string_append(&ruta, "/bitmap.dat");
+    char * ruta = obtener_path_absoluto("bitmap.dat");
 
     // veo si existe un archivo bitmap
     log_debug(log_fs_gral, "ruta bitmap: %s", ruta);
@@ -252,4 +248,12 @@ void retardo_acceso()
 {
     unsigned int tiempo_en_microsegs = config_get_int_value(config, "RETARDO_ACCESO_BLOQUE")*MILISEG_A_MICROSEG;
     usleep(tiempo_en_microsegs);
+}
+
+char *obtener_path_absoluto(char *ruta){
+    char *aux = string_new();
+    string_append(&aux, PATH_BASE);
+    string_append(&aux, "/");
+    string_append(&aux, ruta);
+    return aux;
 }
