@@ -16,6 +16,7 @@ t_bitmap* bitmap;
 bool fin_programa = 0;
 
 unsigned int cantidad_indices_max;
+unsigned int ultimo_bloque_revisado = 0;
 char* PATH_BASE;
 
 // ==========================================================================
@@ -141,6 +142,63 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
     msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
 }
 
+t_list* bloques_libres (unsigned int cantidad)
+{
+    t_bloques_libres* bloqs_lib;
+    unsigned int inicio_busqueda = ultimo_bloque_revisado;
+    t_list* lista = list_create();
+    
+    do
+    {
+        ultimo_bloque_revisado++;
+
+        if (ultimo_bloque_revisado > fs->cant_bloques){
+            ultimo_bloque_revisado = 0;
+        }
+
+        if (bitarray_test_bit(bitmap->bitarray, ultimo_bloque_revisado))
+        { // el bloque esta ocupado, guardo lo q conte y limpio
+            // si la estructura no esta limpia hay q cargarla y limpiarla
+            if (bloqs_lib != NULL)
+            {
+                list_add(lista, bloqs_lib);
+                bloqs_lib = NULL;
+            }
+        }
+        else // el bloque esta libre, lo agrego
+        { // Si el bloque esta libre lo cargo en estructura
+            cantidad--;
+            // anido xq la vida es una
+            if(bloqs_lib == NULL)
+            {
+                bloqs_lib = malloc(sizeof(t_bloques_libres));
+                bloqs_lib->bloque = ultimo_bloque_revisado;
+                bloqs_lib->cant_bloques = 1;
+            }
+            else // ya habia bloques libres previos (continuos)
+            {
+                bloqs_lib->cant_bloques++;
+            } 
+        }
+    } while (inicio_busqueda != ultimo_bloque_revisado && cantidad > 0);
+
+    if (cantidad == 0) // Si encontro todos los bloques q necesitaba
+    {
+        if (bloqs_lib != NULL)
+        {
+            list_add(lista, bloqs_lib);
+            bloqs_lib = NULL;
+        }
+        return lista;
+    }
+    
+    // Si no lo encontro hay q limpiar y devolver NULL
+    list_destroy_and_destroy_elements(lista, free);
+    if (bloqs_lib != NULL)
+        free(bloqs_lib);
+    return NULL;    
+}
+
 void imprimir_bitmap()
 {
     for (unsigned int i=0; i < bitarray_get_max_bit(bitmap->bitarray); i++)
@@ -176,7 +234,6 @@ void iniciar_logs(bool testeo)
 
     free(nivel);		
 }
-
 
 void terminar_programa()
 {
