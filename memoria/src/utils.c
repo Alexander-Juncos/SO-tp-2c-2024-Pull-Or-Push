@@ -580,7 +580,8 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
     paquete = crear_paquete(MEMORY_DUMP);
     agregar_a_paquete(paquete, &(contexto_ejecucion->pcb->pid), sizeof(int));
     agregar_a_paquete(paquete, &(contexto_ejecucion->tcb->tid), sizeof(int));
-    agregar_a_paquete(paquete, timestamp, string_length(timestamp));
+    agregar_a_paquete(paquete, timestamp, string_length(timestamp) + 1);
+    agregar_a_paquete(paquete, &tamanio_proceso, sizeof(int));
     agregar_a_paquete(paquete, data_proceso, tamanio_proceso);       
     enviar_paquete(paquete, socket_fs);
     eliminar_paquete(paquete);

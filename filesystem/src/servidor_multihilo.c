@@ -60,13 +60,16 @@ void* rutina_ejecucion (void* nada)
         case MEMORY_DUMP:
             pedido = recibir_paquete(socket_cliente);
             
-            /* 
-                haciendo el dump en el fs
-            */
+            if (rutina_memory_dump(pedido))
+            {
+                enviar_mensaje("OK", socket_cliente);
+            }
+            else
+            {
+                enviar_mensaje("ERROR", socket_cliente);
+            }
 
             list_destroy_and_destroy_elements(pedido, free);
-            enviar_mensaje("OK", socket_cliente);
-            log_debug(log_fs_gral, "Memory Dump hecho");
             break;
     
         default:

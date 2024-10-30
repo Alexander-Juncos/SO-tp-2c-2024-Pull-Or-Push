@@ -11,6 +11,7 @@ int socket_escucha = 1;
 
 t_file_system* fs;
 pthread_mutex_t mutex_fs;
+pthread_mutex_t mutex_bitmap;
 t_bitmap* bitmap;
 
 bool fin_programa = 0;
@@ -70,6 +71,83 @@ bool iniciar_fs()
     return true;
 }
 
+bool memory_dump(char* ruta, int size, void* data)
+{
+    // preparo para buscar bloques
+    t_list* lista_bloques;
+    unsigned int cant_bloques = size / fs->tam_bloques;
+    if (size % fs->tam_bloques != 0)
+        cant_bloques++;
+
+    // obtengo la ruta absoluta
+    char* ruta_absoluta = obtener_path_absoluto(ruta);
+
+    // busco bloques libres
+    pthread_mutex_lock(&mutex_bitmap);
+    lista_bloques = bloques_libres(cant_bloques);
+    pthread_mutex_unlock(&mutex_bitmap);
+
+    // si la lista no esta iniciada es xq no hay bloques suficientes - ABORTAR
+    if (lista_bloques == NULL)
+    {
+        log_error(log_fs_gral, "ERROR en la Creacion de archivo: \"%s\" - No hay bloques suficientes - cantidad requerida: %i", ruta, cant_bloques);
+        free(ruta_absoluta);
+        free(ruta);
+        return false;
+    }
+
+    // marco como ocupados los bloques
+    pthread_mutex_lock(&mutex_bitmap);
+    marcar_bloques_libres(lista_bloques, ruta);
+    pthread_mutex_unlock(&mutex_bitmap);
+
+    // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
+
+    // imprimir en el archivo bloques.dat la data bloque a bloque y x cada bloque agregar su referencia en el bloque de indices
+
+    // cerrar archivo metadata 
+
+
+    free(ruta_absoluta);
+    free(ruta);
+    return true;
+}
+
+// ==========================================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
+
+bool rutina_memory_dump(t_list* param)
+{
+    char* nombre = string_new();
+    int tamanio;
+    int pid;
+    int tid;
+    int size;
+    char* timestamp;
+    void* data;
+
+    data = list_get(param, 0);
+    pid = *(int*) data;
+    data = list_get(param, 1);
+    tid = *(int*) data;
+    data = list_get(param, 2);
+    timestamp = data;
+    data = list_get(param, 3);
+    size = *(int*) data;
+    data = list_get(param, 4); // la informacion en el espacio usuario del proceso
+
+    // formo el nombre para el archivo // <PID>-<TID>-<TIMESTAMP>.dmp
+    string_append(&nombre, string_itoa(pid));
+    string_append(&nombre, "-");
+    string_append(&nombre, string_itoa(tid));
+    string_append(&nombre, "-");
+    string_append(&nombre, timestamp);
+    string_append(&nombre, ".dmp");
+    
+    return memory_dump(nombre, size, data);
+}
+
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
@@ -123,8 +201,33 @@ void iniciar_bitmap()
     // cuando se crea el bitmap, lo que contuviera el espacio_bitmap no se tendria q modificar... x lo que si se
     // cargo deberia estar bien, y si no existia ftruncate lo inicia con bytes 0
 
+    // inicio su mutex
+    pthread_mutex_init(&mutex_bitmap, NULL);
+
     // Lo imprimimos para testear
     imprimir_bitmap();
+    contar_bloques_libres_totales();
+}
+
+void contar_bloques_libres_totales()
+{
+    unsigned int inicio_busqueda = 0;
+    unsigned int bloque_actual = inicio_busqueda;
+    unsigned int cantidad;
+    
+    do
+    {
+        if (bloque_actual > fs->cant_bloques){
+            bloque_actual = 0;
+        }
+
+        if (!(bitarray_test_bit(bitmap->bitarray, bloque_actual)))
+            cantidad++;
+
+        bloque_actual++;
+    } while (inicio_busqueda != bloque_actual);
+
+    bitmap->bloques_libres_tot = cantidad;
 }
 
 void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hacerse de otra forma pero seria + complejo
@@ -135,7 +238,11 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
     file_desc = fileno(bitmap->f);
     fstat(file_desc, &stat_buf);
 
+    // esto es opcional pero puede funcionar como seguro
+    contar_bloques_libres_totales();
+
     msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
+
 }
 
 t_list* bloques_libres (unsigned int cantidad)
@@ -193,6 +300,26 @@ t_list* bloques_libres (unsigned int cantidad)
     if (bloqs_lib != NULL)
         free(bloqs_lib);
     return NULL;    
+}
+
+void marcar_bloques_libres(t_list* lista, char* archivo)
+{
+    t_bloques_libres* bloques;
+    unsigned int contador;
+
+    for (unsigned int i=0; i<list_size(lista); i++)
+    {
+        bloques = list_get(lista, i);
+        contador = 0;
+
+        while (contador != bloques->cant_bloques)
+        {
+            bitarray_set_bit(bitmap->bitarray, bloques->bloque + contador);
+            bitmap->bloques_libres_tot--;
+            log_info(log_fs_oblig, "## Bloque asignado: %d - Archivo: \"%s\" - Bloques Libres: %d", 
+                                    bloques->bloque + contador, archivo, bitmap->bloques_libres_tot);
+        }
+    }
 }
 
 void imprimir_bitmap()

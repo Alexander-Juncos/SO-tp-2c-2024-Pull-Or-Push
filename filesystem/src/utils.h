@@ -42,10 +42,12 @@ typedef struct {
     FILE* f;
     t_bitarray* bitarray;
     void *espacio_bitmap; // para funcionamiento interno bitmap
+    unsigned int bloques_libres_tot;
 } t_bitmap;
 
 extern t_file_system* fs;
 extern pthread_mutex_t mutex_fs;
+extern pthread_mutex_t mutex_bitmap;
 extern t_bitmap* bitmap;
 
 typedef struct {
@@ -58,21 +60,25 @@ typedef struct {
 // ==========================================================================
 
 bool iniciar_fs(void);
-/*
-    iniciar el fs, crear archivos, cerrar el fs
-*/
+
+bool memory_dump(char* ruta, int size, void* data);
+
+// ==========================================================================
+// ====  Funciones Externas:  ===============================================
+// ==========================================================================
+
+bool rutina_memory_dump(t_list* param);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
-/*
-    obtener path absoluto, quizas algo q emita logs
-*/
-
 /// @brief Abre - Crea el archivo bitmap, mapea el espacio_bitmap con el archivo y inicia el bitarray
 /// @param ruta 
 void iniciar_bitmap();
+
+/// @brief Para que se haga un conteo de los bloques libres
+void contar_bloques_libres_totales();
 
 /// @brief Sincroniza todo el mapeo de bitmap.dat, podria encontrarse forma de
 /// solo sincronizar el byte modificado, pero me parece mucho problema
@@ -84,6 +90,8 @@ void actualizar_f_bitmap();
 /// @param cantidad  cantidad de bloques libres q tiene q encontrar
 /// @return          Si no encontro suficiente retorna NULL, sino retorna la lista cargada
 t_list* bloques_libres (unsigned int cantidad);
+
+void marcar_bloques_libres(t_list* lista, char* archivo);
 
 /// @brief imprime el bitmap en lineas q contienen 20 bits del bitarray c/u 
 void imprimir_bitmap();
