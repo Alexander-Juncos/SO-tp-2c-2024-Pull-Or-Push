@@ -1,6 +1,7 @@
 #include "planificador.h"
 #include "quantum.h"
 #include "respuesta_memory_dump.h"
+#include "io.h"
 
 // ==========================================================================
 // ====  Variables globales (exclusivas del planificador):  =================
@@ -97,38 +98,7 @@ void planific_corto_fifo(void) {
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
-            // paquete = crear_paquete(IO_OPERACION);
-            // agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int));
-            // agregar_a_paquete(paquete, &unidades_de_trabajo, sizeof(int));
-
-            // pthread_mutex_lock(&mutex_lista_io_blocked);
-            // io = encontrar_io(nombre_interfaz);
-            // if(io != NULL) {
-            //     enviar_paquete(paquete, io->socket);
-            //     log_debug(log_kernel_gral, "Proceso %d empieza a usar interfaz %s", proceso_exec->pid, nombre_interfaz);
-            //     pthread_mutex_lock(&(proceso_exec->mutex_uso_de_io));
-            //     list_add(io->cola_blocked, proceso_exec);
-            //     log_info(log_kernel_oblig, "PID: %d - Bloqueado por: INTERFAZ", proceso_exec->pid); // log Obligatorio
-            //     log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso_exec->pid); // log Obligatorio
-            //     proceso_exec = NULL;
-            // }
-            // else {
-            //     log_error(log_kernel_gral, "Interfaz %s no encontrada.", nombre_interfaz);
-            //     pthread_mutex_lock(&mutex_procesos_activos);
-            //     pthread_mutex_lock(&mutex_cola_exit);
-            //     list_add(cola_exit, proceso_exec);
-            //     procesos_activos--;
-            //     sem_post(&sem_cola_exit);
-            //     log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
-            //     log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
-            //     proceso_exec = NULL;
-            //     pthread_mutex_unlock(&mutex_cola_exit);
-            //     pthread_mutex_unlock(&mutex_procesos_activos);
-            // }
-            // pthread_mutex_unlock(&mutex_lista_io_blocked);
-
-            // eliminar_paquete(paquete);
-            manejar_solicitud_io(hilo_exec, unidades_de_trabajo);
+            usar_io(hilo_exec, unidades_de_trabajo);
             break;
 
             case WAIT:
@@ -324,42 +294,12 @@ void planific_corto_prioridades(void) {
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
-            // Del TP viejo. Hay que adaptarlo a este, sólo tiene que hacer un sleep.
+            // Este caso es el que hay que adaptar, hay que mandarlo a blocked y ponerle un contador por el tiempo que realiza la IO. Luego, devolverlo a READY.
             case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
-            paquete = crear_paquete(IO_OPERACION);
-            agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int));
-            agregar_a_paquete(paquete, &unidades_de_trabajo, sizeof(int));
-
-            pthread_mutex_lock(&mutex_lista_io_blocked);
-            io = encontrar_io(nombre_interfaz);
-            if(io != NULL) {
-                enviar_paquete(paquete, io->socket);
-                log_debug(log_kernel_gral, "Proceso %d empieza a usar interfaz %s", proceso_exec->pid, nombre_interfaz);
-                pthread_mutex_lock(&(proceso_exec->mutex_uso_de_io));
-                list_add(io->cola_blocked, proceso_exec);
-                log_info(log_kernel_oblig, "PID: %d - Bloqueado por: INTERFAZ", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-            }
-            else {
-                log_error(log_kernel_gral, "Interfaz %s no encontrada.", nombre_interfaz);
-                pthread_mutex_lock(&mutex_procesos_activos);
-                pthread_mutex_lock(&mutex_cola_exit);
-                list_add(cola_exit, proceso_exec);
-                procesos_activos--;
-                sem_post(&sem_cola_exit);
-                log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-                pthread_mutex_unlock(&mutex_cola_exit);
-                pthread_mutex_unlock(&mutex_procesos_activos);
-            }
-            pthread_mutex_unlock(&mutex_lista_io_blocked);
-
-            eliminar_paquete(paquete);
+            usar_io(hilo_exec, unidades_de_trabajo);
             break;
 
             case WAIT:
@@ -559,41 +499,12 @@ void planific_corto_multinivel(void) {
             pthread_mutex_unlock(&mutex_procesos_activos);
             break;
 
+            // Este caso es el que hay que adaptar, hay que mandarlo a blocked y ponerle un contador por el tiempo que realiza la IO. Luego, devolverlo a READY.
             case IO:
             nombre_interfaz = list_get(desalojo_y_argumentos, 1);
             int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
 
-            paquete = crear_paquete(IO_OPERACION);
-            agregar_a_paquete(paquete, &(proceso_exec->pid), sizeof(int));
-            agregar_a_paquete(paquete, &unidades_de_trabajo, sizeof(int));
-
-            pthread_mutex_lock(&mutex_lista_io_blocked);
-            io = encontrar_io(nombre_interfaz);
-            if(io != NULL) {
-                enviar_paquete(paquete, io->socket);
-                log_debug(log_kernel_gral, "Proceso %d empieza a usar interfaz %s", proceso_exec->pid, nombre_interfaz);
-                pthread_mutex_lock(&(proceso_exec->mutex_uso_de_io));
-                list_add(io->cola_blocked, proceso_exec);
-                log_info(log_kernel_oblig, "PID: %d - Bloqueado por: INTERFAZ", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-            }
-            else {
-                log_error(log_kernel_gral, "Interfaz %s no encontrada.", nombre_interfaz);
-                pthread_mutex_lock(&mutex_procesos_activos);
-                pthread_mutex_lock(&mutex_cola_exit);
-                list_add(cola_exit, proceso_exec);
-                procesos_activos--;
-                sem_post(&sem_cola_exit);
-                log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: INVALID_INTERFACE", proceso_exec->pid); // log Obligatorio
-                log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso_exec->pid); // log Obligatorio
-                proceso_exec = NULL;
-                pthread_mutex_unlock(&mutex_cola_exit);
-                pthread_mutex_unlock(&mutex_procesos_activos);
-            }
-            pthread_mutex_unlock(&mutex_lista_io_blocked);
-
-            eliminar_paquete(paquete);
+            usar_io(hilo_exec, unidades_de_trabajo);
             break;
 
             case WAIT:
