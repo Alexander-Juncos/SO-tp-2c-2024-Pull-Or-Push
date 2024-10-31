@@ -43,6 +43,11 @@ bool iniciar_fs()
     mkdir(PATH_BASE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // En teoria esto deberia crear la carpeta del FS si no existiera
     // si existe da EERROR y no hace nada
 
+    // crear - localizar directorio MOUNT_DIR/files (de config)
+    ruta_aux = obtener_path_absoluto("files");
+    mkdir(ruta_aux, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // En teoria esto deberia crear la carpeta del FS si no existiera
+    free(ruta_aux);
+
     // Abrir - Crear archivo bloques.dat con tamaño = BLOCK_SIZE * BLOCK_COUNT 
     ruta_aux = obtener_path_absoluto("bloques.dat");
     aux_tamanio = (fs->tam_bloques * fs->cant_bloques) - 1; // tamaño en bytes 0-->tam_tot-1 
@@ -73,26 +78,36 @@ bool iniciar_fs()
 
 bool memory_dump(char* ruta, int size, void* data)
 {
+    FILE* f_metadata;
+    t_bloques_libres* bloques;
+    unsigned int bloque_indice;
+
     // preparo para buscar bloques
     t_list* lista_bloques;
     unsigned int cant_bloques = size / fs->tam_bloques;
     if (size % fs->tam_bloques != 0)
         cant_bloques++;
+    
+    // verifico si la cant_bloques es valida, si no va a entrar en un unico bloque de indices => ERROR
+    if (cant_bloques > cantidad_indices_max)
+    {
+        return false;
+    }
 
     // obtengo la ruta absoluta
-    char* ruta_absoluta = obtener_path_absoluto(ruta);
+    char* ruta_absoluta = obtener_path_absoluto_metadata(ruta);
 
     // busco bloques libres
     pthread_mutex_lock(&mutex_bitmap);
     lista_bloques = bloques_libres(cant_bloques);
     pthread_mutex_unlock(&mutex_bitmap);
 
+
     // si la lista no esta iniciada es xq no hay bloques suficientes - ABORTAR
     if (lista_bloques == NULL)
     {
         log_error(log_fs_gral, "ERROR en la Creacion de archivo: \"%s\" - No hay bloques suficientes - cantidad requerida: %i", ruta, cant_bloques);
         free(ruta_absoluta);
-        free(ruta);
         return false;
     }
 
@@ -101,15 +116,43 @@ bool memory_dump(char* ruta, int size, void* data)
     marcar_bloques_libres(lista_bloques, ruta);
     pthread_mutex_unlock(&mutex_bitmap);
 
+    // obtengo el bloque indice y lo saco de la lista
+    bloques = list_remove(lista_bloques, 0);
+    bloque_indice = bloques->bloque;
+    if (bloques->cant_bloques == 1)
+    { // el elemento esta vacio
+        free(bloques);
+        bloques = list_remove(lista_bloques, 0);
+    }
+    else
+    { // como hay + de 1 bloque libre seguido, paso al siguiente y reduzco la cantidad 
+        bloques->bloque++; 
+        bloques->cant_bloques--;
+    }
+
+
     // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
+    t_config *metadata = config_create(ruta_absoluta);
+    if (!metadata){
+        f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
+        fclose(f_metadata);
+
+        metadata = config_create(ruta_absoluta);
+        
+        config_set_value(metadata, "SIZE", cant_bloques);
+        config_set_value(metadata, "INDEX_BLOCK", bloque_indice);
+        config_save(metadata);
+
+        log_debug(log_fs_gral, "config creado");
+    }
 
     // imprimir en el archivo bloques.dat la data bloque a bloque y x cada bloque agregar su referencia en el bloque de indices
+    // antes que nada desmarcar flag fin archivo?
+    // ubicarse en bloque indice y agregar referencias a la par que guardar la data en el bloque
 
     // cerrar archivo metadata 
-
-
+    config_destroy(metadata);
     free(ruta_absoluta);
-    free(ruta);
     return true;
 }
 
@@ -250,6 +293,9 @@ t_list* bloques_libres (unsigned int cantidad)
     t_bloques_libres* bloqs_lib;
     unsigned int inicio_busqueda = ultimo_bloque_revisado;
     t_list* lista = list_create();
+
+    // agrego el bloque indice
+    cantidad++;
     
     do
     {
@@ -381,6 +427,14 @@ char *obtener_path_absoluto(char *ruta){
     char *aux = string_new();
     string_append(&aux, PATH_BASE);
     string_append(&aux, "/");
+    string_append(&aux, ruta);
+    return aux;
+}
+
+char *obtener_path_absoluto_metadata(char *ruta){
+    char *aux = string_new();
+    string_append(&aux, PATH_BASE);
+    string_append(&aux, "/files/");
     string_append(&aux, ruta);
     return aux;
 }
