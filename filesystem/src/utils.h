@@ -100,5 +100,6 @@ void iniciar_logs(bool testeo);
 void terminar_programa();
 void retardo_acceso(); // retardo para cada acceso a bloques de memoria
 char *obtener_path_absoluto(char *ruta);
+char *obtener_path_absoluto_metadata(char *ruta)
 
 #endif /* UTILS_FS_H */
