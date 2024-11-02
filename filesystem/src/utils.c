@@ -156,7 +156,7 @@ bool memory_dump(char* ruta, int size, void* data)
     {
         for(int j=0; j<bloques->cant_bloques; j++)
         {
-            fwrite(bloques->bloque, fs->tam_bloques, 1, fs->f_bloques);
+            fwrite(&(bloques->bloque), fs->tam_bloques, 1, fs->f_bloques);
             bloques->bloque++;
         }
         free(bloques);
@@ -184,23 +184,26 @@ bool memory_dump(char* ruta, int size, void* data)
 
 void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsigned int cant_bloques)
 {
-    uint32_t bloque;
     void* ptr_data = data;
+    // tomo todo el bloque de indices
+    uint32_t* bloque = malloc(fs->tam_bloques); // es lo mismo que sizeof(uint32_t)*cantidad_indices_max
+    
+    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
 
     // LOG OBLIGATORIO - ACCESO A BLOQUE INDICE
     log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
                                 nombre, bloque_indice);
 
+    fread((void*)bloque, fs->tam_bloques, 1, fs->f_bloques); // cargo TODO el bloque indices (un unico acceso)
+
     for (int i=0; i<cant_bloques; i++)
     {
-        fseek(fs->f_bloques, bloque_indice, SEEK_SET);
-        fread(&bloque, sizeof(uint32_t), 1, fs->f_bloques);
-
         // LOG OBLIGATORIO - ACCESO A BLOQUE
         log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %d",
                                 nombre, bloque);
 
-        fseek(fs->f_bloques, bloque, SEEK_SET);
+        // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
+        fseek(fs->f_bloques, *(uint32_t*)(bloque + i * sizeof(uint32_t)), SEEK_SET);
         fwrite(ptr_data,fs->tam_bloques, 1, fs->f_bloques);
 
         ptr_data += fs->tam_bloques;
