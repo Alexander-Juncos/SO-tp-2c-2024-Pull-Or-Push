@@ -477,6 +477,7 @@ void terminar_programa()
     fclose(fs->f_bloques);
     bitarray_destroy(bitmap->bitarray);
     fclose(bitmap->f);
+    free(bitmap->espacio_bitmap);
     free(bitmap);
     free(fs);
 	liberar_conexion(log_fs_gral, "Servidor Multihilo",socket_escucha); 
