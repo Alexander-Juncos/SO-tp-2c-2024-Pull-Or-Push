@@ -131,15 +131,14 @@ bool memory_dump(char* ruta, int size, void* data)
         bloques->cant_bloques--;
     }
 
-
     // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
     f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
     fclose(f_metadata);
 
-    metadata = config_create(ruta_absoluta);
+    metadata = config_create(ruta_absoluta);    
         
-    config_set_value(metadata, "SIZE", cant_bloques);
-    config_set_value(metadata, "INDEX_BLOCK", bloque_indice);
+    config_set_value(metadata, "SIZE", string_itoa(cant_bloques));
+    config_set_value(metadata, "INDEX_BLOCK", string_itoa(bloque_indice));
     config_save(metadata);
 
     // LOG OBLIGATORIO - Creación de Archivo
@@ -152,7 +151,7 @@ bool memory_dump(char* ruta, int size, void* data)
     log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
                                 ruta, bloque_indice);
 
-    for (int i=0; i<=list_size(lista_bloques), i++)
+    for (int i=0; i<=list_size(lista_bloques); i++)
     {
         for(int j=0; j<bloques->cant_bloques; j++)
         {
@@ -224,12 +223,12 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
 bool rutina_memory_dump(t_list* param)
 {
     char* nombre = string_new();
-    int tamanio;
     int pid;
     int tid;
     int size;
     char* timestamp;
     void* data;
+    bool resultado;
 
     data = list_get(param, 0);
     pid = *(int*) data;
@@ -249,7 +248,11 @@ bool rutina_memory_dump(t_list* param)
     string_append(&nombre, timestamp);
     string_append(&nombre, ".dmp");
     
-    return memory_dump(nombre, size, data);
+    resultado = memory_dump(nombre, size, data);
+
+    free(nombre);
+
+    return resultado;
 }
 
 // ==========================================================================
