@@ -81,6 +81,7 @@ bool memory_dump(char* ruta, int size, void* data)
     FILE* f_metadata;
     t_bloques_libres* bloques;
     unsigned int bloque_indice;
+    t_config* metadata;
 
     // preparo para buscar bloques
     t_list* lista_bloques;
@@ -132,28 +133,85 @@ bool memory_dump(char* ruta, int size, void* data)
 
 
     // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
-    t_config *metadata = config_create(ruta_absoluta);
-    if (!metadata){
-        f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
-        fclose(f_metadata);
+    f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
+    fclose(f_metadata);
 
-        metadata = config_create(ruta_absoluta);
+    metadata = config_create(ruta_absoluta);
         
-        config_set_value(metadata, "SIZE", cant_bloques);
-        config_set_value(metadata, "INDEX_BLOCK", bloque_indice);
-        config_save(metadata);
+    config_set_value(metadata, "SIZE", cant_bloques);
+    config_set_value(metadata, "INDEX_BLOCK", bloque_indice);
+    config_save(metadata);
 
-        log_debug(log_fs_gral, "config creado");
+    // LOG OBLIGATORIO - Creación de Archivo
+    log_info(log_fs_oblig, "## Archivo Creado: %s - Tamaño: %d", ruta, size);
+
+    // Agrego al bloque_indice los bloques libres
+    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
+
+    // LOG OBLIGATORIO - ACCESO A BLOQUE INDICE
+    log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
+                                ruta, bloque_indice);
+
+    for (int i=0; i<=list_size(lista_bloques), i++)
+    {
+        for(int j=0; j<bloques->cant_bloques; j++)
+        {
+            fwrite(bloques->bloque, fs->tam_bloques, 1, fs->f_bloques);
+            bloques->bloque++;
+        }
+        free(bloques);
+        if (!list_is_empty(lista_bloques))
+        {
+            bloques = list_remove(lista_bloques, 0);
+        }
+        else
+        {
+            list_destroy_and_destroy_elements(lista_bloques, free);
+        }
     }
-
-    // imprimir en el archivo bloques.dat la data bloque a bloque y x cada bloque agregar su referencia en el bloque de indices
-    // antes que nada desmarcar flag fin archivo?
-    // ubicarse en bloque indice y agregar referencias a la par que guardar la data en el bloque
-
+    
+    // Como ya estan los indices en el bloque indice, ya puedo escribir
+    escribir_bloques(ruta, bloque_indice, data, cant_bloques);
+    
     // cerrar archivo metadata 
     config_destroy(metadata);
     free(ruta_absoluta);
+
+    // LOG OBLIGATORIO
+    log_info(log_fs_oblig,"## Fin de solicitud - Archivo: %s", ruta);
     return true;
+}
+
+void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsigned int cant_bloques)
+{
+    uint32_t bloque;
+    void* ptr_data = data;
+
+    // LOG OBLIGATORIO - ACCESO A BLOQUE INDICE
+    log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
+                                nombre, bloque_indice);
+
+    for (int i=0; i<cant_bloques; i++)
+    {
+        fseek(fs->f_bloques, bloque_indice, SEEK_SET);
+        fread(&bloque, sizeof(uint32_t), 1, fs->f_bloques);
+
+        // LOG OBLIGATORIO - ACCESO A BLOQUE
+        log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %d",
+                                nombre, bloque);
+
+        fseek(fs->f_bloques, bloque, SEEK_SET);
+        fwrite(ptr_data,fs->tam_bloques, 1, fs->f_bloques);
+
+        ptr_data += fs->tam_bloques;
+    }
+
+    // limpiar flag fin de lectura (x las dudas)
+    clearerr(fs->f_bloques);
+    /* 
+        Ya que si al leer el bloque indice x alguna razon estuviera en el ultimo bloque, al leer el ultimo indice
+        el flag de EOF no permitiria realizar ninguna otra lectura...
+    */
 }
 
 // ==========================================================================
@@ -362,6 +420,8 @@ void marcar_bloques_libres(t_list* lista, char* archivo)
         {
             bitarray_set_bit(bitmap->bitarray, bloques->bloque + contador);
             bitmap->bloques_libres_tot--;
+
+            // LOG OBLIGATORIO
             log_info(log_fs_oblig, "## Bloque asignado: %d - Archivo: \"%s\" - Bloques Libres: %d", 
                                     bloques->bloque + contador, archivo, bitmap->bloques_libres_tot);
         }

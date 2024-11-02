@@ -63,6 +63,8 @@ bool iniciar_fs(void);
 
 bool memory_dump(char* ruta, int size, void* data);
 
+void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsigned int cant_bloques);
+
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
 // ==========================================================================
