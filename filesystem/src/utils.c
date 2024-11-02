@@ -347,6 +347,7 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
 
     // esto es opcional pero puede funcionar como seguro
     contar_bloques_libres_totales();
+    imprimir_bitmap();
 
     msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
 
@@ -432,6 +433,7 @@ void marcar_bloques_libres(t_list* lista, char* archivo)
                                     bloques->bloque + contador, archivo, bitmap->bloques_libres_tot);
         }
     }
+    actualizar_f_bitmap();
 }
 
 void imprimir_bitmap()
