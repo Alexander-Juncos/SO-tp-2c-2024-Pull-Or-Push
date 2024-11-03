@@ -48,8 +48,6 @@ void ejecutar_siguiente_hilo(t_list* cola_ready);
 */
 t_list* recibir_de_cpu(int* codigo_operacion);
 
-
-
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
@@ -65,9 +63,11 @@ t_list* recibir_de_cpu(int* codigo_operacion);
 *       activar luego, moviendo el Proceso a NEW.
 */
 t_pcb* nuevo_proceso(int tamanio, int prioridad_hilo_main, char* path_instruc_hilo_main);
-
+/**
+* @brief Activa un Proceso recién creado (lo mueve a NEW).
+* @param pcb : PCB del Proceso a activar.
+*/
 void ingresar_a_new(t_pcb* pcb);
-
 /**
 * @brief Crea un nuevo Hilo, y lo asocia con el Proceso que ordenó crearlo.
 * @param pcb_creador        : El PCB del Proceso creador.
@@ -78,6 +78,16 @@ void ingresar_a_new(t_pcb* pcb);
 *       moviéndolo a READY.
 */
 t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones);
+/**
+* @brief Libera un Hilo y lo manda a EXIT. Si el Hilo a finalizar es Hilo main, primero
+*        finaliza todos los otros Hilos del Proceso (igual a un FIN DE PROCESO).
+* @param tcb : TCB del Hilo a finalizar.
+*/
+void finalizar_hilo(t_tcb* tcb);
+
+void liberar_mutex(t_mutex* mutex);
+
+void liberar_joineado(t_tcb* tcb);
 
 /**
 * @brief Envia a CPU la orden para ejecutar instrucciones de un Hilo.

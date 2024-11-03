@@ -46,7 +46,6 @@ void* rutina_exit(void* puntero_null) {
 
     }
 
-
     return NULL;
 }
 

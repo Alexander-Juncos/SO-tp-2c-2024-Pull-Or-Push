@@ -20,7 +20,7 @@ void* rutina_io(void* puntero_null) {
 
         if(hilo_usando_io != NULL) { // if (el hilo no finalizó mientras la IO laburaba)
 
-            // ingresar_a_ready(hilo_usando_io); // CONOCE EL ALGORITMO DE PLANIF.
+            ingresar_a_ready(hilo_usando_io);
             hilo_usando_io = NULL;
         }
         
@@ -31,7 +31,7 @@ void* rutina_io(void* puntero_null) {
     return NULL;
 }
 
-///////////////////////////////////
+// ==========================================================================
 
 void usar_io(t_tcb* tcb, int tiempo_uso_io_en_ms) {
     tiempo_uso_io_en_microsegs = tiempo_uso_io_en_ms*MILISEG_A_MICROSEG;

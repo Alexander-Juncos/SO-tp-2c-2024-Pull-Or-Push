@@ -11,19 +11,15 @@ typedef struct
     int socket_de_la_conexion;
 } t_recepcion_respuesta_memory_dump;
 
-// DESARROLLANDO
+// ==========================================================================
+
+/**
+* @brief La función que ejecutan los pthread destinados a recibir
+*        y manejar la respuesta al pedido de Memory Dump.
+* @param info_para_recepcion : es del tipo t_recepcion_respuesta_memory_dump*
+*/
 void* rutina_respuesta_memory_dump(void* info_para_recepcion);
 
-/*
-void* rutina_respuesta_memory_dump_fifo(void* info_para_recepcion);
-
-void* rutina_respuesta_memory_dump_prioridades(void* info_para_recepcion);
-
-void* rutina_respuesta_memory_dump_multinivel(void* info_para_recepcion);
-*/
-
-///////////////////////////////////////
-
-
+// ==========================================================================
 
 #endif

@@ -7,7 +7,7 @@
 #include <utils.h>
 
 /**
-* @brief La función que ejecuta el hilo destinado a manejar la cola NEW.
+* @brief La función que ejecuta el pthread destinado a manejar la cola NEW.
 */
 void* rutina_new(void* puntero_null);
 

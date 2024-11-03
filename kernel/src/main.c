@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
     iniciar_planificador();
 
 
-    imprimir_mensaje("pude completar check 3");
+    imprimir_mensaje("pudimos completar check 3");
 
     //terminar_programa();
     return 0;
@@ -99,14 +99,17 @@ void setup_algoritmo_plani_corto_plazo(char* algoritmo) {
     if(strcmp(algoritmo, "FIFO") == 0) {
         cod_algoritmo_planif_corto = FIFO;
         ingresar_a_ready = ingresar_a_ready_fifo;
+        encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_fifo_y_prioridades;
     }
     else if(strcmp(algoritmo, "PRIORIDADES") == 0) {
         cod_algoritmo_planif_corto = PRIORIDADES;
         ingresar_a_ready = ingresar_a_ready_prioridades;
+        encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_fifo_y_prioridades;
     }
     else if(strcmp(algoritmo, "CMN") == 0) {
         cod_algoritmo_planif_corto = CMN;
         ingresar_a_ready = ingresar_a_ready_multinivel;
+        encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_multinivel;
     }
     else {
         log_error(log_kernel_gral, "Algoritmo de planificación desconocido.");

@@ -6,9 +6,9 @@
 #include <utils.h>
 
 /**
-* @brief La función que ejecuta el hilo destinado a manejar la cola EXIT.
+* @brief La función que ejecuta el pthread destinado a manejar la cola EXIT.
 */
-void* rutina_exit(void* puntero_null); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void* rutina_exit(void* puntero_null);
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================

@@ -25,7 +25,8 @@
 #include <io.h>
 #include <planificador.h>
 
-typedef void (*PtrFuncionIngresoReady)(t_tcb*);
+typedef void (*PtrFuncionIngresarReady)(t_tcb*);
+typedef t_tcb* (*PtrFuncionEncontrarYRemoverTCBReady)(int, int);
 
 // ==========================================================================
 // ====  Variables globales:  ===============================================
@@ -75,7 +76,8 @@ extern t_list* procesos_exit; // Es una lista de t_pcb* (Procesos). Son los que 
 
 extern t_config *config;
 extern char* algoritmo_plani;
-extern PtrFuncionIngresoReady ingresar_a_ready; // Variable que referencia a la función de ingresar_a_ready() específica del algoritmo a usar.
+extern PtrFuncionIngresarReady ingresar_a_ready; // Variable que referencia a la función de ingresar_a_ready() específica del algoritmo a usar.
+extern PtrFuncionEncontrarYRemoverTCBReady encontrar_y_remover_tcb_en_ready; // Variable que referencia a la función de encontrar_y_remover_tcb_en_ready() específica del algoritmo a usar.
 extern int quantum_de_config;
 
 extern t_log* log_kernel_oblig; // logger para los logs obligatorios
@@ -112,12 +114,10 @@ extern pthread_mutex_t mutex_sincro_new_exit;
 */
 void enviar_orden_de_interrupcion(void);
 /**
-* @brief  DESARROLLANDO !!! Se conecta con memoria, le envía el pedido de creación de nuevo
+* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
 *         hilo, recibe la respuesta, y se desconecta.
-* @return Exito al inicializar el nuevo hilo.
-* @note   DESARROLLANDO !!!!!!!!!
 */
-bool enviar_nuevo_hilo_a_memoria(); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void enviar_nuevo_hilo_a_memoria(t_tcb* tcb);
 
 // ==========================================================================
 // ====  Funciones Utils:  ==================================================
@@ -133,12 +133,34 @@ t_tcb* crear_tcb(int pid_creador, int tid, int prioridad, char* path_instruccion
 */
 void asociar_tid(t_pcb* pcb, t_tcb* tcb);
 /**
+* @brief Remueve (y destruye) un TID (identificador) de la lista de TID's asociados
+*        a algún PCB.
+* @param pcb : El PCB del cual desasociar.
+* @param tcb : El TCB cuyo TID se quiere desasociar.
+*/
+void desasociar_tid(t_pcb* pcb, t_tcb* tcb);
+/**
 * @brief Busca un PCB según su PID.
 * @param lista_de_pcb : Lista en la que buscar al PCB.
 * @param pid          : PID del PCB a buscar.
 * @return             : El PCB encontrado, o NULL en caso de no encontrarlo.
 */
 t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid);
+/**
+* @brief Busca un TCB según su TID.
+* @param lista_de_tcb : Lista en la que buscar al TCB.
+* @param tid          : TID del TCB a buscar.
+* @return             : El TCB encontrado, o NULL en caso de no encontrarlo.
+*/
+t_tcb* buscar_tcb_por_tid(t_list* lista_de_tcb, int tid);
+/**
+* @brief Busca un TCB según su TID y su PID de pertenencia.
+* @param lista_de_tcb : Lista en la que buscar al TCB.
+* @param pid          : PID de pertenencia del TCB a buscar.
+* @param tid          : TID del TCB a buscar.
+* @return             : El TCB encontrado, o NULL en caso de no encontrarlo.
+*/
+t_tcb* buscar_tcb_por_pid_y_tid(t_list* lista_de_tcb, int pid, int tid);
 /**
 * @brief NO INVOCAR DIRECTAMENTE. USAR "ingresar_a_ready(t_tcb*)" INDEPENDIENTEMENTE
 *        DEL ALGORITMO DE PLANIFICACIÓN.
@@ -173,18 +195,46 @@ void ingresar_a_ready_prioridades(t_tcb* tcb);
 void ingresar_a_ready_multinivel(t_tcb* tcb);
 
 t_cola_ready* crear_ready_multinivel(void);
+/**
+* @brief Busca a un TCB en EXEC, BLOCKED Y READY, según su TID y su PID de pertenencia.
+*        En caso de encontrarlo, lo remueve de ese estado.
+* @param pid          : PID de pertenencia del TCB a buscar.
+* @param tid          : TID del TCB a buscar.
+* @return             : El TCB encontrado (y removido), o NULL en caso de no encontrarlo.
+*/
+t_tcb* encontrar_y_remover_tcb(int pid, int tid);
 
-// ========  DESARROLLANDO  ===========================
+t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid);
 
-void finalizar_hilo(t_tcb* tcb);
+t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid);
 
-void liberar_joineados(t_tcb* tcb);
+void finalizar_hilos_no_main_de_proceso(t_pcb* pcb);
+/**
+* @brief Libera los mutexes asignados a un Hilo, y desbloquea a los Hilos que
+*        tiene joineados. Además desasocia su TID del Proceso de pertenencia.
+* @param pcb : PCB del Proceso creador.
+* @param tcb : TCB del Hilo a liberar.
+* @note  Lo deja listo para ser mandado a EXIT.
+*/
+void liberar_hilo(t_pcb* pcb, t_tcb* tcb);
 
-void liberar_mutexes(t_tcb* tcb);
+void liberar_hilos_joineados(t_tcb* tcb);
 
-// ====================================================
+void liberar_mutexes_asignados(t_pcb* pcb, t_tcb* tcb);
+
+/**
+* @brief Mueve a EXIT un Hilo, el cual ya se debe encontrar liberado.
+* @param tcb : TCB del Hilo.
+*/
+void mandar_a_exit(t_tcb* tcb);
 
 void iniciar_logs(bool testeo);
 void terminar_programa();
+
+// ==========================================================================
+// ====  Funciones Auxiliares:  =============================================
+// ==========================================================================
+
+void enviar_nuevo_hilo(t_tcb* tcb, int socket); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #endif

@@ -916,7 +916,8 @@ t_list* recibir_de_cpu(int* codigo_operacion) {
 t_pcb* nuevo_proceso(int tamanio, int prioridad_hilo_main, char* path_instruc_hilo_main) {
     t_pcb* nuevo_pcb = crear_pcb(contador_pid, tamanio);
     contador_pid++;
-    t_tcb* nuevo_tcb = nuevo_hilo(nuevo_pcb, prioridad_hilo_main, path_instruc_hilo_main);
+    t_tcb* nuevo_tcb = crear_tcb(nuevo_pcb->pid, nuevo_pcb->sig_tid_a_asignar, prioridad_hilo_main, path_instruc_hilo_main);
+    nuevo_pcb->sig_tid_a_asignar++;
     nuevo_pcb->hilo_main = nuevo_tcb;
     return nuevo_pcb;
 }
@@ -931,6 +932,36 @@ t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
     pcb_creador->sig_tid_a_asignar++;
     asociar_tid(pcb_creador, nuevo_tcb);
     return nuevo_tcb;
+}
+
+void finalizar_hilo(t_tcb* tcb) {
+    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
+	if(tcb->tid == 0) { // (if es Hilo main)
+        finalizar_hilos_no_main_de_proceso(pcb);
+	}
+    liberar_hilo(pcb, tcb);
+    pthread_mutex_lock(&mutex_cola_exit);
+    mandar_a_exit(tcb);
+    pthread_mutex_unlock(&mutex_cola_exit);
+}
+
+void liberar_mutex(t_mutex* mutex) {
+    mutex->asignado = false;
+    mutex->tid_asignado = -1;
+    log_debug(log_kernel_gral, "Mutex %s liberado", mutex->nombre);
+    if(!list_is_empty(mutex->bloqueados_esperando)) {
+        t_tcb* tcb = list_remove(mutex->bloqueados_esperando, 0);
+        mutex->tid_asignado = tcb->tid;
+        mutex->asignado = true;
+        ingresar_a_ready(tcb);
+        log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (mutex %s asignado). Pasa a READY", tcb->pid_pertenencia, tcb->tid, mutex->nombre);
+    }
+}
+
+void liberar_joineado(t_tcb* tcb) {
+    tcb->tid_joined = -1;
+    ingresar_a_ready(tcb);
+    log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (fin de hilo joineado). Pasa a READY", tcb->pid_pertenencia, tcb->tid);
 }
 
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {

@@ -34,7 +34,8 @@ t_list* procesos_exit = NULL;
 
 t_config *config = NULL;
 char* algoritmo_plani = NULL;
-PtrFuncionIngresoReady ingresar_a_ready;
+PtrFuncionIngresarReady ingresar_a_ready;
+PtrFuncionEncontrarYRemoverTCBReady encontrar_y_remover_tcb_en_ready;
 int quantum_de_config;
 
 t_log* log_kernel_oblig = NULL;
@@ -75,8 +76,11 @@ void enviar_orden_de_interrupcion(void) {
 	eliminar_paquete(paquete);
 }
 
-bool enviar_nuevo_hilo_a_memoria() {
-    //
+void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
+    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    enviar_nuevo_hilo(tcb, socket_memoria);
+    recibir_mensaje_de_rta(log_kernel_gral, "CREAR HILO", socket_memoria);
+    liberar_conexion(log_kernel_gral, "Memoria (en Hilo EXIT)", socket_memoria);
 }
 
 // ==========================================================================
@@ -98,6 +102,15 @@ void asociar_tid(t_pcb* pcb, t_tcb* tcb) {
 	list_add(pcb->tids_asociados, tid_a_asociar);
 }
 
+void desasociar_tid(t_pcb* pcb, t_tcb* tcb) {
+
+	bool _es_el_tid_buscado(int* tid) {
+		return (*tid) == tcb->tid;
+	}
+
+    list_remove_and_destroy_by_condition(pcb->tids_asociados, (void*)_es_el_tid_buscado, (void*)free);
+}
+
 t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid) {
 
 	bool _es_el_pcb_buscado(t_pcb* pcb) {
@@ -107,6 +120,28 @@ t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid) {
 	t_pcb* pcb_encontrado = NULL;
 	pcb_encontrado = list_find(lista_de_pcb, (void*)_es_el_pcb_buscado);
 	return pcb_encontrado;
+}
+
+t_tcb* buscar_tcb_por_tid(t_list* lista_de_tcb, int tid) {
+
+	bool _es_el_tcb_buscado(t_tcb* tcb) {
+		return tcb->tid == tid;
+	}
+
+	t_tcb* tcb_encontrado = NULL;
+	tcb_encontrado = list_find(lista_de_tcb, (void*)_es_el_tcb_buscado);
+	return tcb_encontrado;
+}
+
+t_tcb* buscar_tcb_por_pid_y_tid(t_list* lista_de_tcb, int pid, int tid) {
+
+	bool _es_el_tcb_que_se_busca(t_tcb* tcb) {
+		return (tcb->tid == tid) && (tcb->pid_pertenencia == pid);
+	}
+
+	t_tcb* tcb_encontrado = NULL;
+	tcb_encontrado = list_find(lista_de_tcb, (void*)_es_el_tcb_que_se_busca);
+	return tcb_encontrado;
 }
 
 void ingresar_a_ready_fifo(t_tcb* tcb) {
@@ -145,24 +180,132 @@ t_cola_ready* crear_ready_multinivel(void) {
     return nueva_estructura_cola_ready;
 }
 
-// ====================================================
-// =======  DESARROLLANDO  ============================
-// ====================================================
+t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
+    t_tcb* tcb = NULL;
+    // Busca en EXEC
+    if(hilo_exec != NULL) {
+        if((hilo_exec->tid == tid) && (hilo_exec->pid_pertenencia == pid)) {
+            tcb = hilo_exec;
+            hilo_exec = NULL;
+            return tcb;
+        }
+    }
+    // Busca en BLOCKED (esperando por IO)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_io, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_io, tcb);
+        return tcb;
+    }
+    // Busca en BLOCKED (usando IO)
+    if(hilo_usando_io != NULL) {
+        if((hilo_usando_io->tid == tid) && (hilo_usando_io->pid_pertenencia == pid)) {
+            tcb = hilo_usando_io;
+            hilo_usando_io = NULL;
+            return tcb;
+        }
+    }
+    // Busca en BLOCKED (joineados)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_join, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_join, tcb);
+        return tcb;
+    }
+    // Busca en BLOCKED (esperando respuesta Memory Dump)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_memory_dump, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_memory_dump, tcb);
+        return tcb;
+    }
+    // Busca en READY
+    tcb = encontrar_y_remover_tcb_en_ready(pid, tid);
+    return tcb;
+}
 
-void finalizar_hilo(t_tcb* tcb) {
-	if(tcb->tid == 0) { // (if es Hilo main)
+t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
+    t_tcb* tcb = NULL;
+    tcb = buscar_tcb_por_pid_y_tid(cola_ready_unica, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_ready_unica, tcb);
+    }
+    return tcb;
+}
 
-	} else {
-		
+t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
+    t_tcb* tcb = NULL;
+
+    bool _es_la_key_que_busco(char* key) {
+        tcb = buscar_tcb_por_pid_y_tid((dictionary_get(diccionario_ready_multinivel, key))->cola_ready, pid, tid);
+        return tcb != NULL;
+    }
+
+    t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
+    char* key_de_cola_ready = NULL;
+    key_de_cola_ready = list_find(lista_de_keys, (void*)_es_la_key_que_busco);
+    if(key_de_cola_ready != NULL) {
+        list_remove_element((dictionary_get(diccionario_ready_multinivel, key_de_cola_ready))->cola_ready, tcb);
+    }
+    list_destroy(lista_de_keys);
+    return tcb;
+}
+
+void finalizar_hilos_no_main_de_proceso(t_pcb* pcb) {
+    int* ptr_tid;
+    t_tcb* tcb = NULL;
+    while(!list_is_empty(pcb->tids_asociados)) {
+        ptr_tid = list_get(pcb->tids_asociados, 0);
+        tcb = encontrar_y_remover_tcb(pcb->pid, *ptr_tid);
+        if(tcb == NULL) {
+            log_error(log_kernel_gral, "## (%d:%d) no encontrado. Revisar codigo.", pcb->pid, *ptr_tid);
+            return;
+        }
+        else {
+            liberar_hilo(pcb, tcb);
+            pthread_mutex_lock(&mutex_cola_exit);
+            mandar_a_exit(tcb);
+            pthread_mutex_unlock(&mutex_cola_exit);
+        }
+    }
+}
+
+void liberar_hilo(t_pcb* pcb, t_tcb* tcb) {
+    liberar_mutexes_asignados(pcb, tcb);
+    liberar_hilos_joineados(tcb);
+    desasociar_tid(pcb, tcb);
+}
+
+void liberar_hilos_joineados(t_tcb* tcb) {
+
+	bool _esta_joineado_a_este_hilo(t_tcb* tcb_bloqueado) {
+		return (tcb_bloqueado->tid_joined == tcb->tid) && (tcb_bloqueado->pid_pertenencia == tcb->pid_pertenencia);
 	}
+
+    t_list* lista_de_hilos_joineados_a_este_hilo = list_filter(cola_blocked_join, (void*)_esta_joineado_a_este_hilo);
+    int cant_a_desjoinear = list_size(lista_de_hilos_joineados_a_este_hilo);
+    bool removido_exitosamente = true;
+    for(int hilo_a_desjoinear = 1; hilo_a_desjoinear <= cant_a_desjoinear; hilo_a_desjoinear++) {
+        removido_exitosamente = list_remove_element(cola_blocked_join, list_get(lista_de_hilos_joineados_a_este_hilo, hilo_a_desjoinear-1));
+        if(!removido_exitosamente) {
+            log_error(log_kernel_gral, "Algo anda mal en el codigo de liberar_joineados()");
+        }
+    }
+    list_iterate(lista_de_hilos_joineados_a_este_hilo, (void*)liberar_joineado);
+    list_destroy(lista_de_hilos_joineados_a_este_hilo);
 }
 
-void liberar_joineados(t_tcb* tcb) {
+void liberar_mutexes_asignados(t_pcb* pcb, t_tcb* tcb) {
 
+	bool _es_mutex_asignado(t_mutex* mutex) {
+		return (mutex->tid_asignado == tcb->tid) && (mutex->asignado == true);
+	}
+
+    t_list* lista_de_mutexes_asignados = list_filter(pcb->mutex_creados, (void*)_es_mutex_asignado);
+    list_iterate(lista_de_mutexes_asignados, (void*)liberar_mutex);
+    list_destroy(lista_de_mutexes_asignados);
 }
 
-void liberar_mutexes(t_tcb* tcb) {
-
+void mandar_a_exit(t_tcb* tcb) {
+    list_add(cola_exit, tcb);
+    sem_post(&sem_cola_exit);
 }
 
 // ====================================================
@@ -193,4 +336,13 @@ void terminar_programa()
 	log_destroy(log_kernel_oblig);
 	log_destroy(log_kernel_gral);
 	config_destroy(config);
+}
+
+// ==========================================================================
+// ====  Funciones Auxiliares:  =============================================
+// ==========================================================================
+
+void enviar_nuevo_hilo(t_tcb* tcb, int socket) {
+    // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    DESARROLLANDO ----------
 }

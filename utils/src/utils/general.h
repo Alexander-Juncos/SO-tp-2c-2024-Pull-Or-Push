@@ -59,9 +59,10 @@ typedef struct
 
 typedef struct
 {
+    char* nombre;
     bool asignado;
     int tid_asignado;
-    t_tcb* bloqueados_esperando;
+    t_list* bloqueados_esperando; // lista de TCB's
 } t_mutex;
 
 /* ==========  OBSOLETO  ====================================================
