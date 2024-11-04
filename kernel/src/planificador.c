@@ -38,7 +38,7 @@ void iniciar_planificador(void) {
 void planific_corto_fifo(void) {
 
     // DEL TP ANTERIOR: /////////////////////////////////////////////////
-    // variables que defino acá porque las repito en varios case del switch
+    // (como referencia) ////////////////////////////////////////////////
     t_paquete* paquete = NULL;
     char* nombre_interfaz = NULL;
     t_io_blocked* io = NULL;
@@ -50,6 +50,14 @@ void planific_corto_fifo(void) {
     char* nombre_recurso = NULL;
     //////////////////////////////////////////////////////////////////////
 
+    // variables que defino acá porque las repito en varios case del switch
+    t_pcb* pcb = NULL;
+    t_pcb* tcb = NULL;
+    int* pid = NULL;
+    int* tid = NULL;
+    char* path_instrucciones = NULL;
+    int* tamanio = NULL;
+    int* prioridad = NULL;
     int codigo_recibido = -1;
     // Lista con data del paquete recibido desde cpu.
     t_list* argumentos_recibidos = NULL;
@@ -71,36 +79,63 @@ void planific_corto_fifo(void) {
         //pthread_mutex_lock(&mutex_proceso_exec);
 
 
-        // EN DESARROLLO... Casi todo del TP viejo
+        // EN DESARROLLO.....
 		switch (codigo_recibido) {
 
+            case SYSCALL_MEMORY_DUMP:
+            enviar_pedido_de_dump_a_memoria(hilo_exec);
+            break;
+
+            case SYSCALL_IO:
+            int* unidades_de_trabajo = list_get(argumentos_recibidos, 0);
+            usar_io(hilo_exec, *unidades_de_trabajo);
+            break;
+
+            case SYSCALL_CREAR_PROCESO:
+            path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
+            tamanio = list_get(argumentos_recibidos, 1);
+            prioridad = list_get(argumentos_recibidos, 2);
+            pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
+            ingresar_a_new(pcb);
+            break;
+
+            case SYSCALL_CREAR_HILO:
+            path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
+            prioridad = list_get(argumentos_recibidos, 1);
+            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
+            ingresar_a_ready(tcb);
+            break;
+
+            case SYSCALL_JOIN_HILO:
         // -!!!!--- ACÁ ESTOY TRABAJANDO ---!!!!-
         // -----   ----!!----   -----   -------!!!!!!!!
-            case SYSCALL_MEMORY_DUMP:
-
+            tid = list_get(argumentos_recibidos, 0);
+            // hacer_join();
             break;
 
-			case SUCCESS:
-            pthread_mutex_lock(&mutex_procesos_activos);
-            pthread_mutex_lock(&mutex_cola_exit);
-            list_add(cola_exit, hilo_exec);
-            sem_post(&sem_procesos_exit);
-            procesos_activos--;
-            log_info(log_kernel_oblig, "Finaliza el proceso %d - Motivo: SUCCESS", hilo_exec->tid); // log Obligatorio.
-            log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", hilo_exec->tid); // log Obligatorio.
-            hilo_exec = NULL;
-            pthread_mutex_unlock(&mutex_cola_exit);
-            pthread_mutex_unlock(&mutex_procesos_activos);
+            case SYSCALL_FINALIZAR_ALGUN_HILO:
             break;
 
-            // Este caso es el que hay que adaptar, hay que mandarlo a blocked y ponerle un contador por el tiempo que realiza la IO. Luego, devolverlo a READY.
-            case IO:
-            nombre_interfaz = list_get(desalojo_y_argumentos, 1);
-            int unidades_de_trabajo = *(int*)list_get(desalojo_y_argumentos, 2);
-
-            usar_io(hilo_exec, unidades_de_trabajo);
+            case SYSCALL_FINALIZAR_ESTE_HILO:
             break;
 
+            case SYSCALL_CREAR_MUTEX:
+            break;
+
+            case SYSCALL_BLOQUEAR_MUTEX:
+            break;
+
+            case SYSCALL_DESBLOQUEAR_MUTEX:
+            break;
+
+            case SYSCALL_FINALIZAR_PROCESO:
+            break;
+
+            case SEGMENTATION_FAULT:
+            break;
+
+        /*
             case WAIT:
             nombre_recurso = list_get(desalojo_y_argumentos, 1);
 
@@ -192,20 +227,23 @@ void planific_corto_fifo(void) {
             pthread_mutex_unlock(&mutex_lista_recurso_blocked);
             pthread_mutex_unlock(&mutex_cola_ready);
             break;
+        */
             
             default:
             log_error(log_kernel_gral, "El motivo de desalojo del proceso %d no se puede interpretar, es desconocido.", proceso_exec->pid);
             break;
 		}
 
-        if(desalojo.motiv!=WAIT && desalojo.motiv!=SIGNAL)
+        if(codigo_recibido!=SYSCALL_CREAR_MUTEX
+            && codigo_recibido!=SYSCALL_BLOQUEAR_MUTEX
+            && codigo_recibido!=SYSCALL_DESBLOQUEAR_MUTEX)
         {
             hilo_exec = NULL;
         }
 
 
         //pthread_mutex_unlock(&mutex_proceso_exec);
-        list_destroy_and_destroy_elements(desalojo_y_argumentos, (void*)free);
+        list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
 	}
 }
 
