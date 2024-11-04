@@ -47,9 +47,29 @@ void ejecutar_siguiente_hilo(t_list* cola_ready);
 * @return : Una lista con los valores (elementos) del paquete recibido.
 */
 t_list* recibir_de_cpu(int* codigo_operacion);
+/**
+* @brief Busca a un TCB en EXEC, BLOCKED Y READY, según su TID y su PID de pertenencia.
+*        En caso de encontrarlo, lo remueve de ese estado.
+* @param pid          : PID de pertenencia del TCB a buscar.
+* @param tid          : TID del TCB a buscar.
+* @return             : El TCB encontrado (y removido), o NULL en caso de no encontrarlo.
+*/
+t_tcb* encontrar_y_remover_tcb(int pid, int tid);
+/**
+* @brief Libera un Hilo y lo manda a EXIT. Si el Hilo a finalizar es Hilo main, primero
+*        finaliza todos los otros Hilos del Proceso (igual a un FIN DE PROCESO).
+* @param tcb : TCB del Hilo a finalizar.
+*/
+void finalizar_hilo(t_tcb* tcb);
+/**
+* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
+*         hilo, recibe la respuesta, y se desconecta.
+* @param tcb : TCB del Hilo a crear en Memoria.
+*/
+void enviar_nuevo_hilo_a_memoria(t_tcb* tcb);
 
 // ==========================================================================
-// ====  Funciones Internas:  ===============================================
+// ====  Funciones Internas  ================================================
 // ==========================================================================
 
 /**
@@ -78,16 +98,12 @@ void ingresar_a_new(t_pcb* pcb);
 *       moviéndolo a READY.
 */
 t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones);
-/**
-* @brief Libera un Hilo y lo manda a EXIT. Si el Hilo a finalizar es Hilo main, primero
-*        finaliza todos los otros Hilos del Proceso (igual a un FIN DE PROCESO).
-* @param tcb : TCB del Hilo a finalizar.
-*/
-void finalizar_hilo(t_tcb* tcb);
 
 void liberar_mutex(t_mutex* mutex);
 
 void liberar_joineado(t_tcb* tcb);
+
+void hacer_join(t_tcb* tcb, int tid_a_joinear);
 
 /**
 * @brief Envia a CPU la orden para ejecutar instrucciones de un Hilo.

@@ -29,7 +29,9 @@ t_tcb* inicializacion_de_proceso(void) {
     
     // Espera hasta saber que hay algún proceso en la cola NEW.
     sem_wait(&sem_cola_new);
+    pthread_mutex_lock(&mutex_cola_new);
     pcb = list_remove(cola_new, 0);
+    pthread_mutex_unlock(&mutex_cola_new);
 
     exito_al_inicializar_proceso = enviar_nuevo_proceso_a_memoria(pcb);
 

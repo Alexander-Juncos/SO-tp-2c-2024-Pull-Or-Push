@@ -95,11 +95,11 @@ extern sem_t sem_cola_exit;
 ----------------------------------------------
 extern pthread_mutex_t mutex_proceso_exec;
 extern pthread_mutex_t mutex_grado_multiprogramacion;
-extern pthread_mutex_t mutex_cola_new; 
 extern pthread_mutex_t mutex_cola_ready;
 ----------------------------------------------
 */
 extern sem_t sem_sincro_new_exit;
+extern pthread_mutex_t mutex_cola_new;
 extern pthread_mutex_t mutex_hilo_exec;
 extern pthread_mutex_t mutex_cola_blocked_memory_dump;
 extern pthread_mutex_t mutex_cola_exit;
@@ -113,11 +113,6 @@ extern pthread_mutex_t mutex_sincro_new_exit;
 * @brief Envía una orden de interrupción a CPU, con datos del PID y TID.
 */
 void enviar_orden_de_interrupcion(void);
-/**
-* @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
-*         hilo, recibe la respuesta, y se desconecta.
-*/
-void enviar_nuevo_hilo_a_memoria(t_tcb* tcb);
 
 // ==========================================================================
 // ====  Funciones Utils:  ==================================================
@@ -195,14 +190,6 @@ void ingresar_a_ready_prioridades(t_tcb* tcb);
 void ingresar_a_ready_multinivel(t_tcb* tcb);
 
 t_cola_ready* crear_ready_multinivel(void);
-/**
-* @brief Busca a un TCB en EXEC, BLOCKED Y READY, según su TID y su PID de pertenencia.
-*        En caso de encontrarlo, lo remueve de ese estado.
-* @param pid          : PID de pertenencia del TCB a buscar.
-* @param tid          : TID del TCB a buscar.
-* @return             : El TCB encontrado (y removido), o NULL en caso de no encontrarlo.
-*/
-t_tcb* encontrar_y_remover_tcb(int pid, int tid);
 
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid);
 
@@ -235,6 +222,6 @@ void terminar_programa();
 // ====  Funciones Auxiliares:  =============================================
 // ==========================================================================
 
-void enviar_nuevo_hilo(t_tcb* tcb, int socket); // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void enviar_nuevo_hilo(t_tcb* tcb, int socket);
 
 #endif

@@ -58,6 +58,7 @@ pthread_mutex_t mutex_cola_ready;
 ----------------------------------------------
 */
 sem_t sem_sincro_new_exit;
+pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_hilo_exec;
 pthread_mutex_t mutex_cola_blocked_memory_dump;
 pthread_mutex_t mutex_cola_exit;
@@ -74,13 +75,6 @@ void enviar_orden_de_interrupcion(void) {
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->tid), sizeof(int));
 	enviar_paquete(paquete, socket_cpu_interrupt);
 	eliminar_paquete(paquete);
-}
-
-void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
-    enviar_nuevo_hilo(tcb, socket_memoria);
-    recibir_mensaje_de_rta(log_kernel_gral, "CREAR HILO", socket_memoria);
-    liberar_conexion(log_kernel_gral, "Memoria (en Hilo EXIT)", socket_memoria);
 }
 
 // ==========================================================================
@@ -178,47 +172,6 @@ t_cola_ready* crear_ready_multinivel(void) {
     nueva_estructura_cola_ready->cola_ready = list_create();
     sem_init(&(nueva_estructura_cola_ready->sem_cola_ready), 0, 0);
     return nueva_estructura_cola_ready;
-}
-
-t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
-    t_tcb* tcb = NULL;
-    // Busca en EXEC
-    if(hilo_exec != NULL) {
-        if((hilo_exec->tid == tid) && (hilo_exec->pid_pertenencia == pid)) {
-            tcb = hilo_exec;
-            hilo_exec = NULL;
-            return tcb;
-        }
-    }
-    // Busca en BLOCKED (esperando por IO)
-    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_io, pid, tid);
-    if(tcb != NULL) {
-        list_remove_element(cola_blocked_io, tcb);
-        return tcb;
-    }
-    // Busca en BLOCKED (usando IO)
-    if(hilo_usando_io != NULL) {
-        if((hilo_usando_io->tid == tid) && (hilo_usando_io->pid_pertenencia == pid)) {
-            tcb = hilo_usando_io;
-            hilo_usando_io = NULL;
-            return tcb;
-        }
-    }
-    // Busca en BLOCKED (joineados)
-    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_join, pid, tid);
-    if(tcb != NULL) {
-        list_remove_element(cola_blocked_join, tcb);
-        return tcb;
-    }
-    // Busca en BLOCKED (esperando respuesta Memory Dump)
-    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_memory_dump, pid, tid);
-    if(tcb != NULL) {
-        list_remove_element(cola_blocked_memory_dump, tcb);
-        return tcb;
-    }
-    // Busca en READY
-    tcb = encontrar_y_remover_tcb_en_ready(pid, tid);
-    return tcb;
 }
 
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
@@ -343,6 +296,10 @@ void terminar_programa()
 // ==========================================================================
 
 void enviar_nuevo_hilo(t_tcb* tcb, int socket) {
-    // DESARROLLANDO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    DESARROLLANDO ----------
+    t_paquete* paquete = crear_paquete(CREAR_HILO);
+    agregar_a_paquete(paquete, (void*)&(tcb->tid), sizeof(int));
+    char* path = tcb->path_relativo_archivo_instrucciones;
+    agregar_a_paquete(paquete, (void*)path, strlen(path) + 1);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
 }

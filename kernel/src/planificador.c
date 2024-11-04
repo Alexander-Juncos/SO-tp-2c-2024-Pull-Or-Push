@@ -39,12 +39,8 @@ void planific_corto_fifo(void) {
 
     // DEL TP ANTERIOR: /////////////////////////////////////////////////
     // (como referencia) ////////////////////////////////////////////////
-    t_paquete* paquete = NULL;
-    char* nombre_interfaz = NULL;
-    t_io_blocked* io = NULL;
     int cant_de_pares_direccion_tamanio;
     int* dir = NULL;
-    int* tamanio = NULL;
     int fs_codigo;
     char* nombre_archivo = NULL;
     char* nombre_recurso = NULL;
@@ -96,7 +92,10 @@ void planific_corto_fifo(void) {
             tamanio = list_get(argumentos_recibidos, 1);
             prioridad = list_get(argumentos_recibidos, 2);
             pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
+            // NEW se ocupa de enviar el nuevo proceso a Memoria.
+            pthread_mutex_lock(&mutex_cola_new);
             ingresar_a_new(pcb);
+            pthread_mutex_unlock(&mutex_cola_new);
             break;
 
             case SYSCALL_CREAR_HILO:
@@ -104,17 +103,21 @@ void planific_corto_fifo(void) {
             prioridad = list_get(argumentos_recibidos, 1);
             pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
             tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
+            enviar_nuevo_hilo_a_memoria(tcb);
             ingresar_a_ready(tcb);
             break;
 
             case SYSCALL_JOIN_HILO:
-        // -!!!!--- ACÁ ESTOY TRABAJANDO ---!!!!-
-        // -----   ----!!----   -----   -------!!!!!!!!
             tid = list_get(argumentos_recibidos, 0);
-            // hacer_join();
+            hacer_join(hilo_exec, *tid);
             break;
 
             case SYSCALL_FINALIZAR_ALGUN_HILO:
+            tid = list_get(argumentos_recibidos, 0);
+            tcb = encontrar_y_remover_tcb(hilo_exec->pid_pertenencia, *tid);
+            if(tcb != NULL) {
+                finalizar_hilo(tcb);
+            }
             break;
 
             case SYSCALL_FINALIZAR_ESTE_HILO:
@@ -236,7 +239,8 @@ void planific_corto_fifo(void) {
 
         if(codigo_recibido!=SYSCALL_CREAR_MUTEX
             && codigo_recibido!=SYSCALL_BLOQUEAR_MUTEX
-            && codigo_recibido!=SYSCALL_DESBLOQUEAR_MUTEX)
+            && codigo_recibido!=SYSCALL_DESBLOQUEAR_MUTEX
+            && codigo_recibido!=SYSCALL_JOIN_HILO)
         {
             hilo_exec = NULL;
         }
@@ -947,6 +951,65 @@ t_list* recibir_de_cpu(int* codigo_operacion) {
     return argumentos_recibidos;
 }
 
+t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
+    t_tcb* tcb = NULL;
+    // Busca en EXEC
+    if(hilo_exec != NULL) {
+        if((hilo_exec->tid == tid) && (hilo_exec->pid_pertenencia == pid)) {
+            tcb = hilo_exec;
+            hilo_exec = NULL;
+            return tcb;
+        }
+    }
+    // Busca en BLOCKED (esperando por IO)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_io, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_io, tcb);
+        return tcb;
+    }
+    // Busca en BLOCKED (usando IO)
+    if(hilo_usando_io != NULL) {
+        if((hilo_usando_io->tid == tid) && (hilo_usando_io->pid_pertenencia == pid)) {
+            tcb = hilo_usando_io;
+            hilo_usando_io = NULL;
+            return tcb;
+        }
+    }
+    // Busca en BLOCKED (joineados)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_join, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_join, tcb);
+        return tcb;
+    }
+    // Busca en BLOCKED (esperando respuesta Memory Dump)
+    tcb = buscar_tcb_por_pid_y_tid(cola_blocked_memory_dump, pid, tid);
+    if(tcb != NULL) {
+        list_remove_element(cola_blocked_memory_dump, tcb);
+        return tcb;
+    }
+    // Busca en READY
+    tcb = encontrar_y_remover_tcb_en_ready(pid, tid);
+    return tcb;
+}
+
+void finalizar_hilo(t_tcb* tcb) {
+    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
+	if(tcb->tid == 0) { // (if es Hilo main)
+        finalizar_hilos_no_main_de_proceso(pcb);
+	}
+    liberar_hilo(pcb, tcb);
+    pthread_mutex_lock(&mutex_cola_exit);
+    mandar_a_exit(tcb);
+    pthread_mutex_unlock(&mutex_cola_exit);
+}
+
+void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
+    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    enviar_nuevo_hilo(tcb, socket_memoria);
+    recibir_mensaje_de_rta(log_kernel_gral, "CREAR HILO", socket_memoria);
+    liberar_conexion(log_kernel_gral, "Memoria (por Creacion de Hilo)", socket_memoria);
+}
+
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
 // ==========================================================================
@@ -972,17 +1035,6 @@ t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
     return nuevo_tcb;
 }
 
-void finalizar_hilo(t_tcb* tcb) {
-    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
-	if(tcb->tid == 0) { // (if es Hilo main)
-        finalizar_hilos_no_main_de_proceso(pcb);
-	}
-    liberar_hilo(pcb, tcb);
-    pthread_mutex_lock(&mutex_cola_exit);
-    mandar_a_exit(tcb);
-    pthread_mutex_unlock(&mutex_cola_exit);
-}
-
 void liberar_mutex(t_mutex* mutex) {
     mutex->asignado = false;
     mutex->tid_asignado = -1;
@@ -1000,6 +1052,20 @@ void liberar_joineado(t_tcb* tcb) {
     tcb->tid_joined = -1;
     ingresar_a_ready(tcb);
     log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (fin de hilo joineado). Pasa a READY", tcb->pid_pertenencia, tcb->tid);
+}
+
+void hacer_join(t_tcb* tcb, int tid_a_joinear) {
+
+	bool _es_el_tid_buscado_para_joinear(int* tid) {
+		return (*tid) == tid_a_joinear;
+	}
+
+    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
+    if(list_any_satisfy(pcb->tids_asociados, (void*)_es_el_tid_buscado_para_joinear)) {
+        tcb->tid_joined = tid_a_joinear;
+        list_add(cola_blocked_join, tcb);
+        hilo_exec = NULL;
+    }
 }
 
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
