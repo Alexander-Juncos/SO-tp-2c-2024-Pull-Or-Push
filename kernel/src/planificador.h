@@ -62,6 +62,19 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid);
 */
 void finalizar_hilo(t_tcb* tcb);
 /**
+* @brief Crea un Mutex (sin asignar), y lo asocia a un Proceso.
+* @param pcb    : PCB del Proceso a asociarle el nuevo Mutex.
+* @param nombre : Nombre del nuevo Mutex.
+*/
+void crear_mutex(t_pcb* pcb, char* nombre);
+/**
+* @brief Se fija si ya hay un Mutex con un determinado nombre asociado a un Proceso.
+* @param pcb    : PCB del Proceso donde fijarse la existencia del Mutex.
+* @param nombre : Nombre del Mutex a buscar.
+* @return       : 'true' si existe, 'false' si no existe.
+*/
+bool ya_existe_mutex(t_pcb* pcb, char* nombre);
+/**
 * @brief  Se conecta con memoria, le envía el pedido de creación de nuevo
 *         hilo, recibe la respuesta, y se desconecta.
 * @param tcb : TCB del Hilo a crear en Memoria.

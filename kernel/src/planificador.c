@@ -43,9 +43,11 @@ void planific_corto_fifo(void) {
     int* dir = NULL;
     int fs_codigo;
     char* nombre_archivo = NULL;
-    char* nombre_recurso = NULL;
     //////////////////////////////////////////////////////////////////////
 
+    int codigo_recibido = -1;
+    // Lista con data del paquete recibido desde cpu.
+    t_list* argumentos_recibidos = NULL;
     // variables que defino acá porque las repito en varios case del switch
     t_pcb* pcb = NULL;
     t_pcb* tcb = NULL;
@@ -54,9 +56,7 @@ void planific_corto_fifo(void) {
     char* path_instrucciones = NULL;
     int* tamanio = NULL;
     int* prioridad = NULL;
-    int codigo_recibido = -1;
-    // Lista con data del paquete recibido desde cpu.
-    t_list* argumentos_recibidos = NULL;
+    char* nombre_mutex = NULL;
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
 
@@ -79,15 +79,18 @@ void planific_corto_fifo(void) {
 		switch (codigo_recibido) {
 
             case SYSCALL_MEMORY_DUMP:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: DUMP_MEMORY", hilo_exec->pid_pertenencia, hilo_exec->tid);
             enviar_pedido_de_dump_a_memoria(hilo_exec);
             break;
 
             case SYSCALL_IO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: IO", hilo_exec->pid_pertenencia, hilo_exec->tid);
             int* unidades_de_trabajo = list_get(argumentos_recibidos, 0);
             usar_io(hilo_exec, *unidades_de_trabajo);
             break;
 
             case SYSCALL_CREAR_PROCESO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
             path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
             tamanio = list_get(argumentos_recibidos, 1);
             prioridad = list_get(argumentos_recibidos, 2);
@@ -99,6 +102,7 @@ void planific_corto_fifo(void) {
             break;
 
             case SYSCALL_CREAR_HILO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
             path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
             prioridad = list_get(argumentos_recibidos, 1);
             pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
@@ -108,11 +112,13 @@ void planific_corto_fifo(void) {
             break;
 
             case SYSCALL_JOIN_HILO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_JOIN", hilo_exec->pid_pertenencia, hilo_exec->tid);
             tid = list_get(argumentos_recibidos, 0);
             hacer_join(hilo_exec, *tid);
             break;
 
             case SYSCALL_FINALIZAR_ALGUN_HILO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CANCEL", hilo_exec->pid_pertenencia, hilo_exec->tid);
             tid = list_get(argumentos_recibidos, 0);
             tcb = encontrar_y_remover_tcb(hilo_exec->pid_pertenencia, *tid);
             if(tcb != NULL) {
@@ -121,9 +127,20 @@ void planific_corto_fifo(void) {
             break;
 
             case SYSCALL_FINALIZAR_ESTE_HILO:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            finalizar_hilo(hilo_exec);
             break;
 
             case SYSCALL_CREAR_MUTEX:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
+            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            if(ya_existe_mutex(pcb, nombre_mutex)){
+                free(nombre_mutex);
+            }
+            else {
+                crear_mutex(pcb, nombre_mutex);
+            }
             break;
 
             case SYSCALL_BLOQUEAR_MUTEX:
@@ -1001,6 +1018,24 @@ void finalizar_hilo(t_tcb* tcb) {
     pthread_mutex_lock(&mutex_cola_exit);
     mandar_a_exit(tcb);
     pthread_mutex_unlock(&mutex_cola_exit);
+}
+
+void crear_mutex(t_pcb* pcb, char* nombre) {
+    t_mutex* nuevo_mutex = malloc(sizeof(t_mutex));
+    nuevo_mutex->nombre = nombre;
+    nuevo_mutex->asignado = false;
+    nuevo_mutex->tid_asignado = -1;
+    nuevo_mutex->bloqueados_esperando = list_create();
+    list_add(pcb->mutex_creados, nuevo_mutex);
+}
+
+bool ya_existe_mutex(t_pcb* pcb, char* nombre) {
+
+    bool _mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
+        return strcmp(mutex->nombre, nombre) == 0;
+    }
+
+    return list_any_satisfy(pcb->mutex_creados, (void*)_mutex_tiene_el_mismo_nombre);
 }
 
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
