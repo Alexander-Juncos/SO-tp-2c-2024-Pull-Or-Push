@@ -155,10 +155,13 @@ void planific_corto_fifo(void) {
             break;
 
             case SYSCALL_FINALIZAR_PROCESO:
+            log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
+            finalizar_proceso(hilo_exec->pid_pertenencia);
             break;
 
             case SEGMENTATION_FAULT:
-
+            log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
+            finalizar_proceso(hilo_exec->pid_pertenencia);
             break;
 
         /*
@@ -1026,6 +1029,15 @@ void finalizar_hilo(t_tcb* tcb) {
     pthread_mutex_unlock(&mutex_cola_exit);
 }
 
+void finalizar_proceso(int pid_pertenencia) {
+    t_pcb* pcb = buscar_pcb_por_pid(pid_pertenencia);
+    
+    while(!list_is_empty(pcb->tids_asociados))
+    {
+        finalizar_hilo((t_tcb*)pcb->tids_asociados->head);
+    }
+}
+
 void crear_mutex(t_pcb* pcb, char* nombre) {
     t_mutex* nuevo_mutex = malloc(sizeof(t_mutex));
     nuevo_mutex->nombre = nombre;
@@ -1175,7 +1187,6 @@ void enviar_pedido_de_dump(int pid, int tid, int socket) {
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
-
 
 /* OBSOLETO. LO DEJO POR LAS DUDAS ==================================
 t_recurso* encontrar_recurso_del_sistema(char* nombre) {

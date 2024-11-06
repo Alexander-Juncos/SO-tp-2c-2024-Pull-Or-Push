@@ -60,6 +60,8 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid);
 *        finaliza todos los otros Hilos del Proceso (igual a un FIN DE PROCESO).
 * @param tcb : TCB del Hilo a finalizar.
 */
+
+void finalizar_proceso(int pid_pertenencia);
 void finalizar_hilo(t_tcb* tcb);
 /**
 * @brief Crea un Mutex (sin asignar), y lo asocia a un Proceso.
@@ -112,6 +114,8 @@ void ingresar_a_new(t_pcb* pcb);
 */
 t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones);
 
+void bloquear_mutex(t_tcb* tcb, t_mutex* mutex);
+
 void liberar_mutex(t_mutex* mutex);
 
 void liberar_joineado(t_tcb* tcb);
@@ -125,10 +129,6 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear);
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb);
 
 void enviar_pedido_de_dump_a_memoria(t_tcb* tcb);
-
-// Para manejos de entrada/salida
-void manejar_solicitud_io(t_tcb* hilo_exec, int unidades_trabajo);
-void esperar_y_mover_a_ready(t_tcb* hilo_exec);
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
