@@ -144,15 +144,21 @@ void planific_corto_fifo(void) {
             break;
 
             case SYSCALL_BLOQUEAR_MUTEX:
+            t_tcb* hilo_solicitante_de_mutex = list_get(argumentos_recibidos, 0);
+            t_mutex* mutex_a_bloquear = list_get(argumentos_recibidos, 1);
+            bloquear_mutex(hilo_solicitante_de_mutex, mutex_a_bloquear);
             break;
 
             case SYSCALL_DESBLOQUEAR_MUTEX:
+            t_mutex* mutex_a_liberar = list_get(argumentos_recibidos, 0);
+            liberar_mutex(mutex_a_liberar);
             break;
 
             case SYSCALL_FINALIZAR_PROCESO:
             break;
 
             case SEGMENTATION_FAULT:
+
             break;
 
         /*
@@ -1070,6 +1076,26 @@ t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
     return nuevo_tcb;
 }
 
+void bloquear_mutex(t_tcb* tcb, t_mutex* mutex) {
+    if(mutex->asignado == true) {
+        // Acá hay que mandar el hilo a la cola de bloqueados y agregarlo a la lista de hilos esperando por el mutex
+
+        list_add(mutex->bloqueados_esperando, tcb);
+        return;
+    }
+    mutex->asignado = true;
+    mutex->tid_asignado = tcb->tid;
+    log_debug(log_kernel_gral, "Mutex %s asignado al hilo %d del proceso %d", mutex->nombre, tcb->tid, tcb->pid_pertenencia);
+
+    if(!list_is_empty(mutex->bloqueados_esperando)) {
+        t_tcb* tcb = list_remove(mutex->bloqueados_esperando, 0);
+        mutex->tid_asignado = tcb->tid;
+        mutex->asignado = true;
+        ingresar_a_ready(tcb);
+        log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (mutex %s asignado). Pasa a READY", tcb->pid_pertenencia, tcb->tid, mutex->nombre);
+    }
+}
+
 void liberar_mutex(t_mutex* mutex) {
     mutex->asignado = false;
     mutex->tid_asignado = -1;
@@ -1126,36 +1152,6 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
     pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)info_para_recibir_rta);
     pthread_detach(*thread_respuesta_memory_dump);
 }
-
-void manejar_solicitud_io(t_tcb* hilo_exec, int unidades_trabajo) {
-    log_info(log_kernel_oblig, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED (IO)", hilo_exec->tid);
-
-    // Mover el hilo a la cola de BLOQUEADOS para IO
-    pthread_mutex_lock(&mutex_cola_blocked_io);
-    list_add(cola_blocked_io, hilo_exec);
-    pthread_mutex_unlock(&mutex_cola_blocked_io);
-
-    // Simular el tiempo de IO con un sleep en un hilo separado para no bloquear el planificador
-    pthread_t hilo_io;
-    pthread_create(&hilo_io, NULL, (void*) esperar_y_mover_a_ready, (void*) hilo_exec);
-    pthread_detach(hilo_io); // Desconecta el hilo para que no sea necesario join
-}
-
-void esperar_y_mover_a_ready(t_tcb* hilo_exec) {
-    // Simular IO
-    sleep(hilo_exec->unidades_trabajo);  // Tiempo en IO
-
-    // Mover el hilo de vuelta a READY
-    pthread_mutex_lock(&mutex_cola_blocked_io);
-    list_remove_by_condition(cola_blocked_io, (void*) hilo_exec);  // Eliminar de BLOCKED IO
-    pthread_mutex_unlock(&mutex_cola_blocked_io);
-
-    pthread_mutex_lock(&mutex_cola_ready_unica);
-    list_add(cola_ready_unica, hilo_exec);
-    log_info(log_kernel_oblig, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: READY", hilo_exec->tid);
-    pthread_mutex_unlock(&mutex_cola_ready_unica);
-}
-
 
 // ==========================================================================
 // ====  Funciones Auxiliares:  =============================================
