@@ -17,16 +17,13 @@ void iniciar_planificador(void);
 /////// ALGORITMOS
 
 // EN DESARROLLO
-void planific_corto_fifo(void);
-
-// EN DESARROLLO
-void planific_corto_prioridades(void);
+void planific_corto_fifo_y_prioridades(void);
 
 // EN DESARROLLO
 void planific_corto_multinivel(void);
 
 // DEL TP VIEJO, COMO REFERENCIA
-void planific_corto_rr(void);
+// void planific_corto_rr(void);
 
 
 // ==========================================================================
@@ -40,6 +37,7 @@ void planific_corto_rr(void);
 * @note  Asume que en ese momento no hay Hilo en ejecución (el CPU está esperando).
 */
 void ejecutar_siguiente_hilo(t_list* cola_ready);
+
 /**
 * @brief Espera hasta que CPU devuelva el control a Kernel. Se recibe la syscall
 *        o interrupción, para luego atenderla.
