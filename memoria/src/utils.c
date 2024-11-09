@@ -404,7 +404,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
 
 void rutina_crear_proceso(t_list* param, int socket_cliente)
 {
-    void* aux;
+    void* aux; // para recibir parametros
     int pid;
     int tamanio;
     char* ruta;
@@ -492,7 +492,7 @@ void rutina_finalizar_proceso(int socket_cliente)
 void rutina_crear_hilo(t_list* param, int socket_cliente)
 {
     // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
-    void* aux;
+    void* aux; // para recibir parametros
     int tid;
     char* ruta;
 
@@ -524,7 +524,7 @@ void rutina_crear_hilo(t_list* param, int socket_cliente)
 void rutina_finalizar_hilo(t_list* param, int socket_cliente)
 {
     // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
-    void* aux;
+    void* aux; // para recibir parametros
     int tid;
     char* ruta;
 
@@ -606,7 +606,7 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
 
 void rutina_contexto_ejecucion(t_list* param)
 {
-    void* data;
+    void* data; // para recibir parametros
     int pid;
     int tid;
     bool resultado;
@@ -639,7 +639,7 @@ void rutina_contexto_ejecucion(t_list* param)
 void rutina_acceso_lectura(t_list* param)
 {
     unsigned int direccion;
-    void* data;
+    void* data; // para recibir parametros
     t_paquete* paquete;
 
     data = list_get(param, 0);
@@ -657,7 +657,7 @@ void rutina_acceso_lectura(t_list* param)
 void rutina_acceso_escritura(t_list* param)
 {
     unsigned int direccion;
-    void* data;
+    void* data; // para recibir parametros
     t_paquete* paquete;
 
     data = list_get(param, 0);
@@ -769,7 +769,7 @@ t_particion* particion_libre (int tamanio)
 t_particion* alg_first_fit(int tamanio) // devuelve directamente la referencia a una particion de la lista
 {
     t_particion* particion = NULL;
-    t_particion* aux;
+    t_particion* aux; 
     unsigned int tam_aux;
     
     for (int i=0; i < list_size(memoria->lista_particiones); i++)
