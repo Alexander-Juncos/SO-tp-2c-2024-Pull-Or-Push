@@ -101,6 +101,7 @@ extern pthread_mutex_t mutex_cola_ready;
 extern sem_t sem_sincro_new_exit;
 extern pthread_mutex_t mutex_cola_new;
 extern pthread_mutex_t mutex_hilo_exec;
+extern pthread_mutex_t mutex_hilo_usando_io;
 extern pthread_mutex_t mutex_cola_blocked_memory_dump;
 extern pthread_mutex_t mutex_cola_exit;
 extern pthread_mutex_t mutex_procesos_activos;

@@ -79,6 +79,9 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre);
 *         hilo, recibe la respuesta, y se desconecta.
 * @param tcb : TCB del Hilo a crear en Memoria.
 */
+
+t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre);
+
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb);
 
 // ==========================================================================

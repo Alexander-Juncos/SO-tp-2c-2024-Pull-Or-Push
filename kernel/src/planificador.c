@@ -61,6 +61,7 @@ void planific_corto_fifo_y_prioridades(void) {
     int* tamanio = NULL;
     int* prioridad = NULL;
     char* nombre_mutex = NULL;
+    t_mutex* mutex_encontrado = NULL;
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
 
@@ -143,9 +144,15 @@ void planific_corto_fifo_y_prioridades(void) {
             break;
 
             case SYSCALL_BLOQUEAR_MUTEX:
-            t_tcb* hilo_solicitante_de_mutex = list_get(argumentos_recibidos, 0);
-            t_mutex* mutex_a_bloquear = list_get(argumentos_recibidos, 1);
-            bloquear_mutex(hilo_solicitante_de_mutex, mutex_a_bloquear);
+            nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
+            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            mutex_encontrado = encontrar_mutex(pcb, nombre_mutex);
+            if(mutex_encontrado == NULL){
+                free(nombre_mutex);
+            }
+            else {
+                bloquear_mutex(hilo_exec, mutex_encontrado); // revisando
+            }
             break;
 
             case SYSCALL_DESBLOQUEAR_MUTEX:
@@ -653,6 +660,7 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
         return tcb;
     }
     // Busca en BLOCKED (usando IO)
+    pthread_mutex_lock(&mutex_hilo_usando_io);
     if(hilo_usando_io != NULL) {
         if((hilo_usando_io->tid == tid) && (hilo_usando_io->pid_pertenencia == pid)) {
             tcb = hilo_usando_io;
@@ -660,6 +668,7 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
             return tcb;
         }
     }
+    pthread_mutex_unlock(&mutex_hilo_usando_io);
     // Busca en BLOCKED (joineados)
     tcb = buscar_tcb_por_pid_y_tid(cola_blocked_join, pid, tid);
     if(tcb != NULL) {
@@ -713,6 +722,17 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre) {
     }
 
     return list_any_satisfy(pcb->mutex_creados, (void*)_mutex_tiene_el_mismo_nombre);
+}
+
+t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
+
+    bool _el_mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
+        return strcmp(mutex->nombre, nombre) == 0;
+    }
+
+    t_mutex* mutex_encontrado = NULL;
+    mutex_encontrado = list_find(pcb->mutex_creados, (void*)_el_mutex_tiene_el_mismo_nombre);
+    return mutex_encontrado;
 }
 
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {

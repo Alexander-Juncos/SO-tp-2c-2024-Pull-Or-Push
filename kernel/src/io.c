@@ -18,11 +18,12 @@ void* rutina_io(void* puntero_null) {
         
         usleep(tiempo_uso_io_en_microsegs);
 
+        pthread_mutex_lock(&mutex_hilo_usando_io);
         if(hilo_usando_io != NULL) { // if (el hilo no finalizó mientras la IO laburaba)
-
             ingresar_a_ready(hilo_usando_io);
             hilo_usando_io = NULL;
         }
+        pthread_mutex_unlock(&mutex_hilo_usando_io);
         
         tcb = NULL;
     }

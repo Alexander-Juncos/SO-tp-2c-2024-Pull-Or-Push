@@ -60,6 +60,7 @@ pthread_mutex_t mutex_cola_ready;
 sem_t sem_sincro_new_exit;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_hilo_exec;
+pthread_mutex_t mutex_hilo_usando_io;
 pthread_mutex_t mutex_cola_blocked_memory_dump;
 pthread_mutex_t mutex_cola_exit;
 pthread_mutex_t mutex_procesos_activos;
