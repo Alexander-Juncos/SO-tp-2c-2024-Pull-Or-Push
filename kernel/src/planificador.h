@@ -46,21 +46,33 @@ void ejecutar_siguiente_hilo(t_list* cola_ready);
 */
 t_list* recibir_de_cpu(int* codigo_operacion);
 /**
+* @brief Busca a un PCB en la lista de 'procesos_activos', según su PID.
+* @param pid          : PID del PCB a buscar.
+* @return : El PCB encontrado, o NULL en caso de no encontrarlo.
+*/
+t_pcb* encontrar_pcb_activo(int pid);
+/**
 * @brief Busca a un TCB en EXEC, BLOCKED Y READY, según su TID y su PID de pertenencia.
 *        En caso de encontrarlo, lo remueve de ese estado.
 * @param pid          : PID de pertenencia del TCB a buscar.
 * @param tid          : TID del TCB a buscar.
-* @return             : El TCB encontrado (y removido), o NULL en caso de no encontrarlo.
+* @return : El TCB encontrado (y removido), o NULL en caso de no encontrarlo.
 */
 t_tcb* encontrar_y_remover_tcb(int pid, int tid);
 /**
-* @brief Libera un Hilo y lo manda a EXIT. Si el Hilo a finalizar es Hilo main, primero
-*        finaliza todos los otros Hilos del Proceso (igual a un FIN DE PROCESO).
+* @brief Libera un Hilo y lo manda a EXIT.
+*
+*        Si el Hilo a finalizar es Hilo main, primero finaliza todos los
+*        otros Hilos del Proceso, y manda el Proceso a la lista de 'procesos_exit'
+*        (igual a un FIN DE PROCESO).
 * @param tcb : TCB del Hilo a finalizar.
 */
-
-void finalizar_proceso(int pid_pertenencia);
 void finalizar_hilo(t_tcb* tcb);
+/**
+* @brief Finaliza todos los Hilos del Proceso en ejecución y manda el Proceso a
+*        la lista de 'procesos_exit'.
+*/
+void finalizar_proceso(void);
 /**
 * @brief Crea un Mutex (sin asignar), y lo asocia a un Proceso.
 * @param pcb    : PCB del Proceso a asociarle el nuevo Mutex.
@@ -81,6 +93,8 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre);
 */
 
 t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre);
+
+bool mutex_esta_asignado_a_hilo(t_mutex* mutex, int tid);
 
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb);
 

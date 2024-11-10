@@ -105,7 +105,7 @@ void planific_corto_fifo_y_prioridades(void) {
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
             path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
             prioridad = list_get(argumentos_recibidos, 1);
-            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
             enviar_nuevo_hilo_a_memoria(tcb);
             ingresar_a_ready(tcb);
@@ -134,7 +134,7 @@ void planific_corto_fifo_y_prioridades(void) {
             case SYSCALL_CREAR_MUTEX:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
             nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
-            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             if(ya_existe_mutex(pcb, nombre_mutex)){
                 free(nombre_mutex);
             }
@@ -144,30 +144,39 @@ void planific_corto_fifo_y_prioridades(void) {
             break;
 
             case SYSCALL_BLOQUEAR_MUTEX:
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_LOCK", hilo_exec->pid_pertenencia, hilo_exec->tid);
             nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
-            pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             mutex_encontrado = encontrar_mutex(pcb, nombre_mutex);
             if(mutex_encontrado == NULL){
                 free(nombre_mutex);
             }
             else {
-                bloquear_mutex(hilo_exec, mutex_encontrado); // revisando
+                bloquear_mutex(hilo_exec, mutex_encontrado);
             }
             break;
 
             case SYSCALL_DESBLOQUEAR_MUTEX:
-            t_mutex* mutex_a_liberar = list_get(argumentos_recibidos, 0);
-            liberar_mutex(mutex_a_liberar);
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_UNLOCK", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
+            mutex_encontrado = encontrar_mutex(pcb, nombre_mutex);
+            if(mutex_encontrado == NULL || !mutex_esta_asignado_a_hilo(mutex_encontrado, hilo_exec->tid)){
+                free(nombre_mutex);
+            }
+            else {
+                liberar_mutex(mutex_encontrado);
+            }
             break;
 
             case SYSCALL_FINALIZAR_PROCESO:
-            log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            finalizar_proceso();
             break;
 
             case SEGMENTATION_FAULT:
-            log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
+            log_debug(log_kernel_gral, "## SEGMENTATION_FAULT de proceso %d", hilo_exec->pid_pertenencia);
+            finalizar_proceso();
             break;
            
             default:
@@ -175,6 +184,9 @@ void planific_corto_fifo_y_prioridades(void) {
             break;
 		}
 
+        // esto sacarlo luego de verificar que
+        // hacemos 'hilo_exec = NULL' en todos los
+        // lugares que corresponde
         if(codigo_recibido!=SYSCALL_CREAR_MUTEX
             && codigo_recibido!=SYSCALL_BLOQUEAR_MUTEX
             && codigo_recibido!=SYSCALL_DESBLOQUEAR_MUTEX
@@ -271,7 +283,7 @@ void planific_corto_multinivel_rr(void) {
                 log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
                 path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
                 prioridad = list_get(argumentos_recibidos, 1);
-                pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+                pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
                 tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
                 enviar_nuevo_hilo_a_memoria(tcb);
                 ingresar_a_ready(tcb);
@@ -300,7 +312,7 @@ void planific_corto_multinivel_rr(void) {
                 case SYSCALL_CREAR_MUTEX:
                 log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
                 nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
-                pcb = buscar_pcb_por_pid(procesos_activos, hilo_exec->pid_pertenencia);
+                pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
                 if(ya_existe_mutex(pcb, nombre_mutex)){
                     free(nombre_mutex);
                 }
@@ -643,6 +655,14 @@ t_list* recibir_de_cpu(int* codigo_operacion) {
     return argumentos_recibidos;
 }
 
+t_pcb* encontrar_pcb_activo(int pid) {
+    t_pcb* pcb = NULL;
+    pthread_mutex_lock(&mutex_procesos_activos);
+    pcb = buscar_pcb_por_pid(procesos_activos, pid);
+    pthread_mutex_unlock(&mutex_procesos_activos);
+    return pcb;
+}
+
 t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
     t_tcb* tcb = NULL;
     // Busca en EXEC
@@ -687,23 +707,27 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
 }
 
 void finalizar_hilo(t_tcb* tcb) {
-    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
+    t_pcb* pcb = encontrar_pcb_activo(tcb->pid_pertenencia);
 	if(tcb->tid == 0) { // (if es Hilo main)
         finalizar_hilos_no_main_de_proceso(pcb);
+        pthread_mutex_lock(&mutex_procesos_activos);
+        list_remove_element(procesos_activos, pcb);
+        pthread_mutex_unlock(&mutex_procesos_activos);
+        pthread_mutex_lock(&mutex_procesos_exit);
+        list_add(procesos_exit, pcb);
+        pthread_mutex_unlock(&mutex_procesos_exit);
+        hilo_exec = NULL;
 	}
     liberar_hilo(pcb, tcb);
+    log_info(log_kernel_oblig, "## (%d:%d) Finaliza el hilo", tcb->pid_pertenencia, tcb->tid);
     pthread_mutex_lock(&mutex_cola_exit);
     mandar_a_exit(tcb);
     pthread_mutex_unlock(&mutex_cola_exit);
 }
 
-void finalizar_proceso(int pid_pertenencia) {
-    t_pcb* pcb = buscar_pcb_por_pid(pid_pertenencia);
-    
-    while(!list_is_empty(pcb->tids_asociados))
-    {
-        finalizar_hilo((t_tcb*)pcb->tids_asociados->head);
-    }
+void finalizar_proceso(void) {
+    finalizar_hilo(hilo_exec);
+    log_info(log_kernel_oblig, "## Finaliza el proceso %d", hilo_exec->pid_pertenencia);
 }
 
 void crear_mutex(t_pcb* pcb, char* nombre) {
@@ -733,6 +757,10 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
     t_mutex* mutex_encontrado = NULL;
     mutex_encontrado = list_find(pcb->mutex_creados, (void*)_el_mutex_tiene_el_mismo_nombre);
     return mutex_encontrado;
+}
+
+bool mutex_esta_asignado_a_hilo(t_mutex* mutex, int tid) {
+    return (mutex->asignado == true) && (mutex->tid_asignado == tid);
 }
 
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
@@ -769,22 +797,16 @@ t_tcb* nuevo_hilo(t_pcb* pcb_creador, int prioridad, char* path_instrucciones) {
 
 void bloquear_mutex(t_tcb* tcb, t_mutex* mutex) {
     if(mutex->asignado == true) {
-        // Acá hay que mandar el hilo a la cola de bloqueados y agregarlo a la lista de hilos esperando por el mutex
-
+        // Manda el hilo a la cola de bloqueados esperando por el mutex
         list_add(mutex->bloqueados_esperando, tcb);
+        log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: MUTEX", tcb->pid_pertenencia, tcb->tid);
+        hilo_exec = NULL;
         return;
     }
+    // si el mutex está libre
     mutex->asignado = true;
     mutex->tid_asignado = tcb->tid;
-    log_debug(log_kernel_gral, "Mutex %s asignado al hilo %d del proceso %d", mutex->nombre, tcb->tid, tcb->pid_pertenencia);
-
-    if(!list_is_empty(mutex->bloqueados_esperando)) {
-        t_tcb* tcb = list_remove(mutex->bloqueados_esperando, 0);
-        mutex->tid_asignado = tcb->tid;
-        mutex->asignado = true;
-        ingresar_a_ready(tcb);
-        log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (mutex %s asignado). Pasa a READY", tcb->pid_pertenencia, tcb->tid, mutex->nombre);
-    }
+    log_debug(log_kernel_gral, "Mutex %s asignado a ## (%d:%d)", mutex->nombre, tcb->pid_pertenencia, tcb->tid);
 }
 
 void liberar_mutex(t_mutex* mutex) {
@@ -793,10 +815,10 @@ void liberar_mutex(t_mutex* mutex) {
     log_debug(log_kernel_gral, "Mutex %s liberado", mutex->nombre);
     if(!list_is_empty(mutex->bloqueados_esperando)) {
         t_tcb* tcb = list_remove(mutex->bloqueados_esperando, 0);
-        mutex->tid_asignado = tcb->tid;
         mutex->asignado = true;
+        mutex->tid_asignado = tcb->tid;
         ingresar_a_ready(tcb);
-        log_debug(log_kernel_gral, "## (%d:%d) desbloqueado (mutex %s asignado). Pasa a READY", tcb->pid_pertenencia, tcb->tid, mutex->nombre);
+        log_debug(log_kernel_gral, "## (%d:%d) desbloqueado. Mutex %s asignado. Pasa a READY", tcb->pid_pertenencia, tcb->tid, mutex->nombre);
     }
 }
 
@@ -812,10 +834,11 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
 		return (*tid) == tid_a_joinear;
 	}
 
-    t_pcb* pcb = buscar_pcb_por_pid(procesos_activos, tcb->pid_pertenencia);
+    t_pcb* pcb = encontrar_pcb_activo(tcb->pid_pertenencia);
     if(list_any_satisfy(pcb->tids_asociados, (void*)_es_el_tid_buscado_para_joinear)) {
         tcb->tid_joined = tid_a_joinear;
         list_add(cola_blocked_join, tcb);
+        log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: PTHREAD_JOIN", tcb->pid_pertenencia, tcb->tid);
         hilo_exec = NULL;
     }
 }

@@ -64,6 +64,7 @@ pthread_mutex_t mutex_hilo_usando_io;
 pthread_mutex_t mutex_cola_blocked_memory_dump;
 pthread_mutex_t mutex_cola_exit;
 pthread_mutex_t mutex_procesos_activos;
+pthread_mutex_t mutex_procesos_exit;
 pthread_mutex_t mutex_sincro_new_exit;
 
 // ==========================================================================
@@ -214,6 +215,7 @@ void finalizar_hilos_no_main_de_proceso(t_pcb* pcb) {
         }
         else {
             liberar_hilo(pcb, tcb);
+            log_info(log_kernel_oblig, "## (%d:%d) Finaliza el hilo", tcb->pid_pertenencia, tcb->tid);
             pthread_mutex_lock(&mutex_cola_exit);
             mandar_a_exit(tcb);
             pthread_mutex_unlock(&mutex_cola_exit);

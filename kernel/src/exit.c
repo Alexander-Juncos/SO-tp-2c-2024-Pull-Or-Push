@@ -70,19 +70,24 @@ void enviar_fin_proceso_a_memoria(int pid) {
 
 void destruir_tcb(t_tcb* tcb) {
     free(tcb->path_relativo_archivo_instrucciones);
+    log_debug(log_kernel_gral. "## EXIT: TCB de (%d:%d) destruido.", tcb->pid_pertenencia, tcb->tid);
     free(tcb);
 }
 
 void destruir_pcb(int pid) {
+    pthread_mutex_lock(&mutex_procesos_exit);
     t_pcb* pcb = buscar_pcb_por_pid(procesos_exit, pid);
-
+    pthread_mutex_unlock(&mutex_procesos_exit);
     if(pcb == NULL) { // solo para asegurarnos que anda bien
-        log_error(log_kernel_gral, "Error en la lógica de EXIT. No se encuentra el PCB a destruir.");
+        log_error(log_kernel_gral, "## EXIT: Error en la logica. No se encuentra el PCB de (%d) a destruir.", pid);
     }
     else {
+        pthread_mutex_lock(&mutex_procesos_exit);
         list_remove_element(procesos_exit, pcb);
+        pthread_mutex_unlock(&mutex_procesos_exit);
         list_destroy_and_destroy_elements(pcb->tids_asociados, (void*)free);
         list_destroy_and_destroy_elements(pcb->mutex_creados, ¡¡¡¡COMPLETAR!!!!);
+        log_debug(log_kernel_gral. "## EXIT: PCB de (%d) destruido.", pcb->pid);
         free(pcb);
     }
 }
