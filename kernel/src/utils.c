@@ -176,6 +176,11 @@ t_cola_ready* crear_ready_multinivel(void) {
     return nueva_estructura_cola_ready;
 }
 
+void agregar_ready_multinivel(int prioridad) {
+    t_cola_ready* estruct_cola_ready = crear_ready_multinivel();
+    dictionary_put(diccionario_ready_multinivel, string_itoa(prioridad), estruct_cola_ready);
+}
+
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
     t_tcb* tcb = NULL;
     tcb = buscar_tcb_por_pid_y_tid(cola_ready_unica, pid, tid);

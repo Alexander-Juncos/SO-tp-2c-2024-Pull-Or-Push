@@ -110,6 +110,8 @@ void setup_algoritmo_plani_corto_plazo(char* algoritmo) {
         cod_algoritmo_planif_corto = CMN;
         ingresar_a_ready = ingresar_a_ready_multinivel;
         encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_multinivel;
+        diccionario_ready_multinivel = dictionary_create();
+        agregar_ready_multinivel(0);
     }
     else {
         log_error(log_kernel_gral, "Algoritmo de planificación desconocido.");

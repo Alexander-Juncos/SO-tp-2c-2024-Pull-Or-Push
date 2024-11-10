@@ -193,6 +193,8 @@ void ingresar_a_ready_multinivel(t_tcb* tcb);
 
 t_cola_ready* crear_ready_multinivel(void);
 
+void agregar_ready_multinivel(int prioridad);
+
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid);
 
 t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid);
