@@ -70,7 +70,7 @@ void enviar_fin_proceso_a_memoria(int pid) {
 
 void destruir_tcb(t_tcb* tcb) {
     free(tcb->path_relativo_archivo_instrucciones);
-    log_debug(log_kernel_gral. "## EXIT: TCB de (%d:%d) destruido.", tcb->pid_pertenencia, tcb->tid);
+    log_debug(log_kernel_gral, "## EXIT: TCB de (%d:%d) destruido.", tcb->pid_pertenencia, tcb->tid);
     free(tcb);
 }
 
@@ -86,8 +86,8 @@ void destruir_pcb(int pid) {
         list_remove_element(procesos_exit, pcb);
         pthread_mutex_unlock(&mutex_procesos_exit);
         list_destroy_and_destroy_elements(pcb->tids_asociados, (void*)free);
-        list_destroy_and_destroy_elements(pcb->mutex_creados, ¡¡¡¡COMPLETAR!!!!);
-        log_debug(log_kernel_gral. "## EXIT: PCB de (%d) destruido.", pcb->pid);
+        list_destroy_and_destroy_elements(pcb->mutex_creados, (void*)free);//¡¡¡¡COMPLETAR!!!!);
+        log_debug(log_kernel_gral, "## EXIT: PCB de (%d) destruido.", pcb->pid);
         free(pcb);
     }
 }

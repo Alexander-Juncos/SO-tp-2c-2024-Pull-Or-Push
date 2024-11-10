@@ -187,17 +187,21 @@ t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
 
 t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
     t_tcb* tcb = NULL;
+    t_cola_ready* cola_multinivel = NULL;
 
     bool _es_la_key_que_busco(char* key) {
-        tcb = buscar_tcb_por_pid_y_tid((dictionary_get(diccionario_ready_multinivel, key))->cola_ready, pid, tid);
+        cola_multinivel = dictionary_get(diccionario_ready_multinivel, key);
+        tcb = buscar_tcb_por_pid_y_tid(cola_multinivel->cola_ready, pid, tid);
         return tcb != NULL;
     };
 
     t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
     char* key_de_cola_ready = NULL;
     key_de_cola_ready = list_find(lista_de_keys, (void*)_es_la_key_que_busco);
+    cola_multinivel = NULL;
     if(key_de_cola_ready != NULL) {
-        list_remove_element((dictionary_get(diccionario_ready_multinivel, key_de_cola_ready))->cola_ready, tcb);
+        cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
+        list_remove_element(cola_multinivel->cola_ready, tcb);
     }
     list_destroy(lista_de_keys);
     return tcb;
