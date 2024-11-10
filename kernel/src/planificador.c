@@ -204,7 +204,7 @@ void planific_corto_multinivel_rr(void) {
     // Lista con data del paquete recibido desde cpu.
     t_list* argumentos_recibidos = NULL;
     // variables que defino acá porque las repito en varios case del switch
-    t_cola_ready* estruct_cola_ready = NULL;
+    t_cola_ready* estructura_ready = NULL;
     t_pcb* pcb = NULL;
     t_tcb* tcb = NULL;
     int* pid = NULL;
@@ -217,14 +217,14 @@ void planific_corto_multinivel_rr(void) {
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo CMN y Round Robin.");
 
-    estruct_cola_ready = obtener_estructura_cola_ready(0);
-    sem_wait(&sem_cola_ready_unica);
+    estructura_ready = obtener_estructura_cola_ready(0);
+    sem_wait(&(estructura_ready->sem_cola_ready));
     pthread_mutex_lock(&mutex_hilo_exec);
-    ejecutar_siguiente_hilo(cola_ready_unica);
+    ejecutar_siguiente_hilo(estructura_ready->cola_ready);
     pthread_mutex_unlock(&mutex_hilo_exec);
 
     while (true) {
-
+        /*
         char* clave_nivel = string_itoa(nivel);
 
         if (!dictionary_has_key(diccionario_ready_multinivel, clave_nivel)) {
@@ -247,6 +247,7 @@ void planific_corto_multinivel_rr(void) {
         pthread_mutex_unlock(&mutex_hilo_exec);
 
         free(clave_nivel);
+        */
 
         // Esperar el código de desalojo o interrupción al finalizar el quantum
         argumentos_recibidos = esperar_cpu_rr(&codigo_recibido);
