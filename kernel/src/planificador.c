@@ -473,7 +473,7 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre) {
 
     bool _mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    };
+    }
 
     return list_any_satisfy(pcb->mutex_creados, (void*)_mutex_tiene_el_mismo_nombre);
 }
@@ -482,7 +482,7 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
 
     bool _el_mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    };
+    }
 
     t_mutex* mutex_encontrado = NULL;
     mutex_encontrado = list_find(pcb->mutex_creados, (void*)_el_mutex_tiene_el_mismo_nombre);
@@ -567,7 +567,7 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
 
 	bool _es_el_tid_buscado_para_joinear(int* tid) {
 		return (*tid) == tid_a_joinear;
-	};
+	}
 
     t_pcb* pcb = encontrar_pcb_activo(tcb->pid_pertenencia);
     if(list_any_satisfy(pcb->tids_asociados, (void*)_es_el_tid_buscado_para_joinear)) {

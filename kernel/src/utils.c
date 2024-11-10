@@ -102,7 +102,7 @@ void desasociar_tid(t_pcb* pcb, t_tcb* tcb) {
 
 	bool _es_el_tid_buscado(int* tid) {
 		return (*tid) == tcb->tid;
-	};
+	}
 
     list_remove_and_destroy_by_condition(pcb->tids_asociados, (void*)_es_el_tid_buscado, (void*)free);
 }
@@ -111,7 +111,7 @@ t_pcb* buscar_pcb_por_pid(t_list* lista_de_pcb, int pid) {
 
 	bool _es_el_pcb_buscado(t_pcb* pcb) {
 		return pcb->pid == pid;
-	};
+	}
 
 	t_pcb* pcb_encontrado = NULL;
 	pcb_encontrado = list_find(lista_de_pcb, (void*)_es_el_pcb_buscado);
@@ -122,7 +122,7 @@ t_tcb* buscar_tcb_por_tid(t_list* lista_de_tcb, int tid) {
 
 	bool _es_el_tcb_buscado(t_tcb* tcb) {
 		return (tcb->tid==tid);
-	};
+	}
 
 	t_tcb* tcb_encontrado = NULL;
 	tcb_encontrado = list_find(lista_de_tcb, (void*)_es_el_tcb_buscado);
@@ -133,7 +133,7 @@ t_tcb* buscar_tcb_por_pid_y_tid(t_list* lista_de_tcb, int pid, int tid) {
 
 	bool _es_el_tcb_que_se_busca(t_tcb* tcb) {
 		return (tcb->tid == tid) && (tcb->pid_pertenencia == pid);
-	};
+	}
 
 	t_tcb* tcb_encontrado = NULL;
 	tcb_encontrado = list_find(lista_de_tcb, (void*)_es_el_tcb_que_se_busca);
@@ -148,7 +148,7 @@ void ingresar_a_ready_fifo(t_tcb* tcb) {
 void ingresar_a_ready_prioridades(t_tcb* tcb) {
     bool _hilo_tiene_menor_prioridad(t_tcb* tcb1, t_tcb* tcb2) {
         return tcb1->prioridad < tcb2->prioridad;
-    };
+    }
 
     list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
     sem_post(&sem_cola_ready_unica);
@@ -198,7 +198,7 @@ t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
         cola_multinivel = dictionary_get(diccionario_ready_multinivel, key);
         tcb = buscar_tcb_por_pid_y_tid(cola_multinivel->cola_ready, pid, tid);
         return tcb != NULL;
-    };
+    }
 
     t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
     char* key_de_cola_ready = NULL;
@@ -242,7 +242,7 @@ void liberar_hilos_joineados(t_tcb* tcb) {
 
 	bool _esta_joineado_a_este_hilo(t_tcb* tcb_bloqueado) {
 		return (tcb_bloqueado->tid_joined == tcb->tid) && (tcb_bloqueado->pid_pertenencia == tcb->pid_pertenencia);
-	};
+	}
 
     t_list* lista_de_hilos_joineados_a_este_hilo = list_filter(cola_blocked_join, (void*)_esta_joineado_a_este_hilo);
     int cant_a_desjoinear = list_size(lista_de_hilos_joineados_a_este_hilo);
@@ -261,7 +261,7 @@ void liberar_mutexes_asignados(t_pcb* pcb, t_tcb* tcb) {
 
 	bool _es_mutex_asignado(t_mutex* mutex) {
 		return (mutex->tid_asignado == tcb->tid) && (mutex->asignado == true);
-	};
+	}
 
     t_list* lista_de_mutexes_asignados = list_filter(pcb->mutex_creados, (void*)_es_mutex_asignado);
     list_iterate(lista_de_mutexes_asignados, (void*)liberar_mutex);
