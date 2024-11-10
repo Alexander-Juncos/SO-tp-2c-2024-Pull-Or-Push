@@ -1,8 +1,8 @@
 #ifndef HILO_PLANIFICADOR_KERNEL_H_
 #define HILO_PLANIFICADOR_KERNEL_H_
+#define MAX_NIVELES_PRIORIDAD 10  // Ajusta el valor según tus necesidades
 
 #include <commons/config.h>
-
 #include "utils.h"
 
 extern int contador_pid; // Contador. Para asignar diferente pid a cada nuevo proceso.
@@ -20,7 +20,7 @@ void iniciar_planificador(void);
 void planific_corto_fifo_y_prioridades(void);
 
 // EN DESARROLLO
-void planific_corto_multinivel(void);
+void planific_corto_multinivel_rr(void);
 
 // DEL TP VIEJO, COMO REFERENCIA
 // void planific_corto_rr(void);

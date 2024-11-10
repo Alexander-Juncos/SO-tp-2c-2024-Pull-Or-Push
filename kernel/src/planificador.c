@@ -23,7 +23,7 @@ void iniciar_planificador(void) {
         planific_corto_fifo_y_prioridades();
     }
     else if (strcmp(algoritmo_plani, "CMN") == 0) {
-        planific_corto_multinivel();
+        planific_corto_multinivel_rr();
     }
     
 }
@@ -224,136 +224,137 @@ void planific_corto_multinivel_rr(void) {
     pthread_mutex_unlock(&mutex_hilo_exec);
 
     while (true) {
+        for (int nivel = 0; nivel < MAX_NIVELES_PRIORIDAD; nivel++) {
+            char* clave_nivel = string_itoa(nivel);
 
-        char* clave_nivel = string_itoa(nivel);
+            if (!dictionary_has_key(diccionario_ready_multinivel, clave_nivel)) {
+                free(clave_nivel);
+                continue;
+            }
 
-        if (!dictionary_has_key(diccionario_ready_multinivel, clave_nivel)) {
+            t_list* cola_nivel = dictionary_get(diccionario_ready_multinivel, clave_nivel);
+
+            if (list_is_empty(cola_nivel)) {
+                free(clave_nivel);
+                continue;
+            }
+
+            // Ejecutar el primer hilo en la cola
+            pthread_mutex_lock(&mutex_hilo_exec);
+            hilo_exec = list_remove(cola_nivel, 0);
+            enviar_orden_de_ejecucion_al_cpu(hilo_exec);
+            log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO en nivel %d", hilo_exec->pid_pertenencia, hilo_exec->tid, nivel);
+            pthread_mutex_unlock(&mutex_hilo_exec);
+
             free(clave_nivel);
-            continue;
-        }
 
-        t_list* cola_nivel = dictionary_get(diccionario_ready_multinivel, clave_nivel);
+            // Esperar el código de desalojo o interrupción al finalizar el quantum
+            argumentos_recibidos = esperar_cpu_rr(&codigo_recibido);
 
-        if (list_is_empty(cola_nivel)) {
-            free(clave_nivel);
-            continue;
-        }
+            // Switch para tratar los códigos recibidos
+            switch (codigo_recibido) {
+                case SYSCALL_MEMORY_DUMP:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: DUMP_MEMORY", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                enviar_pedido_de_dump_a_memoria(hilo_exec);
+                break;
 
-        // Ejecutar el primer hilo en la cola
-        pthread_mutex_lock(&mutex_hilo_exec);
-        hilo_exec = list_remove(cola_nivel, 0);
-        enviar_orden_de_ejecucion_al_cpu(hilo_exec);
-        log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO en nivel %d", hilo_exec->pid_pertenencia, hilo_exec->tid, nivel);
-        pthread_mutex_unlock(&mutex_hilo_exec);
+                case SYSCALL_IO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: IO", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                int* unidades_de_trabajo = list_get(argumentos_recibidos, 0);
+                usar_io(hilo_exec, *unidades_de_trabajo);
+                break;
 
-        free(clave_nivel);
+                case SYSCALL_CREAR_PROCESO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
+                tamanio = list_get(argumentos_recibidos, 1);
+                prioridad = list_get(argumentos_recibidos, 2);
+                pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
+                // NEW se ocupa de enviar el nuevo proceso a Memoria.
+                pthread_mutex_lock(&mutex_cola_new);
+                ingresar_a_new(pcb);
+                pthread_mutex_unlock(&mutex_cola_new);
+                break;
 
-        // Esperar el código de desalojo o interrupción al finalizar el quantum
-        argumentos_recibidos = esperar_cpu_rr(&codigo_recibido);
+                case SYSCALL_CREAR_HILO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
+                prioridad = list_get(argumentos_recibidos, 1);
+                pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
+                tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
+                enviar_nuevo_hilo_a_memoria(tcb);
+                ingresar_a_ready(tcb);
+                break;
 
-        // Switch para tratar los códigos recibidos
-        switch (codigo_recibido) {
-            case SYSCALL_MEMORY_DUMP:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: DUMP_MEMORY", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            enviar_pedido_de_dump_a_memoria(hilo_exec);
-            break;
+                case SYSCALL_JOIN_HILO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_JOIN", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                tid = list_get(argumentos_recibidos, 0);
+                hacer_join(hilo_exec, *tid);
+                break;
 
-            case SYSCALL_IO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: IO", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            int* unidades_de_trabajo = list_get(argumentos_recibidos, 0);
-            usar_io(hilo_exec, *unidades_de_trabajo);
-            break;
+                case SYSCALL_FINALIZAR_ALGUN_HILO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CANCEL", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                tid = list_get(argumentos_recibidos, 0);
+                tcb = encontrar_y_remover_tcb(hilo_exec->pid_pertenencia, *tid);
+                if(tcb != NULL) {
+                    finalizar_hilo(tcb);
+                }
+                break;
 
-            case SYSCALL_CREAR_PROCESO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
-            tamanio = list_get(argumentos_recibidos, 1);
-            prioridad = list_get(argumentos_recibidos, 2);
-            pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
-            // NEW se ocupa de enviar el nuevo proceso a Memoria.
-            pthread_mutex_lock(&mutex_cola_new);
-            ingresar_a_new(pcb);
-            pthread_mutex_unlock(&mutex_cola_new);
-            break;
+                case SYSCALL_FINALIZAR_ESTE_HILO:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                finalizar_hilo(hilo_exec);
+                break;
 
-            case SYSCALL_CREAR_HILO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            path_instrucciones = string_duplicate(list_get(argumentos_recibidos, 0));
-            prioridad = list_get(argumentos_recibidos, 1);
-            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
-            tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
-            enviar_nuevo_hilo_a_memoria(tcb);
-            ingresar_a_ready(tcb);
-            break;
+                case SYSCALL_CREAR_MUTEX:
+                log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
+                pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
+                if(ya_existe_mutex(pcb, nombre_mutex)){
+                    free(nombre_mutex);
+                }
+                else {
+                    crear_mutex(pcb, nombre_mutex);
+                }
+                break;
 
-            case SYSCALL_JOIN_HILO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_JOIN", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            tid = list_get(argumentos_recibidos, 0);
-            hacer_join(hilo_exec, *tid);
-            break;
+                case SYSCALL_BLOQUEAR_MUTEX:
+                t_tcb* hilo_solicitante_de_mutex = list_get(argumentos_recibidos, 0);
+                t_mutex* mutex_a_bloquear = list_get(argumentos_recibidos, 1);
+                bloquear_mutex(hilo_solicitante_de_mutex, mutex_a_bloquear);
+                break;
 
-            case SYSCALL_FINALIZAR_ALGUN_HILO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_CANCEL", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            tid = list_get(argumentos_recibidos, 0);
-            tcb = encontrar_y_remover_tcb(hilo_exec->pid_pertenencia, *tid);
-            if(tcb != NULL) {
-                finalizar_hilo(tcb);
+                case SYSCALL_DESBLOQUEAR_MUTEX:
+                t_mutex* mutex_a_liberar = list_get(argumentos_recibidos, 0);
+                liberar_mutex(mutex_a_liberar);
+                break;
+
+                case SYSCALL_FINALIZAR_PROCESO:
+                log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
+                finalizar_proceso();
+                break;
+
+                case SEGMENTATION_FAULT:
+                log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
+                finalizar_proceso();
+                break;
+
+                case INTERRUPCION:
+                log_info(log_kernel_oblig, "## (%d:%d) - Desalojado por fin de Quantum", hilo_exec->pid_pertenencia, hilo_exec->tid);
+                list_add(cola_nivel, hilo_exec);  // Volver a agregar al final de la cola para RR
+                break;
+
+                default:
+                log_error(log_kernel_gral, "El motivo de desalojo del proceso %d no se puede interpretar, es desconocido.", hilo_exec->pid_pertenencia);
+                break;
             }
-            break;
+        
 
-            case SYSCALL_FINALIZAR_ESTE_HILO:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            finalizar_hilo(hilo_exec);
-            break;
+            // Reiniciar el quantum al finalizar la ejecución del hilo actual
+            reiniciar_quantum();
 
-            case SYSCALL_CREAR_MUTEX:
-            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_CREATE", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
-            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
-            if(ya_existe_mutex(pcb, nombre_mutex)){
-                free(nombre_mutex);
-            }
-            else {
-                crear_mutex(pcb, nombre_mutex);
-            }
-            break;
-
-            case SYSCALL_BLOQUEAR_MUTEX:
-            t_tcb* hilo_solicitante_de_mutex = list_get(argumentos_recibidos, 0);
-            t_mutex* mutex_a_bloquear = list_get(argumentos_recibidos, 1);
-            bloquear_mutex(hilo_solicitante_de_mutex, mutex_a_bloquear);
-            break;
-
-            case SYSCALL_DESBLOQUEAR_MUTEX:
-            t_mutex* mutex_a_liberar = list_get(argumentos_recibidos, 0);
-            liberar_mutex(mutex_a_liberar);
-            break;
-
-            case SYSCALL_FINALIZAR_PROCESO:
-            log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
-            break;
-
-            case SEGMENTATION_FAULT:
-            log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
-            break;
-
-            case INTERRUPCION:
-            log_info(log_kernel_oblig, "## (%d:%d) - Desalojado por fin de Quantum", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            list_add(cola_nivel, hilo_exec);  // Volver a agregar al final de la cola para RR
-            break;
-
-            default:
-            log_error(log_kernel_gral, "El motivo de desalojo del proceso %d no se puede interpretar, es desconocido.", hilo_exec->pid_pertenencia);
-            break;
+            list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
         }
-
-        // Reiniciar el quantum al finalizar la ejecución del hilo actual
-        reiniciar_quantum();
-
-        list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
-
 
         sem_wait(&sem_cola_ready_unica);  // Esperar a que haya algo en READY si todas las colas están vacías
     }
@@ -472,7 +473,7 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre) {
 
     bool _mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    }
+    };
 
     return list_any_satisfy(pcb->mutex_creados, (void*)_mutex_tiene_el_mismo_nombre);
 }
@@ -481,7 +482,7 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
 
     bool _el_mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    }
+    };
 
     t_mutex* mutex_encontrado = NULL;
     mutex_encontrado = list_find(pcb->mutex_creados, (void*)_el_mutex_tiene_el_mismo_nombre);
@@ -566,7 +567,7 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
 
 	bool _es_el_tid_buscado_para_joinear(int* tid) {
 		return (*tid) == tid_a_joinear;
-	}
+	};
 
     t_pcb* pcb = encontrar_pcb_activo(tcb->pid_pertenencia);
     if(list_any_satisfy(pcb->tids_asociados, (void*)_es_el_tid_buscado_para_joinear)) {
