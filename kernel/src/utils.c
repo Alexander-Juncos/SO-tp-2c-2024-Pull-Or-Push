@@ -148,7 +148,7 @@ void ingresar_a_ready_fifo(t_tcb* tcb) {
 void ingresar_a_ready_prioridades(t_tcb* tcb) {
     bool _hilo_tiene_menor_prioridad(t_tcb* tcb1, t_tcb* tcb2) {
         return tcb1->prioridad < tcb2->prioridad;
-    }
+    };
 
     list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
     sem_post(&sem_cola_ready_unica);

@@ -23,7 +23,7 @@ void iniciar_planificador(void) {
         planific_corto_fifo_y_prioridades();
     }
     else if (strcmp(algoritmo_plani, "CMN") == 0) {
-        planific_corto_multinivel();
+        planific_corto_multinivel_rr();
     }
     
 }
@@ -332,29 +332,29 @@ void planific_corto_multinivel_rr(void) {
 
             case SYSCALL_FINALIZAR_PROCESO:
             log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
+            finalizar_proceso();
             break;
 
             case SEGMENTATION_FAULT:
             log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
-            finalizar_proceso(hilo_exec->pid_pertenencia);
+            finalizar_proceso();
             break;
 
             case INTERRUPCION:
             log_info(log_kernel_oblig, "## (%d:%d) - Desalojado por fin de Quantum", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            list_add(cola_nivel, hilo_exec);  // Volver a agregar al final de la cola para RR
+            ingresar_a_ready(hilo_exec);
             break;
 
             default:
             log_error(log_kernel_gral, "El motivo de desalojo del proceso %d no se puede interpretar, es desconocido.", hilo_exec->pid_pertenencia);
             break;
         }
+    
 
         // Reiniciar el quantum al finalizar la ejecución del hilo actual
         reiniciar_quantum();
 
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
-
 
         sem_wait(&sem_cola_ready_unica);  // Esperar a que haya algo en READY si todas las colas están vacías
     }
@@ -473,7 +473,7 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre) {
 
     bool _mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    }
+    };
 
     return list_any_satisfy(pcb->mutex_creados, (void*)_mutex_tiene_el_mismo_nombre);
 }
@@ -482,7 +482,7 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
 
     bool _el_mutex_tiene_el_mismo_nombre(t_mutex* mutex) {
         return strcmp(mutex->nombre, nombre) == 0;
-    }
+    };
 
     t_mutex* mutex_encontrado = NULL;
     mutex_encontrado = list_find(pcb->mutex_creados, (void*)_el_mutex_tiene_el_mismo_nombre);
@@ -567,7 +567,7 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
 
 	bool _es_el_tid_buscado_para_joinear(int* tid) {
 		return (*tid) == tid_a_joinear;
-	}
+	};
 
     t_pcb* pcb = encontrar_pcb_activo(tcb->pid_pertenencia);
     if(list_any_satisfy(pcb->tids_asociados, (void*)_es_el_tid_buscado_para_joinear)) {

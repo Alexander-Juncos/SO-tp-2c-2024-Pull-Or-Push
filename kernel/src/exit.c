@@ -86,10 +86,19 @@ void destruir_pcb(int pid) {
         list_remove_element(procesos_exit, pcb);
         pthread_mutex_unlock(&mutex_procesos_exit);
         list_destroy_and_destroy_elements(pcb->tids_asociados, (void*)free);
-        list_destroy_and_destroy_elements(pcb->mutex_creados, (void*)free);//¡¡¡¡COMPLETAR!!!!);
+        list_destroy_and_destroy_elements(pcb->mutex_creados, (void*)destruir_mutex);
         log_debug(log_kernel_gral, "## EXIT: PCB de (%d) destruido.", pcb->pid);
         free(pcb);
     }
+}
+
+void destruir_mutex(t_mutex* mutex) {
+    if(!list_is_empty(mutex->bloqueados_esperando)) {
+        log_error(log_kernel_gral, "## EXIT: Error en la logica. Mutex %s a destruir no tiene vacia la lista de bloqueados esperando.", mutex->nombre);
+    }
+    list_destroy(mutex->bloqueados_esperando);
+    free(mutex->nombre);
+    free(mutex);
 }
 
 // ==========================================================================

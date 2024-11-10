@@ -32,13 +32,6 @@ typedef t_tcb* (*PtrFuncionEncontrarYRemoverTCBReady)(int, int);
 // ====  Variables globales:  ===============================================
 // ==========================================================================
 
-typedef struct
-{
-    //int cantidad_de_hilos_activos;
-    t_list* cola_ready;
-    sem_t sem_cola_ready;
-} t_cola_ready;
-
 typedef enum
 {
     FIFO,
