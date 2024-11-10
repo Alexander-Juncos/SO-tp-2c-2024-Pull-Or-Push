@@ -14,6 +14,7 @@ extern pthread_mutex_t mutex_rutina_quantum;
 ////////////////////////////////////////
 
 void* rutina_quantum(void *puntero_null);
+void reiniciar_quantum(void);
 t_list* esperar_cpu_rr(int* codigo_operacion);
 
 #endif
