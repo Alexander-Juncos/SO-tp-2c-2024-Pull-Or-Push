@@ -54,7 +54,7 @@ void planific_corto_fifo_y_prioridades(void) {
     t_list* argumentos_recibidos = NULL;
     // variables que defino acá porque las repito en varios case del switch
     t_pcb* pcb = NULL;
-    t_pcb* tcb = NULL;
+    t_tcb* tcb = NULL;
     int* pid = NULL;
     int* tid = NULL;
     char* path_instrucciones = NULL;
@@ -209,7 +209,7 @@ void planific_corto_multinivel_rr(void) {
     t_list* argumentos_recibidos = NULL;
     // variables que defino acá porque las repito en varios case del switch
     t_pcb* pcb = NULL;
-    t_pcb* tcb = NULL;
+    t_tcb* tcb = NULL;
     int* pid = NULL;
     int* tid = NULL;
     char* path_instrucciones = NULL;
