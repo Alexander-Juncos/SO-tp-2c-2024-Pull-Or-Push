@@ -316,23 +316,37 @@ void iniciar_bitmap()
     contar_bloques_libres_totales();
 }
 
-void contar_bloques_libres_totales()
-{
-    unsigned int inicio_busqueda = 0;
-    unsigned int bloque_actual = inicio_busqueda;
-    unsigned int cantidad;
+// void contar_bloques_libres_totales()
+// {
+//     unsigned int inicio_busqueda = 0;
+//     unsigned int bloque_actual = inicio_busqueda;
+//     unsigned int cantidad;
     
-    do
-    {
-        if (bloque_actual > fs->cant_bloques){
-            bloque_actual = 0;
-        }
+//     do
+//     {
+//         if (bloque_actual > fs->cant_bloques){
+//             bloque_actual = 0;
+//         }
 
-        if (!(bitarray_test_bit(bitmap->bitarray, bloque_actual)))
+//         if (!(bitarray_test_bit(bitmap->bitarray, bloque_actual)))
+//             cantidad++;
+
+//         bloque_actual++;
+//     } while (inicio_busqueda != bloque_actual);
+
+//     bitmap->bloques_libres_tot = cantidad;
+// }
+
+void contar_bloques_libres_totales() {
+    unsigned int bloque_actual = 0;  // Inicia en el primer bloque
+    unsigned int cantidad = 0;
+
+    // Recorrer todos los bloques y contar los libres
+    for (bloque_actual = 0; bloque_actual < fs->cant_bloques; bloque_actual++) {
+        if (!bitarray_test_bit(bitmap->bitarray, bloque_actual)) {
             cantidad++;
-
-        bloque_actual++;
-    } while (inicio_busqueda != bloque_actual);
+        }
+    }
 
     bitmap->bloques_libres_tot = cantidad;
 }
