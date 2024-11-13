@@ -27,17 +27,14 @@ int main(int argc, char* argv[]) {
     else if (argc == 2)
     {
         imprimir_mensaje("Error: Debe ingresar tambien el [tamanio_proceso]");
+        exit(3);
     }
     else if (argc <= 1)
     {
-        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
+        //config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
 
-        /* COMENTO ESTO POR AHORA, PARA PROBAR LOS HANDSHAKES.
-        -------------------------------------------------------
         imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
         exit(3);
-        -------------------------------------------------------
-        */
     }
 
     // argv[1] => ruta de archivo de pseudocodigo (para memoria)

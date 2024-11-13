@@ -71,6 +71,8 @@ void* rutina_ejecucion (void* nada)
 
             list_destroy_and_destroy_elements(pedido, free);
             break;
+
+            // No sé si falta algún case para que reciba el handshake de memoria, ya que cada vez que se conecta libera el socket y rompe toda la ejecución
     
         default:
             // consumo lo q haya llegado (para liberar socket) (esto puede causar algun error)

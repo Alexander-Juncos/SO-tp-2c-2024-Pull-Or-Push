@@ -43,7 +43,6 @@ int main(int argc, char* argv[]) {
     int socket_temp = crear_conexion(ip_fs, puerto_fs);
     enviar_handshake(MEMORIA, socket_temp);
     recibir_y_manejar_rta_handshake(log_memoria_gral, "FileSystem", socket_temp); // esto ya emite y todo
-    liberar_conexion(log_memoria_gral, "FileSystem", socket_temp);
     
     /****************** Servidor CPU *******************/
     socket_cpu = esperar_cliente(socket_escucha);
