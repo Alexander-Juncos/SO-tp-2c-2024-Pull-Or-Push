@@ -31,10 +31,12 @@ int main(int argc, char* argv[]) {
     }
     else if (argc <= 1)
     {
-        //config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
+        // ESTO ES PARA ENVIAR EL PLANI_PROC POR AHORA. ELIMINAR CUANDO TODO ESTÉ LISTO
+        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
 
-        imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
-        exit(3);
+
+        // imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
+        // exit(3);
     }
 
     // argv[1] => ruta de archivo de pseudocodigo (para memoria)
@@ -77,7 +79,15 @@ int main(int argc, char* argv[]) {
     pthread_create(&thread_io, NULL, rutina_io, NULL);
     
     // El Proceso inicial.
-    proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, argv[1]);
+    // ESTA PARTE SE PUEDE ELIMINAR CUANDO SE TERMINE DE DEBUGGEAR
+    if(argc == 1)
+    {
+        proceso_inicial = nuevo_proceso(256, 0, "PLANI_PROC");
+    }
+    else
+    {
+        proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, argv[1]);
+    }
     ingresar_a_new(proceso_inicial);
 
 
