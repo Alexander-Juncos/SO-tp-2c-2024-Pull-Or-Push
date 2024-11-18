@@ -251,12 +251,16 @@ void recibir_pedido_ejecucion(void)
     int pid;
     int tid;
     bool resultado_contexto = true;
-    log_trace(log_cpu_gral, "Esperando pedido ejecución");
+    log_debug(log_cpu_gral, "Esperando pedido ejecución");
 
     codigo = recibir_codigo(socket_kernel_dispatch);
+    
 
     switch (codigo)
     {
+    case EJECUCION:
+        log_debug(log_cpu_gral, "Pedido ejecucion Kernel");
+        break;
     case -1:
         log_error(log_cpu_gral, "Kernel se desconecto, finalizando modulo cpu");
         exit(3);
