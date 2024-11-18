@@ -35,8 +35,10 @@ int main(int argc, char* argv[]) {
     recibir_y_manejar_rta_handshake(log_cpu_gral, "Memoria", socket_memoria);
 
     /***************** Conexión Kernel *****************/
+    pthread_mutex_init(&mutex_interrupcion, NULL);
+    if (pthread_create(&hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
+        log_error(log_cpu_gral, "Error al crear hilo interrupcion");
 
-    // prueba conexion - limpiar y rehacer despues de check 1
     puerto = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
     socket_escucha_puerto_dispatch = iniciar_servidor(puerto);
     socket_kernel_dispatch = esperar_cliente(socket_escucha_puerto_dispatch);
@@ -47,11 +49,6 @@ int main(int argc, char* argv[]) {
     enviar_handshake(HANDSHAKE_OK, socket_kernel_dispatch);
     
     /******************** Logíca CPU *******************/
-    pthread_mutex_init(&mutex_interrupcion, NULL);
-
-    if (pthread_create(&hilo_interrupt, NULL, rutina_hilo_interrupcion, NULL) != 0)
-        log_error(log_cpu_gral, "Error al crear hilo interrupcion");
-
     rutina_main_cpu();
 
     terminar_programa();
@@ -74,12 +71,13 @@ void* rutina_hilo_interrupcion (void*)
         return EXIT_FAILURE;
     }
     enviar_handshake(HANDSHAKE_OK, socket_kernel_interrupt);
+    log_debug(log_cpu_gral, "Conexion Kernel Interrupt OK");
 
     // lo tome del tp anterior, aunque no se su funcion bien...
     // (comentario tp anterior) agregué esto para que el recv() de check interrupt no se quede esperando
     // Alexis 1: Esta función lo que permite es que el socket especificado permita hacer recv()'s NO bloqueantes.
     //           Así se chequea por interrupciones, y si no hay bytes por recibir, simplemente avanza.
-    fcntl(socket_kernel_interrupt, F_SETFL, O_NONBLOCK); 
+    // fcntl(socket_kernel_interrupt, F_SETFL, O_NONBLOCK); 
 
     do
     {
@@ -110,6 +108,8 @@ void* rutina_hilo_interrupcion (void*)
 
         list_clean_and_destroy_elements(recibido, free);
     } while (operacion > 0);
+
+    free(puerto);
 
     return;
 }

@@ -10,6 +10,8 @@ void* rutina_new(void* puntero_null) {
     t_tcb* tcb_hilo_main = NULL;
     log_debug(log_kernel_gral, "Hilo responsable de cola NEW listo.");
 
+    cola_new = list_create();
+
     while(true) {
 
         tcb_hilo_main = inicializacion_de_proceso();
