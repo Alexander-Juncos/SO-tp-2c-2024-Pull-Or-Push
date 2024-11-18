@@ -32,70 +32,72 @@ t_list* decode (char* instruccion)
 {
     char **arg = string_split(instruccion, " ");
     t_list* parametros = list_create();
-    int var_instruccion = DESCONOCIDA;
+    int *var_instruccion = malloc(sizeof(int));
+    *var_instruccion = DESCONOCIDA;
     int num_arg = string_array_size(arg);
 
     // si el numero de parametros no coincide con lo esperado, desconoce la instruccion
 
-    if (strcmp(arg[0], "SET") == 0 && num_arg == 2){
-        var_instruccion = SET;
+    if (strcmp(arg[0], "SET") == 0 && num_arg == 3){
+        *var_instruccion = SET;
     }
-    if (strcmp(arg[0], "READ_MEM") == 0 && num_arg == 2){
-        var_instruccion = READ_MEM;
+    if (strcmp(arg[0], "READ_MEM") == 0 && num_arg == 3){
+        *var_instruccion = READ_MEM;
     }
-    if (strcmp(arg[0], "WRITE_MEM") == 0 && num_arg == 2){
-        var_instruccion = WRITE_MEM;
+    if (strcmp(arg[0], "WRITE_MEM") == 0 && num_arg == 3){
+        *var_instruccion = WRITE_MEM;
     }
-    if (strcmp(arg[0], "SUM") == 0 && num_arg == 2){
-        var_instruccion = SUM;
+    if (strcmp(arg[0], "SUM") == 0 && num_arg == 3){
+        *var_instruccion = SUM;
     }
-    if (strcmp(arg[0], "SUB") == 0 && num_arg == 2){
-        var_instruccion = SUB;
+    if (strcmp(arg[0], "SUB") == 0 && num_arg == 3){
+        *var_instruccion = SUB;
     }
-    if (strcmp(arg[0], "JNZ") == 0 && num_arg == 2){
-        var_instruccion = JNZ;
+    if (strcmp(arg[0], "JNZ") == 0 && num_arg == 3){
+        *var_instruccion = JNZ;
     }
-    if (strcmp(arg[0], "LOG") == 0 && num_arg == 1){
-        var_instruccion = LOG;
+    if (strcmp(arg[0], "LOG") == 0 && num_arg == 2){
+        *var_instruccion = LOG;
     }
-    if (strcmp(arg[0], "DUMP_MEMORY") == 0 && num_arg == 0){
-        var_instruccion = DUMP_MEMORY;
+    if (strcmp(arg[0], "DUMP_MEMORY") == 0 && num_arg == 1){
+        *var_instruccion = DUMP_MEMORY;
     }
-    if (strcmp(arg[0], "IO") == 0 && num_arg == 1){
-        var_instruccion = IO;
+    if (strcmp(arg[0], "IO") == 0 && num_arg == 2){
+        *var_instruccion = IO;
     }
-    if (strcmp(arg[0], "PROCESS_CREATE") == 0 && num_arg == 3){
-        var_instruccion = PROCESS_CREATE;
+    if (strcmp(arg[0], "PROCESS_CREATE") == 0 && num_arg == 4){
+        *var_instruccion = PROCESS_CREATE;
     }
-    if (strcmp(arg[0], "THREAD_CREATE") == 0 && num_arg == 2){
-        var_instruccion = THREAD_CREATE;
+    if (strcmp(arg[0], "THREAD_CREATE") == 0 && num_arg == 3){
+        *var_instruccion = THREAD_CREATE;
     }
-    if (strcmp(arg[0], "THREAD_JOIN") == 0 && num_arg == 1){
-        var_instruccion = THREAD_JOIN;
+    if (strcmp(arg[0], "THREAD_JOIN") == 0 && num_arg == 2){
+        *var_instruccion = THREAD_JOIN;
     }
-    if (strcmp(arg[0], "THREAD_CANCEL") == 0 && num_arg == 1){
-        var_instruccion = THREAD_CANCEL;
+    if (strcmp(arg[0], "THREAD_CANCEL") == 0 && num_arg == 2){
+        *var_instruccion = THREAD_CANCEL;
     }
-    if (strcmp(arg[0], "MUTEX_CREATE") == 0 && num_arg == 1){
-        var_instruccion = MUTEX_CREATE;
+    if (strcmp(arg[0], "MUTEX_CREATE") == 0 && num_arg == 2){
+        *var_instruccion = MUTEX_CREATE;
     }
-    if (strcmp(arg[0], "MUTEX_LOCK") == 0 && num_arg == 1){
-        var_instruccion = MUTEX_LOCK;
+    if (strcmp(arg[0], "MUTEX_LOCK") == 0 && num_arg == 2){
+        *var_instruccion = MUTEX_LOCK;
     }
-    if (strcmp(arg[0], "MUTEX_UNLOCK") == 0 && num_arg == 1){
-        var_instruccion = MUTEX_UNLOCK;
+    if (strcmp(arg[0], "MUTEX_UNLOCK") == 0 && num_arg == 2){
+        *var_instruccion = MUTEX_UNLOCK;
     }
     if (strcmp(arg[0], "THREAD_EXIT") == 0){
-        var_instruccion = THREAD_EXIT;
+        *var_instruccion = THREAD_EXIT;
     }
     if (strcmp(arg[0], "PROCESS_EXIT") == 0){
-        var_instruccion = PROCESS_EXIT;
+        *var_instruccion = PROCESS_EXIT;
     }
 
     list_add(parametros, &var_instruccion);
+    log_debug(log_cpu_gral, "instruccion <%s> - codigo: %d - num param: %d", arg[0], *var_instruccion, num_arg);
     
     // si no se conoce la instruccion devuelvo
-    if (var_instruccion == DESCONOCIDA)
+    if (*var_instruccion == DESCONOCIDA)
         return parametros;
 
     // paso los parametros
@@ -230,7 +232,7 @@ char* fetch (void)
     enviar_paquete(paq, socket_memoria);
     eliminar_paquete(paq);
 
-    if(recibir_codigo(socket_memoria) != OBTENER_INSTRUCCION){
+    if(recibir_codigo(socket_memoria) != MENSAJE){
         log_error(log_cpu_gral,"Error en respuesta de siguiente instruccion");
     }
     char* instruccion = recibir_mensaje(socket_memoria);
