@@ -879,8 +879,10 @@ t_list *cargar_instrucciones(char *directorio, int pid, int tid)
         return NULL;
     }
     strcpy(dir_completa, base_dir);
+    strcat(dir_completa, "/");
     strcat(dir_completa, directorio);
-    
+
+    log_debug(log_memoria_gral, "Ruta al archivo: %s", dir_completa);
     archivo = fopen(dir_completa, "r");
     free(dir_completa); // ahora podemos liberar la memoria de dir_completa
 
