@@ -229,7 +229,7 @@ bool actualizar_contexto_ejecucion(t_list* nuevo_pedido_raw)
     data = list_get(nuevo_pedido_raw, 8);
     contexto_ejecucion->tcb->registros.HX = *(uint32_t*)data;
 
-    log_trace(log_memoria_gral, "Contexto Actualizado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d",
+    log_debug(log_memoria_gral, "Contexto Actualizado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d",
         contexto_ejecucion->pcb->pid,
         contexto_ejecucion->tcb->tid,
         contexto_ejecucion->tcb->PC,
@@ -285,7 +285,7 @@ char* mem_lectura (unsigned int desplazamiento)
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
-    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
     
@@ -323,7 +323,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
-    log_trace(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
 
@@ -352,7 +352,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
         particion_derecha = list_remove(memoria->lista_particiones, indice);
         
         // log para debug
-        log_trace(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+        log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
                                      indice-1, particion_izquierda->base, particion_izquierda->limite,
                                      indice, particion_derecha->base, particion_derecha->limite);
 
@@ -364,7 +364,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
         indice--;
 
         // logueo
-        log_trace(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+        log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
                                     particion_izquierda->base, particion_izquierda->limite);
     }
 
@@ -375,7 +375,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
         particion_izquierda = list_remove(memoria->lista_particiones, indice);
 
         // log para debug
-        log_trace(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+        log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
                                      indice, particion_izquierda->base, particion_izquierda->limite,
                                      indice+1, particion_derecha->base, particion_derecha->limite);
 
@@ -384,7 +384,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
         free(particion_izquierda);
 
         // logueo
-        log_trace(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+        log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
                                     particion_derecha->base, particion_derecha->limite);
     }
 
@@ -445,7 +445,7 @@ void rutina_finalizar_proceso(int socket_cliente)
     // Limpiando cada TCB perteneciente al proceso y sus estrucutras
     pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
     
-    log_trace(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
+    log_debug(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
                                 contexto_ejecucion->pcb->pid,
                                 list_size(contexto_ejecucion->pcb->lista_tcb));
 
@@ -746,7 +746,7 @@ t_particion* particion_libre (int tamanio)
     // Si no encontro particion retorno NULL
     if (particion == NULL)
     {
-        log_trace(log_memoria_gral, "No hay particion de tamaño <%d bytes> disponible.", tamanio);
+        log_debug(log_memoria_gral, "No hay particion de tamaño <%d bytes> disponible.", tamanio);
         free(algoritmo);
         return particion;
     }
@@ -754,14 +754,14 @@ t_particion* particion_libre (int tamanio)
     // Si hay particiones fijas devolvemos la particion hallada
     if (memoria->particiones_dinamicas == false)
     {
-        log_trace(log_memoria_gral, "Particion Fija hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, particion->limite);
+        log_debug(log_memoria_gral, "Particion Fija hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, particion->limite);
         particion->ocupada = true;
         free(algoritmo);
         return particion;
     }
 
     // Si las particiones son dinamicas recortamos solo lo necesario
-    log_trace(log_memoria_gral, "Particion Dinamica hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, (particion->base + tamanio - 1));
+    log_debug(log_memoria_gral, "Particion Dinamica hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, (particion->base + tamanio - 1));
     free(algoritmo);
     return recortar_particion(particion, tamanio);
 }
@@ -782,7 +782,7 @@ t_particion* alg_first_fit(int tamanio) // devuelve directamente la referencia a
             particion = aux;
             return particion;
         }
-        log_trace(log_memoria_gral, "Particion ocupada [FIRST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        log_debug(log_memoria_gral, "Particion ocupada [FIRST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -805,9 +805,9 @@ t_particion* alg_best_fit(int tamanio) // devuelve directamente la referencia a 
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_trace(log_memoria_gral, "Particion posible [BEST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "Particion posible [BEST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
         }
-        log_trace(log_memoria_gral, "Particion ocupada [BEST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        log_debug(log_memoria_gral, "Particion ocupada [BEST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -829,9 +829,9 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_trace(log_memoria_gral, "Particion posible [WORST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "Particion posible [WORST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
         }
-        log_trace(log_memoria_gral, "Particion ocupada [WORST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        log_debug(log_memoria_gral, "Particion ocupada [WORST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -1078,9 +1078,9 @@ void listar_particiones()
     {
         p = list_get(memoria->lista_particiones, i);
         if (p->ocupada)
-            log_trace(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Ocupada", i, p->base, p->limite);
+            log_debug(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Ocupada", i, p->base, p->limite);
         else
-            log_trace(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Libre", i, p->base, p->limite);
+            log_debug(log_memoria_gral, "Particion [%d] - Base: %d - Limite: %d - Estado: Libre", i, p->base, p->limite);
     }
 }
 

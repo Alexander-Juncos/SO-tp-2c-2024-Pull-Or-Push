@@ -117,7 +117,7 @@ void liberar_conexion(t_log *log, char *nombre_conexion, int socket)
 	}
 	else
 	{
-		log_trace(log, "La conexion con %s fue cerrada.", nombre_conexion);
+		log_debug(log, "La conexion con %s fue cerrada.", nombre_conexion);
 	}
 }
 
@@ -212,7 +212,7 @@ bool recibir_y_verificar_cod_respuesta_empaquetado(t_log *logger, op_code cod_es
 	if (cod_recibido == cod_esperado)
 	{
 		respuesta_exitosa = true;
-		log_trace(logger, "Respuesta de %s recibida: EXITO", nombre_conexion);
+		log_debug(logger, "Respuesta de %s recibida: EXITO", nombre_conexion);
 	}
 	else
 	{ // con esto solo va a entrar si el codigo no es el esperado (eliminando q esperado salga en default)
@@ -229,7 +229,7 @@ bool recibir_y_verificar_cod_respuesta_empaquetado(t_log *logger, op_code cod_es
 			log_error(logger, "Se esperaba solo un codigo de respuesta por parte de %s. Pero se recibieron mas cosas.", nombre_conexion);
 			break;
 		default:
-			log_trace(logger, "Respuesta de %s recibida: ERROR", nombre_conexion);
+			log_debug(logger, "Respuesta de %s recibida: ERROR", nombre_conexion);
 			break;
 		}
 	}

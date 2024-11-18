@@ -300,7 +300,7 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     // si no cambio pid y tid entonces el contexto ya esta en CPU
     if (contexto_exec.pid == pid && contexto_exec.tid == tid)
     {
-        log_trace(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
+        log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
         return true;
     }
     log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
@@ -346,7 +346,7 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     data = list_get(recibido, 10);
     contexto_exec.Limite = *(uint32_t*)data;
 
-    log_trace(log_cpu_gral, "Contexto Cargado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d - BASE: %d - LIMITE: %d",
+    log_debug(log_cpu_gral, "Contexto Cargado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d - BASE: %d - LIMITE: %d",
         pid, tid, contexto_exec.PC,
         contexto_exec.registros.AX,
         contexto_exec.registros.BX,
@@ -759,7 +759,7 @@ void interrupcion (op_code tipo_interrupcion)
 {
     // gestion caso hay interrupcion, pero el cpu ya habia desalojado = no tengo q interrumpir
     if (desalojado){
-        log_trace(log_cpu_gral, "PID: %d - TID: %d - interrupcion recibida pero cpu ya esta desalojado. Omitiendo interrupcion.", 
+        log_debug(log_cpu_gral, "PID: %d - TID: %d - interrupcion recibida pero cpu ya esta desalojado. Omitiendo interrupcion.", 
                                 contexto_exec.pid, contexto_exec.tid);
         return;
     }
