@@ -873,7 +873,7 @@ t_list *cargar_instrucciones(char *directorio, int pid, int tid)
     log_debug(log_memoria_gral, "Cargando instrucciones del hilo %d, del proceso %d....", tid, pid);
     
     // Crear una nueva cadena para la ruta completa
-    size_t tamano_ruta = strlen(base_dir) + strlen(directorio) + 1;
+    size_t tamano_ruta = strlen(base_dir) + strlen(directorio) + 1 + 1; // +1 x el "/" y +1 x el fin string
     char *dir_completa = malloc(tamano_ruta);
     if (dir_completa == NULL) {
         return NULL;

@@ -93,7 +93,7 @@ t_list* decode (char* instruccion)
         *var_instruccion = PROCESS_EXIT;
     }
 
-    list_add(parametros, &var_instruccion);
+    list_add(parametros, var_instruccion);
     log_debug(log_cpu_gral, "instruccion <%s> - codigo: %d - num param: %d", arg[0], *var_instruccion, num_arg);
     
     // si no se conoce la instruccion devuelvo
@@ -226,8 +226,8 @@ void instruccion_log (t_list* param)
 char* fetch (void)
 {
     t_paquete* paq = crear_paquete(OBTENER_INSTRUCCION);
-    agregar_a_paquete(paq, &(contexto_exec.pid), sizeof(int));
-    agregar_a_paquete(paq, &(contexto_exec.tid), sizeof(int));
+    // agregar_a_paquete(paq, &(contexto_exec.pid), sizeof(int)); // no se requieren ya que la instruccion se toma del contexto
+    // agregar_a_paquete(paq, &(contexto_exec.tid), sizeof(int));
     agregar_a_paquete(paq, &(contexto_exec.PC), sizeof(uint32_t));
     enviar_paquete(paq, socket_memoria);
     eliminar_paquete(paq);

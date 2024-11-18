@@ -194,6 +194,8 @@ void planific_corto_fifo_y_prioridades(void) {
 
         //pthread_mutex_unlock(&mutex_proceso_exec);
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
+
+        // QUEDA PENDIENTE DEVOLVER EL CONTROL A CPU TRAS UNA SYSCALL????
 	}
 }
 
