@@ -55,14 +55,14 @@ void* rutina_exit(void* puntero_null) {
 // ==========================================================================
 
 void enviar_fin_hilo_a_memoria(t_tcb* tcb) {
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    int socket_memoria = crear_conexion_memoria(); // considera el handshake
     enviar_fin_hilo(tcb, socket_memoria);
     recibir_mensaje_de_rta(log_kernel_gral, "FINALIZAR HILO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria (en Hilo EXIT)", socket_memoria);
 }
 
 void enviar_fin_proceso_a_memoria(int pid) {
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    int socket_memoria = crear_conexion_memoria(); // considera el handshake
     enviar_fin_proceso(pid, socket_memoria);
     recibir_mensaje_de_rta(log_kernel_gral, "FINALIZAR PROCESO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria (en Hilo EXIT)", socket_memoria);

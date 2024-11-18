@@ -315,3 +315,13 @@ void enviar_nuevo_hilo(t_tcb* tcb, int socket) {
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
+
+int crear_conexion_memoria()
+{
+    int socket = crear_conexion(ip_memoria, puerto_memoria);
+    enviar_handshake(KERNEL, socket);
+    if (recibir_y_manejar_rta_handshake(log_kernel_gral, "Conexion temporal Memoria", socket))
+        return socket;
+    else
+        return -1;
+}

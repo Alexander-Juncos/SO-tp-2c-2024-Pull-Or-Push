@@ -221,4 +221,8 @@ void terminar_programa();
 
 void enviar_nuevo_hilo(t_tcb* tcb, int socket);
 
+/// @brief Crea la conexion con memoria y realiza el handshake (utiliza ip_memoria, puerto_memoria)
+/// @return retorna el socket
+int crear_conexion_memoria();
+
 #endif

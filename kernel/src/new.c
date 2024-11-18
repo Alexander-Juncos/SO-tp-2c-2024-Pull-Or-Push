@@ -56,7 +56,7 @@ t_tcb* inicializacion_de_proceso(void) {
 
 bool enviar_nuevo_proceso_a_memoria(t_pcb* pcb) {
     bool exito_al_crear_proceso_en_memoria;
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    int socket_memoria = crear_conexion_memoria(); // considera el handshake
     enviar_nuevo_proceso(pcb, socket_memoria);
     exito_al_crear_proceso_en_memoria = recibir_mensaje_de_rta(log_kernel_gral, "CREAR PROCESO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria (en Hilo NEW)", socket_memoria);

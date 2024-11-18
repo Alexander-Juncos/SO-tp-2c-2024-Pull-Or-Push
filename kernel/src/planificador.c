@@ -499,7 +499,7 @@ bool mutex_esta_asignado_a_hilo(t_mutex* mutex, int tid) {
 }
 
 void enviar_nuevo_hilo_a_memoria(t_tcb* tcb) {
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    int socket_memoria = crear_conexion_memoria(); // considera el handshake
     enviar_nuevo_hilo(tcb, socket_memoria);
     recibir_mensaje_de_rta(log_kernel_gral, "CREAR HILO", socket_memoria);
     liberar_conexion(log_kernel_gral, "Memoria (por Creacion de Hilo)", socket_memoria);
@@ -587,7 +587,7 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
 }
 
 void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
-    int socket_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    int socket_memoria = crear_conexion_memoria(); // considera el handshake
     enviar_pedido_de_dump(tcb->pid_pertenencia, tcb->tid, socket_memoria);
     pthread_mutex_lock(&mutex_cola_blocked_memory_dump);
     list_add(cola_blocked_memory_dump, tcb);
