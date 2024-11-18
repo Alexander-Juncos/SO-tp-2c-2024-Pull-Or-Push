@@ -89,6 +89,7 @@ void atender_cpu()
     while (!fin_programa)
     {
         operacion = recibir_codigo(socket_cpu);
+        log_debug(log_memoria_gral, "Operación CPU: %d", operacion);
         switch (operacion)
         {
         case CONTEXTO_EJECUCION: // COMPLETA
