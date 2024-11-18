@@ -87,14 +87,13 @@ int main(int argc, char* argv[]) {
     sem_init(&sem_cola_ready_unica, 0, 0); // CONFIRMAR VALORES
 
     cola_blocked_io = list_create();
-    pthread_mutex_init(&cola_blocked_io, NULL);
     sem_init(&sem_cola_blocked_io, 0, 0); // CONFIRMAR VALORES
 
     cola_blocked_join = list_create();
-    pthread_mutex_init(&cola_blocked_join, NULL);
+    // pthread_mutex_init(&cola_blocked_join, NULL); nose si deberia estar protegida o no
 
     cola_blocked_memory_dump = list_create();
-    pthread_mutex_init(&cola_blocked_memory_dump, NULL);
+    pthread_mutex_init(&mutex_cola_blocked_memory_dump, NULL);
 
     cola_exit = list_create();
     pthread_mutex_init(&mutex_cola_exit, NULL);
