@@ -74,6 +74,40 @@ int main(int argc, char* argv[]) {
     pthread_t thread_exit;
     pthread_t thread_io;
 
+            /*********** Listas, Mutex y Semaforos *********/
+    // Antes de que se ejecuten los hilos-planificador, inicio los t_list* junto a sus mutex
+    cola_new = list_create();
+    pthread_mutex_init(&mutex_cola_new, NULL);
+    sem_init(&sem_cola_new, 0, 0); // CONFIRMAR VALORES
+    
+    procesos_activos = list_create();
+    pthread_mutex_init(&mutex_procesos_activos, NULL);
+
+    cola_ready_unica = list_create();
+    sem_init(&sem_cola_ready_unica, 0, 0); // CONFIRMAR VALORES
+
+    cola_blocked_io = list_create();
+    pthread_mutex_init(&cola_blocked_io, NULL);
+    sem_init(&sem_cola_blocked_io, 0, 0); // CONFIRMAR VALORES
+
+    cola_blocked_join = list_create();
+    pthread_mutex_init(&cola_blocked_join, NULL);
+
+    cola_blocked_memory_dump = list_create();
+    pthread_mutex_init(&cola_blocked_memory_dump, NULL);
+
+    cola_exit = list_create();
+    pthread_mutex_init(&mutex_cola_exit, NULL);
+    sem_init(&sem_cola_exit, 0, 0); // CONFIRMAR VALORES
+
+    procesos_exit = list_create();
+    pthread_mutex_init(&mutex_procesos_exit, NULL);
+
+    pthread_mutex_init(&mutex_hilo_exec, NULL);
+    pthread_mutex_init(&mutex_hilo_usando_io, NULL);
+    pthread_mutex_init(&mutex_sincro_new_exit, NULL);
+                /******************************/
+
     pthread_create(&thread_new, NULL, rutina_new, NULL);
     pthread_create(&thread_exit, NULL, rutina_exit, NULL);
     pthread_create(&thread_io, NULL, rutina_io, NULL);

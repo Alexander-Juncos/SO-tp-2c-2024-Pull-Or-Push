@@ -106,7 +106,7 @@ void* rutina_ejecucion (void* nada)
             pedido = recibir_paquete(socket_cliente);
             list_destroy_and_destroy_elements(pedido, free);
             enviar_mensaje("Recibi operación: ERROR", socket_cliente);
-            log_error(log_memoria_gral, "Operacion invalida");
+            log_error(log_memoria_gral, "Operacion invalida, codigo: %d", operacion);
             break;
     }
 
