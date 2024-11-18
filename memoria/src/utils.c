@@ -117,7 +117,7 @@ t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script)
 
 t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
 {
-    t_pcb_mem* pcb_new = NULL;
+    t_pcb_mem* pcb_new = malloc(sizeof(t_pcb_mem));
     t_tcb_mem* tcb_0 = NULL;
 
     // busca si hay particion libre (din-fijas) - deja protegida la memoria mientras busca particiones (revisar si no es "Mucha" SC)
