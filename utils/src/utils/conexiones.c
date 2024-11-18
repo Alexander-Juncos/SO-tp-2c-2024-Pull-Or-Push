@@ -4,7 +4,7 @@
 // ====  Funciones conexión:  ===============================================
 // ==========================================================================
 
-int crear_conexion(char *ip, char* puerto)
+int crear_conexion(char *ip, char *puerto)
 {
 	struct addrinfo hints;
 	struct addrinfo *destino_info;
@@ -14,17 +14,17 @@ int crear_conexion(char *ip, char* puerto)
 	hints.ai_socktype = SOCK_STREAM;
 
 	int err = getaddrinfo(ip, puerto, &hints, &destino_info);
-	if(err != 0)
+	if (err != 0)
 	{
 		imprimir_mensaje("error en funcion getaddrinfo()");
 		exit(3);
 	}
 
 	// Ahora vamos a crear el socket.
-	int socket_conexion_destino_file_descriptor = socket(   destino_info->ai_family,
-						                                    destino_info->ai_socktype,
-						                                    destino_info->ai_protocol);
-	if(socket_conexion_destino_file_descriptor == -1)
+	int socket_conexion_destino_file_descriptor = socket(destino_info->ai_family,
+														 destino_info->ai_socktype,
+														 destino_info->ai_protocol);
+	if (socket_conexion_destino_file_descriptor == -1)
 	{
 		imprimir_mensaje("error en funcion socket()");
 		exit(3);
@@ -32,7 +32,7 @@ int crear_conexion(char *ip, char* puerto)
 
 	// Ahora que tenemos el socket, vamos a conectarlo
 	err = connect(socket_conexion_destino_file_descriptor, destino_info->ai_addr, destino_info->ai_addrlen);
-	if(err != 0)
+	if (err != 0)
 	{
 		imprimir_mensaje("error en funcion connect()");
 		exit(3);
@@ -43,8 +43,8 @@ int crear_conexion(char *ip, char* puerto)
 	return socket_conexion_destino_file_descriptor;
 }
 
-int iniciar_servidor(char* puerto)
-{	
+int iniciar_servidor(char *puerto)
+{
 	struct addrinfo hints;
 	struct addrinfo *servinfo;
 	// struct addrinfo *p;
@@ -55,7 +55,7 @@ int iniciar_servidor(char* puerto)
 	hints.ai_flags = AI_PASSIVE;
 
 	int err = getaddrinfo(NULL, puerto, &hints, &servinfo);
-	if(err != 0)
+	if (err != 0)
 	{
 		printf("error en funcion getaddrinfo()\n");
 		exit(3);
@@ -65,7 +65,7 @@ int iniciar_servidor(char* puerto)
 	int socket_servidor_fd = socket(servinfo->ai_family,
 									servinfo->ai_socktype,
 									servinfo->ai_protocol);
-	if(socket_servidor_fd == -1)
+	if (socket_servidor_fd == -1)
 	{
 		printf("error en funcion socket()\n");
 		exit(3);
@@ -73,7 +73,7 @@ int iniciar_servidor(char* puerto)
 
 	// Asociamos el socket a un puerto
 	err = bind(socket_servidor_fd, servinfo->ai_addr, servinfo->ai_addrlen);
-	if(err != 0)
+	if (err != 0)
 	{
 		printf("error en funcion bind()\n");
 		exit(3);
@@ -81,7 +81,7 @@ int iniciar_servidor(char* puerto)
 
 	// Escuchamos las conexiones entrantes
 	err = listen(socket_servidor_fd, SOMAXCONN);
-	if(err != 0)
+	if (err != 0)
 	{
 		printf("error en funcion listen()\n");
 		exit(3);
@@ -97,7 +97,7 @@ int esperar_cliente(int socket_servidor_fd)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente_fd = accept(socket_servidor_fd, NULL, NULL);
-	if(socket_cliente_fd == -1)
+	if (socket_cliente_fd == -1)
 	{
 		imprimir_mensaje("error en funcion accept()");
 		exit(3);
@@ -108,14 +108,15 @@ int esperar_cliente(int socket_servidor_fd)
 	return socket_cliente_fd;
 }
 
-void liberar_conexion(t_log* log, char* nombre_conexion, int socket)
+void liberar_conexion(t_log *log, char *nombre_conexion, int socket)
 {
 	int err = close(socket);
-	if(err != 0)
+	if (err != 0)
 	{
 		log_error(log, "error en funcion close() al intentar cerrar la conexion con %s.", nombre_conexion);
 	}
-	else {
+	else
+	{
 		log_trace(log, "La conexion con %s fue cerrada.", nombre_conexion);
 	}
 }
@@ -124,36 +125,38 @@ void liberar_conexion(t_log* log, char* nombre_conexion, int socket)
 // ====  Funciones handshake: ===============================================
 // ==========================================================================
 
-bool recibir_y_manejar_rta_handshake(t_log* logger, const char* nombre_servidor, int socket) { 
-   bool exito_handshake = false;
+bool recibir_y_manejar_rta_handshake(t_log *logger, const char *nombre_servidor, int socket)
+{
+	bool exito_handshake = false;
 
-   int handshake_codigo = recibir_handshake(socket);
+	int handshake_codigo = recibir_handshake(socket);
 
-	switch (handshake_codigo) {
-		case HANDSHAKE_OK:
-     		exito_handshake = true;
-			log_debug(logger, "Handshake con %s fue aceptado.", nombre_servidor);
+	switch (handshake_codigo)
+	{
+	case HANDSHAKE_OK:
+		exito_handshake = true;
+		log_debug(logger, "Handshake con %s fue aceptado.", nombre_servidor);
 		break;
-		case HANDSHAKE_INVALIDO:
-			log_error(logger, "Handshake con %s fue rechazado por ser invalido.", nombre_servidor);
-			break;
-		case -1:
-			log_error(logger, "op_code no esperado de %s. Se esperaba HANDSHAKE.", nombre_servidor);
-			break;
-		case -2:
-			log_error(logger, "al recibir la rta al handshake de %s hubo un tamanio de buffer no esperado.", nombre_servidor);
-			break;
-		default:
-			log_error(logger, "error desconocido al recibir la rta al handshake de %s.", nombre_servidor);
+	case HANDSHAKE_INVALIDO:
+		log_error(logger, "Handshake con %s fue rechazado por ser invalido.", nombre_servidor);
+		break;
+	case -1:
+		log_error(logger, "op_code no esperado de %s. Se esperaba HANDSHAKE.", nombre_servidor);
+		break;
+	case -2:
+		log_error(logger, "al recibir la rta al handshake de %s hubo un tamanio de buffer no esperado.", nombre_servidor);
+		break;
+	default:
+		log_error(logger, "error desconocido al recibir la rta al handshake de %s.", nombre_servidor);
 		break;
 	}
 
-   return exito_handshake;
+	return exito_handshake;
 }
 
 void enviar_handshake(handshake_code handshake_codigo, int socket)
 {
-	t_paquete* paquete = crear_paquete(HANDSHAKE);
+	t_paquete *paquete = crear_paquete(HANDSHAKE);
 	agregar_a_paquete(paquete, &handshake_codigo, sizeof(handshake_code));
 	enviar_paquete(paquete, socket);
 	eliminar_paquete(paquete);
@@ -163,13 +166,14 @@ int recibir_handshake(int socket)
 {
 	op_code codigo_op = recibir_codigo(socket);
 
-	if(codigo_op != HANDSHAKE) {
+	if (codigo_op != HANDSHAKE)
+	{
 		return -1; // error, op_code no esperado.
 	}
 
 	int size;
 	int desplazamiento = 0;
-	void* buffer;
+	void *buffer;
 
 	buffer = recibir_buffer(&size, socket);
 
@@ -180,7 +184,8 @@ int recibir_handshake(int socket)
 	memcpy(&handshake_codigo, buffer + desplazamiento, tamanio_codigo_handshake);
 	desplazamiento += tamanio_codigo_handshake;
 
-	if(desplazamiento != size) {
+	if (desplazamiento != size)
+	{
 		free(buffer);
 		return -2; // error al recibir handshake. Tamanio de buffer no esperado.
 	}
@@ -193,11 +198,12 @@ int recibir_handshake(int socket)
 // ====  Funciones comunicación: ============================================
 // ==========================================================================
 
-bool recibir_y_verificar_cod_respuesta_empaquetado(t_log* logger, op_code cod_esperado, char* nombre_conexion, int socket) {
+bool recibir_y_verificar_cod_respuesta_empaquetado(t_log *logger, op_code cod_esperado, char *nombre_conexion, int socket)
+{
 	bool respuesta_exitosa = false;
 
 	int cod_recibido = recibir_codigo(socket);
-	//t_list* lista = recibir_paquete(socket);
+	// t_list* lista = recibir_paquete(socket);
 	recibir_codigo(socket);
 	/*if(cod_recibido != -1 && list_size(lista) > 0) {
 		cod_recibido = -2;
@@ -207,33 +213,35 @@ bool recibir_y_verificar_cod_respuesta_empaquetado(t_log* logger, op_code cod_es
 	{
 		respuesta_exitosa = true;
 		log_trace(logger, "Respuesta de %s recibida: EXITO", nombre_conexion);
-	} else 
+	}
+	else
 	{ // con esto solo va a entrar si el codigo no es el esperado (eliminando q esperado salga en default)
-		switch (cod_recibido) {
-			// case cod_esperado: // switch solo puede manejar expresiones q se evaluan en compilacion (no variables)
-			// respuesta_exitosa = true;
-			// log_trace(logger, "Respuesta de %s recibida: EXITO", nombre_conexion);
-			// break;
-			case -1:
+		switch (cod_recibido)
+		{
+		// case cod_esperado: // switch solo puede manejar expresiones q se evaluan en compilacion (no variables)
+		// respuesta_exitosa = true;
+		// log_trace(logger, "Respuesta de %s recibida: EXITO", nombre_conexion);
+		// break;
+		case -1:
 			log_error(logger, "No se pudo recibir la respuesta de %s.", nombre_conexion);
 			break;
-			case -2:
+		case -2:
 			log_error(logger, "Se esperaba solo un codigo de respuesta por parte de %s. Pero se recibieron mas cosas.", nombre_conexion);
 			break;
-			default:
+		default:
 			log_trace(logger, "Respuesta de %s recibida: ERROR", nombre_conexion);
 			break;
 		}
 	}
 
-	//list_destroy_and_destroy_elements(lista, (void*)free);
+	// list_destroy_and_destroy_elements(lista, (void*)free);
 
 	return respuesta_exitosa;
 }
 
-void* recibir_buffer(int* size, int socket)
+void *recibir_buffer(int *size, int socket)
 {
-	void* buffer;
+	void *buffer;
 
 	recv(socket, size, sizeof(int), MSG_WAITALL);
 	buffer = malloc(*size);
@@ -245,7 +253,7 @@ void* recibir_buffer(int* size, int socket)
 int recibir_codigo(int socket)
 {
 	int cod;
-	if(recv(socket, &cod, sizeof(int), MSG_WAITALL) > 0)
+	if (recv(socket, &cod, sizeof(int), MSG_WAITALL) > 0)
 		return cod;
 	else
 	{
@@ -254,54 +262,61 @@ int recibir_codigo(int socket)
 	}
 }
 
-bool recibir_mensaje_de_rta(t_log* logger, char* nombre_de_la_operacion, int socket) {
-    bool rta_exitosa = false;
+bool recibir_mensaje_de_rta(t_log *logger, char *nombre_de_la_operacion, int socket)
+{
+	bool rta_exitosa = false;
+	int codigo = recibir_codigo(socket);
+	if(codigo != MENSAJE)
+	{
+		printf("Error: esperaba un MENSAJE");
+	}
+	char *respuesta = recibir_mensaje(socket);
+	if (strcmp(respuesta, "OK") == 0)
+	{
+		rta_exitosa = true;
+		log_debug(logger, "Exito al %s", nombre_de_la_operacion);
+	}
+	else
+	{
+		log_debug(logger, "Fallo al %s: %s", nombre_de_la_operacion, respuesta);
+	}
+	free(respuesta);
 
-    char* respuesta = recibir_mensaje(socket);
-    if(strcmp(respuesta, "OK") == 0) {
-        rta_exitosa = true;
-        log_debug(logger, "Exito al %s", nombre_de_la_operacion);
-    }
-    else {
-        log_debug(logger, "Fallo al %s: %s", nombre_de_la_operacion, respuesta);
-    }
-    free(respuesta);
-
-    return rta_exitosa;
+	return rta_exitosa;
 }
 
-char* recibir_mensaje(int socket)
+char *recibir_mensaje(int socket)
 {
 	int size;
-	char* buffer = recibir_buffer(&size, socket);
+	char *buffer = recibir_buffer(&size, socket);
 	return buffer;
 }
 
-t_list* recibir_paquete(int socket)
+t_list *recibir_paquete(int socket)
 {
 	int size;
 	int desplazamiento = 0;
-	void* buffer;
-	t_list* valores = list_create();
+	void *buffer;
+	t_list *valores = list_create();
 	int tamanio;
 
 	buffer = recibir_buffer(&size, socket);
-	while(desplazamiento < size)
+	while (desplazamiento < size)
 	{
 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-		desplazamiento+=sizeof(int);
-		void* valor = malloc(tamanio);
-		memcpy(valor, buffer+desplazamiento, tamanio);
-		desplazamiento+=tamanio;
+		desplazamiento += sizeof(int);
+		void *valor = malloc(tamanio);
+		memcpy(valor, buffer + desplazamiento, tamanio);
+		desplazamiento += tamanio;
 		list_add(valores, valor);
 	}
 	free(buffer);
 	return valores;
 }
 
-void* serializar_paquete(t_paquete* paquete, int bytes)
+void *serializar_paquete(t_paquete *paquete, int bytes)
 {
-	void* magic = malloc(bytes);
+	void *magic = malloc(bytes);
 	int desplazamiento = 0;
 
 	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
@@ -314,21 +329,21 @@ void* serializar_paquete(t_paquete* paquete, int bytes)
 	return magic;
 }
 
-void enviar_mensaje(char* mensaje, int socket_emisor)
-{	
-	t_paquete* paquete = malloc(sizeof(t_paquete));
+void enviar_mensaje(char *mensaje, int socket_emisor)
+{
+	t_paquete *paquete = malloc(sizeof(t_paquete));
 
 	paquete->codigo_operacion = MENSAJE;
 	paquete->buffer = malloc(sizeof(t_buffer));
-	
+
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
-	
+
 	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
 
-	int bytes = paquete->buffer->size + 2*sizeof(int);
+	int bytes = paquete->buffer->size + 2 * sizeof(int);
 
-	void* a_enviar = serializar_paquete(paquete, bytes);
+	void *a_enviar = serializar_paquete(paquete, bytes);
 
 	send(socket_emisor, a_enviar, bytes, 0);
 
@@ -336,22 +351,22 @@ void enviar_mensaje(char* mensaje, int socket_emisor)
 	eliminar_paquete(paquete);
 }
 
-void crear_buffer(t_paquete* paquete)
+void crear_buffer(t_paquete *paquete)
 {
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = 0;
 	paquete->buffer->stream = NULL;
 }
 
-t_paquete* crear_paquete(int cod_op)
+t_paquete *crear_paquete(int cod_op)
 {
-	t_paquete* paquete = malloc(sizeof(t_paquete));
+	t_paquete *paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = cod_op;
 	crear_buffer(paquete);
 	return paquete;
 }
 
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
+void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
 
@@ -361,7 +376,7 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 	paquete->buffer->size += tamanio + sizeof(int);
 }
 
-void agregar_estatico_a_paquete(t_paquete* paquete, void* valor, int tamanio)
+void agregar_estatico_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio);
 
@@ -370,10 +385,10 @@ void agregar_estatico_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 	paquete->buffer->size += tamanio;
 }
 
-int enviar_paquete(t_paquete* paquete, int socket)
+int enviar_paquete(t_paquete *paquete, int socket)
 {
-	int bytes = paquete->buffer->size + 2*sizeof(int);
-	void* a_enviar = serializar_paquete(paquete, bytes);
+	int bytes = paquete->buffer->size + 2 * sizeof(int);
+	void *a_enviar = serializar_paquete(paquete, bytes);
 
 	bytes = send(socket, a_enviar, bytes, 0);
 
@@ -382,7 +397,7 @@ int enviar_paquete(t_paquete* paquete, int socket)
 	return bytes;
 }
 
-void eliminar_paquete(t_paquete* paquete)
+void eliminar_paquete(t_paquete *paquete)
 {
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
