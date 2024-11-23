@@ -84,22 +84,23 @@ extern sem_t sem_cola_new; // Cantidad de procesos en estado NEW.
 extern sem_t sem_cola_ready_unica; // Cantidad de procesos en estado READY (para FIFO y PRIORIDADES).
 extern sem_t sem_cola_blocked_io;
 extern sem_t sem_cola_exit;
-/* Sacados del tp anterior
-----------------------------------------------
-extern pthread_mutex_t mutex_proceso_exec;
-extern pthread_mutex_t mutex_grado_multiprogramacion;
-extern pthread_mutex_t mutex_cola_ready;
-----------------------------------------------
-*/
 extern sem_t sem_sincro_new_exit;
 extern pthread_mutex_t mutex_cola_new;
-extern pthread_mutex_t mutex_hilo_exec;
+extern pthread_mutex_t mutex_cola_ready_unica;
+// extern pthread_mutex_t mutex_hilo_exec; // ESTE ESTÁ EN OBSERVACIÓN. POR AHORA NO VA.
 extern pthread_mutex_t mutex_hilo_usando_io;
+extern pthread_mutex_t mutex_cola_blocked_io;
 extern pthread_mutex_t mutex_cola_blocked_memory_dump;
 extern pthread_mutex_t mutex_cola_exit;
 extern pthread_mutex_t mutex_procesos_activos;
 extern pthread_mutex_t mutex_procesos_exit;
 extern pthread_mutex_t mutex_sincro_new_exit;
+/* Sacados del tp anterior
+----------------------------------------------
+extern pthread_mutex_t mutex_proceso_exec;
+extern pthread_mutex_t mutex_grado_multiprogramacion;
+----------------------------------------------
+*/
 
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================
@@ -195,7 +196,8 @@ t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid);
 void finalizar_hilos_no_main_de_proceso(t_pcb* pcb);
 /**
 * @brief Libera los mutexes asignados a un Hilo, y desbloquea a los Hilos que
-*        tiene joineados. Además desasocia su TID del Proceso de pertenencia.
+*        tiene joineados. Además, si NO es Hilo main, desasocia su TID del Proceso
+*        de pertenencia.
 * @param pcb : PCB del Proceso creador.
 * @param tcb : TCB del Hilo a liberar.
 * @note  Lo deja listo para ser mandado a EXIT.

@@ -49,29 +49,30 @@ sem_t sem_cola_new;
 sem_t sem_cola_ready_unica;
 sem_t sem_cola_blocked_io;
 sem_t sem_cola_exit;
-/* Sacados del tp anterior
-----------------------------------------------
-pthread_mutex_t mutex_proceso_exec;
-pthread_mutex_t mutex_grado_multiprogramacion;
-pthread_mutex_t mutex_cola_new;
-pthread_mutex_t mutex_cola_ready;
-----------------------------------------------
-*/
 sem_t sem_sincro_new_exit;
 pthread_mutex_t mutex_cola_new;
-pthread_mutex_t mutex_hilo_exec;
+pthread_mutex_t mutex_cola_ready_unica;
+// pthread_mutex_t mutex_hilo_exec;
 pthread_mutex_t mutex_hilo_usando_io;
+pthread_mutex_t mutex_cola_blocked_io;
 pthread_mutex_t mutex_cola_blocked_memory_dump;
 pthread_mutex_t mutex_cola_exit;
 pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_procesos_exit;
 pthread_mutex_t mutex_sincro_new_exit;
+/* Sacados del tp anterior
+----------------------------------------------
+pthread_mutex_t mutex_proceso_exec;
+pthread_mutex_t mutex_grado_multiprogramacion;
+----------------------------------------------
+*/
 
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================
 // ==========================================================================
 
 void enviar_orden_de_interrupcion(void) {
+
 	t_paquete* paquete = crear_paquete(INTERRUPCION);
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->pid_pertenencia), sizeof(int));
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->tid), sizeof(int));
@@ -141,7 +142,9 @@ t_tcb* buscar_tcb_por_pid_y_tid(t_list* lista_de_tcb, int pid, int tid) {
 }
 
 void ingresar_a_ready_fifo(t_tcb* tcb) {
+    pthread_mutex_lock(&mutex_cola_ready_unica);
     list_add(cola_ready_unica, tcb);
+    pthread_mutex_unlock(&mutex_cola_ready_unica);
     sem_post(&sem_cola_ready_unica);
 }
 
@@ -150,7 +153,9 @@ void ingresar_a_ready_prioridades(t_tcb* tcb) {
         return tcb1->prioridad < tcb2->prioridad;
     }
 
+    pthread_mutex_lock(&mutex_cola_ready_unica);
     list_add_sorted(cola_ready_unica, tcb, (void*)_hilo_tiene_menor_prioridad);
+    pthread_mutex_unlock(&mutex_cola_ready_unica);
     sem_post(&sem_cola_ready_unica);
 }
 
@@ -235,7 +240,9 @@ void finalizar_hilos_no_main_de_proceso(t_pcb* pcb) {
 void liberar_hilo(t_pcb* pcb, t_tcb* tcb) {
     liberar_mutexes_asignados(pcb, tcb);
     liberar_hilos_joineados(tcb);
-    desasociar_tid(pcb, tcb);
+    if(tcb->tid != 0) {
+        desasociar_tid(pcb, tcb);
+    }
 }
 
 void liberar_hilos_joineados(t_tcb* tcb) {

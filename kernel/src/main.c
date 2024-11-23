@@ -63,9 +63,33 @@ int main(int argc, char* argv[]) {
     ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
 
-    /******************* Logica de Kernel *******************/
-    t_pcb* proceso_inicial = NULL;
 
+            /*********** Listas, Semáforos y Mutexes *********/
+    // Antes de que se ejecuten los hilos-planificador, iniciamos los t_list* junto
+    // a sus Semáforos y Mutexes.
+    cola_new = list_create();
+    cola_blocked_io = list_create();
+    cola_blocked_join = list_create();
+    cola_blocked_memory_dump = list_create();
+    cola_exit = list_create();
+    procesos_activos = list_create();
+    procesos_exit = list_create();
+    
+    sem_init(&sem_cola_new, 0, 0);
+    sem_init(&sem_cola_blocked_io, 0, 0);
+    sem_init(&sem_cola_exit, 0, 0);
+    sem_init(&sem_sincro_new_exit, 0, 0);
+    
+    pthread_mutex_init(&mutex_cola_new, NULL);
+    pthread_mutex_init(&mutex_hilo_usando_io, NULL);
+    pthread_mutex_init(&mutex_cola_blocked_io, NULL);
+    pthread_mutex_init(&mutex_cola_blocked_memory_dump, NULL);
+    pthread_mutex_init(&mutex_cola_exit, NULL);
+    pthread_mutex_init(&mutex_procesos_activos, NULL);
+    pthread_mutex_init(&mutex_procesos_exit, NULL);
+    pthread_mutex_init(&mutex_sincro_new_exit, NULL);
+    
+            /*************** Lógica de Kernel ***************/
     algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
     setup_algoritmo_plani_corto_plazo(algoritmo_plani);
     quantum_de_config = config_get_int_value(config, "QUANTUM");
@@ -73,52 +97,20 @@ int main(int argc, char* argv[]) {
     pthread_t thread_new;
     pthread_t thread_exit;
     pthread_t thread_io;
-
-            /*********** Listas, Mutex y Semaforos *********/
-    // Antes de que se ejecuten los hilos-planificador, inicio los t_list* junto a sus mutex
-    cola_new = list_create();
-    pthread_mutex_init(&mutex_cola_new, NULL);
-    sem_init(&sem_cola_new, 0, 0); // CONFIRMAR VALORES
-    
-    procesos_activos = list_create();
-    pthread_mutex_init(&mutex_procesos_activos, NULL);
-
-    cola_ready_unica = list_create();
-    sem_init(&sem_cola_ready_unica, 0, 0); // CONFIRMAR VALORES
-
-    cola_blocked_io = list_create();
-    sem_init(&sem_cola_blocked_io, 0, 0); // CONFIRMAR VALORES
-
-    cola_blocked_join = list_create();
-    // pthread_mutex_init(&cola_blocked_join, NULL); nose si deberia estar protegida o no
-
-    cola_blocked_memory_dump = list_create();
-    pthread_mutex_init(&mutex_cola_blocked_memory_dump, NULL);
-
-    cola_exit = list_create();
-    pthread_mutex_init(&mutex_cola_exit, NULL);
-    sem_init(&sem_cola_exit, 0, 0); // CONFIRMAR VALORES
-
-    procesos_exit = list_create();
-    pthread_mutex_init(&mutex_procesos_exit, NULL);
-
-    pthread_mutex_init(&mutex_hilo_exec, NULL);
-    pthread_mutex_init(&mutex_hilo_usando_io, NULL);
-    pthread_mutex_init(&mutex_sincro_new_exit, NULL);
-                /******************************/
-
     pthread_create(&thread_new, NULL, rutina_new, NULL);
     pthread_create(&thread_exit, NULL, rutina_exit, NULL);
     pthread_create(&thread_io, NULL, rutina_io, NULL);
     
-    // El Proceso inicial.
-    // ESTA PARTE SE PUEDE ELIMINAR CUANDO SE TERMINE DE DEBUGGEAR
+    t_pcb* proceso_inicial = NULL;
+    // El Proceso inicial
     if(argc == 1)
     {
-        proceso_inicial = nuevo_proceso(256, 0, "PLANI_PROC");
+        // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
+        proceso_inicial = nuevo_proceso(32, 0, "PLANI_PROC");
     }
     else
     {
+        // DEBE QUEDAR SOLO ESTO
         proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, argv[1]);
     }
     ingresar_a_new(proceso_inicial);
@@ -140,11 +132,17 @@ void setup_algoritmo_plani_corto_plazo(char* algoritmo) {
         cod_algoritmo_planif_corto = FIFO;
         ingresar_a_ready = ingresar_a_ready_fifo;
         encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_fifo_y_prioridades;
+        cola_ready_unica = list_create();
+        sem_init(&sem_cola_ready_unica, 0, 0);
+        pthread_mutex_init(&mutex_cola_ready_unica, NULL);
     }
     else if(strcmp(algoritmo, "PRIORIDADES") == 0) {
         cod_algoritmo_planif_corto = PRIORIDADES;
         ingresar_a_ready = ingresar_a_ready_prioridades;
         encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_fifo_y_prioridades;
+        cola_ready_unica = list_create();
+        sem_init(&sem_cola_ready_unica, 0, 0);
+        pthread_mutex_init(&mutex_cola_ready_unica, NULL);
     }
     else if(strcmp(algoritmo, "CMN") == 0) {
         cod_algoritmo_planif_corto = CMN;
