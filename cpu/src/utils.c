@@ -181,7 +181,11 @@ void instruccion_jnz (t_list* param)
 {
     char* str_r = (char*)list_get(param, 0);
     void* data = list_get(param, 1);
-    uint32_t num_inst = *(uint32_t*)data;
+    char* valor_de_instruccion = (char*) data;
+
+    // Convertir el segundo parámetro a uint32_t
+    char* endptr;
+    uint32_t num_inst = (uint32_t)strtol(data, &endptr, 10);
     
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "JNZ", str_r, num_inst);
