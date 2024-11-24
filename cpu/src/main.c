@@ -242,7 +242,12 @@ void rutina_main_cpu(void)
 
         free(instruccion_raw);
 
-        // actualizo registro program counter
-        contexto_exec.PC++;
+        // actualizo registro program counter si corresponde
+        if(!se_hizo_jnz) {
+            contexto_exec.PC++;
+        }
+        else {
+            se_hizo_jnz = false;
+        }
     } 
 }

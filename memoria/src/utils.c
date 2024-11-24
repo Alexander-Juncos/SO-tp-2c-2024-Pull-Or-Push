@@ -614,7 +614,7 @@ void rutina_contexto_ejecucion(t_list* param)
 
     data = list_get(param, 0);
     pid = *(int*)data;
-    data = list_get(param, 0);
+    data = list_get(param, 1);
     tid = *(int*)data;
 
     resultado = cargar_contexto_ejecucion(pid, tid);

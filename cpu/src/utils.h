@@ -36,6 +36,8 @@ extern t_log* log_cpu_gral; // logger para los logs nuestros. Loguear con criter
 
 extern t_config* config;
 
+extern bool se_hizo_jnz;
+
 typedef enum {
     DESCONOCIDA,
     INTERRUPCION_PENDIENTE,

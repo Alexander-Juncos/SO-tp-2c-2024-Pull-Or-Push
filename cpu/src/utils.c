@@ -14,6 +14,8 @@ t_log* log_cpu_oblig;
 t_log* log_cpu_gral; 
 t_config* config;
 
+bool se_hizo_jnz = false;
+
 t_contexto_exec contexto_exec;
 
 bool hay_interrupcion;
@@ -180,8 +182,8 @@ void instruccion_sub (t_list* param)
 void instruccion_jnz (t_list* param)
 {
     char* str_r = (char*)list_get(param, 0);
-    void* data = list_get(param, 1);
-    uint32_t num_inst = *(uint32_t*)data;
+    char* data_como_string = list_get(param, 1);
+    uint32_t num_inst = atoi(data_como_string);
     
     // para revisar si coincide hubo algun error al cambiar contexto
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %d", contexto_exec.pid, contexto_exec.tid, "JNZ", str_r, num_inst);
@@ -194,9 +196,10 @@ void instruccion_jnz (t_list* param)
     }
 
     // como no es 0 reemplazo el PC
-    contexto_exec.PC = *(uint32_t*)reg;
+    contexto_exec.PC = num_inst;
+    se_hizo_jnz = true;
     
-	log_debug(log_cpu_gral, "Se hizo JNZ a instruccion %d (%s)", num_inst, str_r); // temporal. Sacar luego
+	log_debug(log_cpu_gral, "Se hizo JNZ a instruccion %d", num_inst); // temporal. Sacar luego
     
     log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "JNZ", str_r, num_inst);
 }
