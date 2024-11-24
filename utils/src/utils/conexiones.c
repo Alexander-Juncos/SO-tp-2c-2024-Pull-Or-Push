@@ -245,7 +245,9 @@ void *recibir_buffer(int *size, int socket)
 
 	recv(socket, size, sizeof(int), MSG_WAITALL);
 	buffer = malloc(*size);
-	recv(socket, buffer, *size, MSG_WAITALL);
+	if(*size > 0) { // para que no se quede esperando si no hay datos por recibir
+		recv(socket, buffer, *size, MSG_WAITALL);
+	}
 
 	return buffer;
 }
