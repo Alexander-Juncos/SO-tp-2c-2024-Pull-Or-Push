@@ -584,6 +584,9 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
         log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: PTHREAD_JOIN", tcb->pid_pertenencia, tcb->tid);
         hilo_exec = NULL;
     }
+    else {
+        log_debug(log_kernel_gral, "TID %d a joinear no encontrado", tid_a_joinear);
+    }
 }
 
 void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {

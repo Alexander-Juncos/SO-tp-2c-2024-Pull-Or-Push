@@ -496,6 +496,8 @@ void syscall_io (t_list* param)
 
     // variables parametros
     void* var_aux;
+    char* tiempo_como_string;
+    int tiempo;
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -505,12 +507,14 @@ void syscall_io (t_list* param)
 
         // descargo parametros
     var_aux = list_get(param, 0);
-    agregar_a_paquete(paquete, (int*)var_aux, sizeof(int));
+    tiempo_como_string = (char*)var_aux;
+    tiempo = atoi(tiempo_como_string);
+    agregar_a_paquete(paquete, &tiempo, sizeof(int));
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "IO", *(int*)var_aux);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "IO", tiempo);
     desalojado = true;
 }
 
@@ -522,8 +526,10 @@ void syscall_process_create (t_list* param)
     // variables parametros
     void* var_aux;
     char* ruta;
-    int* tamanio;
-    int* prioridad;
+    char* tamanio_como_string;
+    int tamanio;
+    char* prioridad_como_string;
+    int prioridad;
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -537,17 +543,19 @@ void syscall_process_create (t_list* param)
     agregar_a_paquete(paquete, ruta, strlen(ruta) + 1);
 
     var_aux = list_get(param, 1);
-    tamanio = (int*)var_aux;
-    agregar_a_paquete(paquete, (int*)tamanio, sizeof(int));
+    tamanio_como_string = (char*)var_aux;
+    tamanio = atoi(tamanio_como_string);
+    agregar_a_paquete(paquete, &tamanio, sizeof(int));
 
     var_aux = list_get(param, 2);
-    prioridad = (int*)var_aux;
-    agregar_a_paquete(paquete, (int*)prioridad, sizeof(int));
+    prioridad_como_string = (char*)var_aux;
+    prioridad = atoi(prioridad_como_string);
+    agregar_a_paquete(paquete, &prioridad, sizeof(int));
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, *tamanio, *prioridad);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, tamanio, prioridad);
     desalojado = true;
 }
 
@@ -559,7 +567,8 @@ void syscall_thread_create (t_list* param)
     // variables parametros
     void* var_aux;
     char* ruta;
-    int* prioridad;
+    char* prioridad_como_string;
+    int prioridad;
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -573,13 +582,14 @@ void syscall_thread_create (t_list* param)
     agregar_a_paquete(paquete, ruta, strlen(ruta) + 1);
 
     var_aux = list_get(param, 1);
-    prioridad = (int*)var_aux;
-    agregar_a_paquete(paquete, (int*)prioridad, sizeof(int));
+    prioridad_como_string = (char*)var_aux;
+    prioridad = atoi(prioridad_como_string);
+    agregar_a_paquete(paquete, &prioridad, sizeof(int));
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, *prioridad);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, prioridad);
     desalojado = true;
 }
 
@@ -590,7 +600,8 @@ void syscall_thread_join (t_list* param)
 
     // variables parametros
     void* var_aux;
-    int* tid;
+    char* tid_como_string;
+    int tid;
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -600,13 +611,14 @@ void syscall_thread_join (t_list* param)
 
         // descargo parametros
     var_aux = list_get(param, 0);
-    tid = (int*)var_aux;
-    agregar_a_paquete(paquete, (int*)tid, sizeof(int));
+    tid_como_string = (char*)var_aux;
+    tid = atoi(tid_como_string);
+    agregar_a_paquete(paquete, &tid, sizeof(int));
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_JOIN", *tid);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_JOIN", tid);
     desalojado = true;
 }
 
@@ -617,7 +629,8 @@ void syscall_thread_cancel (t_list* param)
 
     // variables parametros
     void* var_aux;
-    int* tid;
+    char* tid_como_string;
+    int tid;
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -627,13 +640,14 @@ void syscall_thread_cancel (t_list* param)
 
         // descargo parametros
     var_aux = list_get(param, 0);
-    tid = (int*)var_aux;
-    agregar_a_paquete(paquete, (int*)tid, sizeof(int));
+    tid_como_string = (char*)var_aux;
+    tid = atoi(tid_como_string);
+    agregar_a_paquete(paquete, &tid, sizeof(int));
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_CANCEL", *tid);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutada: %s - %d", contexto_exec.tid, "THREAD_CANCEL", tid);
     desalojado = true;
 }
 
