@@ -457,15 +457,10 @@ void finalizar_hilo(t_tcb* tcb) {
 }
 
 void finalizar_proceso(void) {
+    // Hay que ver si falta algo más...
     int pid_proceso = hilo_exec->pid_pertenencia;
-    if(hilo_exec->tid == 0) {
-        finalizar_hilo(hilo_exec);
-    }
-    else {
-        t_pcb* pcb = encontrar_pcb_activo(pid_proceso);
-        finalizar_hilo(pcb->hilo_main);
-    }
     log_info(log_kernel_oblig, "## Finaliza el proceso %d", pid_proceso);
+    destruir_pcb(pid_proceso);
 }
 
 void crear_mutex(t_pcb* pcb, char* nombre) {
