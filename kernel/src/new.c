@@ -41,7 +41,6 @@ t_tcb* inicializacion_de_proceso(void) {
         exito_al_inicializar_proceso = reintentar_creacion_proceso(pcb);
     }
 
-    asociar_tid(pcb, pcb->hilo_main);
     pthread_mutex_lock(&mutex_procesos_activos);
     list_add(procesos_activos, pcb);
     pthread_mutex_unlock(&mutex_procesos_activos);

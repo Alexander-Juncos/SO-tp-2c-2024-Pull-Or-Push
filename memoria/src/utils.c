@@ -111,7 +111,7 @@ t_tcb_mem* iniciar_tcb(int pid, int tid, char* ruta_script)
     }
     
     log_debug(log_memoria_gral, 
-                    "Creado el thread %d del proceso %d", pid, tid);
+                    "Creado el thread %d del proceso %d", tid, pid);
     return tcb_new;
 }
 
@@ -448,6 +448,7 @@ void rutina_finalizar_proceso(int socket_cliente)
     log_debug(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
                                 contexto_ejecucion->pcb->pid,
                                 list_size(contexto_ejecucion->pcb->lista_tcb));
+    pid = contexto_ejecucion->pcb->pid; // para poder loguear luego de la destrucción
 
     for (int i=0; i< list_size(contexto_ejecucion->pcb->lista_tcb); i++)
     {
@@ -470,6 +471,8 @@ void rutina_finalizar_proceso(int socket_cliente)
     eliminar_pcb(procesos_cargados, contexto_ejecucion->pcb->pid);
     pthread_mutex_unlock(&mutex_procesos_cargados);
     contexto_ejecucion->pcb = NULL;
+
+    enviar_mensaje("OK", socket_cliente);
 
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Proceso Destruido -  PID: %d - Tamaño: %d",
@@ -526,17 +529,12 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     void* aux; // para recibir parametros
     int tid;
-    char* ruta;
 
     // descargo parametros
     // aux = list_get(param, 0);
     // int pid = *(int*) aux;
     aux = list_get(param, 0);
-    tid = *(int*) aux;
-    aux = list_get(param, 1);
-    ruta = aux;
-
-    t_pcb_mem* tcb_new = iniciar_tcb(contexto_ejecucion->pcb->pid, tid, ruta);
+    tid = *(int*)aux;
 
     pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
     eliminar_tcb(contexto_ejecucion->pcb->lista_tcb, tid);
