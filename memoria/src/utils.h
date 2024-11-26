@@ -62,6 +62,7 @@ typedef struct {
     t_particion* particion;
     t_list* lista_tcb;
     pthread_mutex_t sem_p_mutex;
+    int tamanio;
 } t_pcb_mem;
 
 typedef struct {

@@ -134,6 +134,7 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
     }
     // inicializo resto del pcb
     pcb_new->pid = pid;
+    pcb_new->tamanio = tamanio;
     pcb_new->lista_tcb = list_create();
     pthread_mutex_init(&(pcb_new->sem_p_mutex), NULL);
 
@@ -440,6 +441,7 @@ void rutina_finalizar_proceso(int socket_cliente)
     t_tcb_mem* tcb;
     t_particion* particion_liberada = NULL;
     int pid;
+    int tamanio_proceso_eliminado;
 
 
     // Limpiando cada TCB perteneciente al proceso y sus estrucutras
@@ -466,6 +468,9 @@ void rutina_finalizar_proceso(int socket_cliente)
     particion_liberada = contexto_ejecucion->pcb->particion;
     contexto_ejecucion->pcb->particion = NULL;
 
+    //backup tamanio
+    tamanio_proceso_eliminado = contexto_ejecucion->pcb->tamanio;
+
     // Saco el PCB de la lista y lo libero
     pthread_mutex_lock(&mutex_procesos_cargados); 
     eliminar_pcb(procesos_cargados, contexto_ejecucion->pcb->pid);
@@ -476,7 +481,7 @@ void rutina_finalizar_proceso(int socket_cliente)
 
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Proceso Destruido -  PID: %d - Tamaño: %d",
-                                pid, (particion_liberada->limite - particion_liberada->base + 1));
+                                pid, tamanio_proceso_eliminado);
 
     if (memoria->particiones_dinamicas == false)
         return; // si hay particiones fijas ya terminamos x lo q salimos
