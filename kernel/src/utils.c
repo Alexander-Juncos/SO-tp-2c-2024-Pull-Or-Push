@@ -192,6 +192,7 @@ t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
     t_tcb* tcb = NULL;
     tcb = buscar_tcb_por_pid_y_tid(cola_ready_unica, pid, tid);
     if(tcb != NULL) {
+        sem_wait(&sem_cola_ready_unica);
         list_remove_element(cola_ready_unica, tcb);
     }
     return tcb;
@@ -213,6 +214,7 @@ t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
     cola_multinivel = NULL;
     if(key_de_cola_ready != NULL) {
         cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
+        sem_wait(&(cola_multinivel->sem_cola_ready));
         list_remove_element(cola_multinivel->cola_ready, tcb);
     }
     list_destroy(lista_de_keys);

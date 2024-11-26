@@ -858,7 +858,8 @@ t_dictionary* crear_diccionario_reg(t_contexto_exec* r)
 t_paquete* empaquetar_contexto()
 {
     t_paquete* p = crear_paquete(ACTUALIZAR_CONTEXTO_EJECUCION);
-    agregar_a_paquete(p, &(contexto_exec.PC), sizeof(uint32_t));
+    uint32_t siguiente_PC = contexto_exec.PC + 1;
+    agregar_a_paquete(p, &(siguiente_PC), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.AX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.BX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.CX), sizeof(uint32_t));
