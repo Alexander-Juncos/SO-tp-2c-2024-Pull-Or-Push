@@ -77,6 +77,7 @@ void enviar_orden_de_interrupcion(void) {
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->pid_pertenencia), sizeof(int));
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->tid), sizeof(int));
 	enviar_paquete(paquete, socket_cpu_interrupt);
+    log_info(log_kernel_gral, "Envio interrupcion");
 	eliminar_paquete(paquete);
 }
 
@@ -90,6 +91,7 @@ t_tcb* crear_tcb(int pid_pertenencia, int tid, int prioridad, char* path_instruc
 	tcb->pid_pertenencia = pid_pertenencia;
 	tcb->prioridad = prioridad;
 	tcb->path_relativo_archivo_instrucciones = path_instrucciones;
+    log_debug(log_kernel_gral, "NUEVO TCB: PID:%d TID:%d PATH: %s", tcb->pid_pertenencia, tcb->tid, tcb->path_relativo_archivo_instrucciones);
 	return tcb;
 }
 

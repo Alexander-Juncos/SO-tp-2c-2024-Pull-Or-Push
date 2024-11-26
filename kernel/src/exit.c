@@ -19,13 +19,13 @@ void* rutina_exit(void* puntero_null) {
         pthread_mutex_unlock(&mutex_cola_exit);
 
         if(tcb->tid == 0) { // (if es Hilo main)
-
+            
             enviar_fin_hilo_a_memoria(tcb);
             enviar_fin_proceso_a_memoria(tcb->pid_pertenencia);
-
             pid_de_pcb_a_eliminar = tcb->pid_pertenencia;
             destruir_tcb(tcb);
             destruir_pcb(pid_de_pcb_a_eliminar);
+
             
             // Si NEW se encuentra esperando, le avisa
             // que reintente la creación de proceso.
@@ -69,6 +69,7 @@ void enviar_fin_proceso_a_memoria(int pid) {
 }
 
 void destruir_tcb(t_tcb* tcb) {
+    log_debug(log_kernel_gral, "TCB a destruir: PID:%d TID:%d PATH: %s", tcb->pid_pertenencia, tcb->tid, tcb->path_relativo_archivo_instrucciones);
     free(tcb->path_relativo_archivo_instrucciones);
     log_debug(log_kernel_gral, "## EXIT: TCB de (%d:%d) destruido.", tcb->pid_pertenencia, tcb->tid);
     free(tcb);

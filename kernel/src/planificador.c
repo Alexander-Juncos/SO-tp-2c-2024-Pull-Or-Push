@@ -366,7 +366,6 @@ void planific_corto_multinivel_rr(void) {
 void ejecutar_siguiente_hilo(t_list* cola_ready) {
     hilo_exec = list_remove(cola_ready, 0);
     enviar_orden_de_ejecucion_al_cpu(hilo_exec);
-    log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO", hilo_exec->pid_pertenencia, hilo_exec->tid);
 }
 
 t_list* recibir_de_cpu(int* codigo_operacion) {
@@ -386,6 +385,7 @@ t_pcb* encontrar_pcb_activo(int pid) {
     pthread_mutex_lock(&mutex_procesos_activos);
     pcb = buscar_pcb_por_pid(procesos_activos, pid);
     pthread_mutex_unlock(&mutex_procesos_activos);
+    if(pcb == NULL) log_debug(log_kernel_gral, "No se encontro pcb activo");
     return pcb;
 }
 
@@ -457,10 +457,18 @@ void finalizar_hilo(t_tcb* tcb) {
 }
 
 void finalizar_proceso(void) {
-    // Hay que ver si falta algo más...
+
     int pid_proceso = hilo_exec->pid_pertenencia;
+    if(hilo_exec->tid == 0) {
+        finalizar_hilo(hilo_exec);
+    }
+    else {
+        t_pcb* pcb = encontrar_pcb_activo(pid_proceso);
+        finalizar_hilo(pcb->hilo_main);
+    }
+
+
     log_info(log_kernel_oblig, "## Finaliza el proceso %d", pid_proceso);
-    destruir_pcb(pid_proceso);
 }
 
 void crear_mutex(t_pcb* pcb, char* nombre) {
@@ -589,6 +597,7 @@ void enviar_orden_de_ejecucion_al_cpu(t_tcb* tcb) {
     agregar_a_paquete(paquete, (void*)&(tcb->pid_pertenencia), sizeof(int));
     agregar_a_paquete(paquete, (void*)&(tcb->tid), sizeof(int));
     enviar_paquete(paquete, socket_cpu_dispatch);
+    log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO", tcb->pid_pertenencia, tcb->tid);
     eliminar_paquete(paquete);
 }
 

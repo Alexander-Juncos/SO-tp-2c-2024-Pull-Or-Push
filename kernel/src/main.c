@@ -106,12 +106,12 @@ int main(int argc, char* argv[]) {
     if(argc == 1)
     {
         // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
-        proceso_inicial = nuevo_proceso(32, 0, "PLANI_PROC");
+        proceso_inicial = nuevo_proceso(32, 0, string_duplicate("PLANI_PROC"));
     }
     else
     {
         // DEBE QUEDAR SOLO ESTO
-        proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, argv[1]);
+        proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, string_duplicate(argv[1]));
     }
     ingresar_a_new(proceso_inicial);
 
