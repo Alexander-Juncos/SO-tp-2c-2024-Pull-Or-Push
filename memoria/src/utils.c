@@ -437,7 +437,6 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
 
 void rutina_finalizar_proceso(int socket_cliente)
 {
-    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     t_tcb_mem* tcb;
     t_particion* particion_liberada = NULL;
     int pid;
@@ -534,19 +533,23 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     void* aux; // para recibir parametros
     int tid;
+    int pid; 
 
     // descargo parametros
     // aux = list_get(param, 0);
     // int pid = *(int*) aux;
     aux = list_get(param, 0);
     tid = *(int*)aux;
+    aux = list_get(param, 1);
+    pid = *(int*)aux;
+    t_pcb_mem* pcb = obtener_pcb(pid); 
 
     pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
-    eliminar_tcb(contexto_ejecucion->pcb->lista_tcb, tid);
+    eliminar_tcb(pcb->lista_tcb, tid); //cambio para eliminar el tcb correspondiente
     pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
 
     // LOG OBLIGATORIO
-    log_info(log_memoria_oblig, "## Hilo Destruido - (PID:TID) - (%d:%d)", contexto_ejecucion->pcb->pid, tid);
+    log_info(log_memoria_oblig, "## Hilo Destruido - (PID:TID) - (%d:%d)", pid, tid);
 
     enviar_mensaje("OK", socket_cliente);
 }
