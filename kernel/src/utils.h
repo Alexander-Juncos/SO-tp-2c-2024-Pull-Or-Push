@@ -81,7 +81,8 @@ extern t_log* log_kernel_gral; // logger para los logs nuestros. Loguear con cri
 // ==========================================================================
 
 extern sem_t sem_cola_new; // Cantidad de procesos en estado NEW.
-extern sem_t sem_cola_ready_unica; // Cantidad de procesos en estado READY (para FIFO y PRIORIDADES).
+extern sem_t sem_cola_ready_unica; // Cantidad de hilos en estado READY (para FIFO y PRIORIDADES).
+extern sem_t sem_hilos_ready_en_cmn; // Cantidad de hilos en estado READY (para CMN).
 extern sem_t sem_cola_blocked_io;
 extern sem_t sem_cola_exit;
 extern sem_t sem_sincro_new_exit;

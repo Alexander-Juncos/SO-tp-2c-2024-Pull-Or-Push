@@ -9,6 +9,7 @@
 // ==========================================================================
 
 int contador_pid = 0;
+//bool hay_que_chequear_colas_cmn = false;
 
 // ==========================================================================
 // ====  Función principal (que inicia el planificador):  ===================
@@ -69,12 +70,11 @@ void planific_corto_fifo_y_prioridades(void) {
 
     while(true) {
 
-        // Se queda esperando el "desalojo" del hilo en ejecución
+        // Se queda esperando alguna Syscall del hilo en ejecución
         argumentos_recibidos = recibir_de_cpu(&codigo_recibido);
 
-        // EN DESARROLLO.....
+        // Switch para tratar los códigos recibidos
 		switch (codigo_recibido) {
-
             case SYSCALL_MEMORY_DUMP:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: DUMP_MEMORY", hilo_exec->pid_pertenencia, hilo_exec->tid);
             enviar_pedido_de_dump_a_memoria(hilo_exec);
@@ -178,7 +178,6 @@ void planific_corto_fifo_y_prioridades(void) {
             break;
 		}
 
-        //pthread_mutex_unlock(&mutex_proceso_exec);
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
 
         if(hilo_exec == NULL) { // caso en que el hilo NO continúa ejecutando
@@ -214,10 +213,12 @@ void planific_corto_multinivel_rr(void) {
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo CMN y Round Robin.");
 
-    estructura_ready = obtener_estructura_cola_ready(0);
-    sem_wait(&(estructura_ready->sem_cola_ready));
+    sem_wait(&sem_hilos_ready_en_cmn);
 
+    estructura_ready = obtener_estructura_cola_ready(0);
+    pthread_mutex_lock(&(estructura_ready->mutex_cola_ready));
     ejecutar_siguiente_hilo(estructura_ready->cola_ready);
+    pthread_mutex_unlock(&(estructura_ready->mutex_cola_ready));
 
     while (true) {
         /*
@@ -245,7 +246,7 @@ void planific_corto_multinivel_rr(void) {
         free(clave_nivel);
         */
 
-        // Esperar el código de desalojo o interrupción al finalizar el quantum
+        // Se queda esperando alguna Syscall del hilo en ejecución, o su interrupción por Quantum agotado.
         argumentos_recibidos = esperar_cpu_rr(&codigo_recibido);
 
         // Switch para tratar los códigos recibidos
@@ -301,6 +302,7 @@ void planific_corto_multinivel_rr(void) {
             case SYSCALL_FINALIZAR_ESTE_HILO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
             finalizar_hilo(hilo_exec);
+            //hay_que_chequear_colas_cmn = true;
             break;
 
             case SYSCALL_CREAR_MUTEX:
@@ -308,6 +310,7 @@ void planific_corto_multinivel_rr(void) {
             nombre_mutex = string_duplicate(list_get(argumentos_recibidos, 0));
             pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             if(ya_existe_mutex(pcb, nombre_mutex)){
+                log_debug(log_kernel_gral, "Ya existe un Mutex llamado %s !!!", nombre_mutex);
                 free(nombre_mutex);
             }
             else {
@@ -316,18 +319,29 @@ void planific_corto_multinivel_rr(void) {
             break;
 
             case SYSCALL_BLOQUEAR_MUTEX:
-            t_tcb* hilo_solicitante_de_mutex = list_get(argumentos_recibidos, 0);
-            t_mutex* mutex_a_bloquear = list_get(argumentos_recibidos, 1);
-            bloquear_mutex(hilo_solicitante_de_mutex, mutex_a_bloquear);
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_LOCK", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            nombre_mutex = list_get(argumentos_recibidos, 0);
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
+            mutex_encontrado = encontrar_mutex(pcb, nombre_mutex);
+            if(mutex_encontrado != NULL){
+                bloquear_mutex(hilo_exec, mutex_encontrado);
+            }
             break;
 
             case SYSCALL_DESBLOQUEAR_MUTEX:
-            t_mutex* mutex_a_liberar = list_get(argumentos_recibidos, 0);
-            liberar_mutex(mutex_a_liberar);
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: MUTEX_UNLOCK", hilo_exec->pid_pertenencia, hilo_exec->tid);
+            nombre_mutex = list_get(argumentos_recibidos, 0);
+            pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
+            mutex_encontrado = encontrar_mutex(pcb, nombre_mutex);
+            if(mutex_encontrado != NULL){
+                if(mutex_esta_asignado_a_hilo(mutex_encontrado, hilo_exec->tid)) {
+                    liberar_mutex(mutex_encontrado);
+                }
+            }
             break;
 
             case SYSCALL_FINALIZAR_PROCESO:
-            log_info(log_kernel_oblig,"## Finaliza el proceso %d.", hilo_exec->pid_pertenencia);
+            log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
             finalizar_proceso();
             break;
 
@@ -339,20 +353,30 @@ void planific_corto_multinivel_rr(void) {
             case INTERRUPCION:
             log_info(log_kernel_oblig, "## (%d:%d) - Desalojado por fin de Quantum", hilo_exec->pid_pertenencia, hilo_exec->tid);
             ingresar_a_ready(hilo_exec);
+            //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
+            hilo_exec = NULL;
             break;
 
             default:
             log_error(log_kernel_gral, "El motivo de desalojo del proceso %d no se puede interpretar, es desconocido.", hilo_exec->pid_pertenencia);
             break;
         }
-    
-
-        // Reiniciar el quantum al finalizar la ejecución del hilo actual
-        reiniciar_quantum();
 
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
 
-        sem_wait(&sem_cola_ready_unica);  // Esperar a que haya algo en READY si todas las colas están vacías
+        if(hilo_exec == NULL) { // caso en que el hilo NO continúa ejecutando
+            reiniciar_quantum();
+
+            sem_wait(&sem_hilos_ready_en_cmn);
+            // VIENDO ACA --------------
+            //estructura_ready = obtener_estructura_cola_ready(AAA);
+            pthread_mutex_lock(&mutex_cola_ready_unica);
+            ejecutar_siguiente_hilo(cola_ready_unica);
+            pthread_mutex_unlock(&mutex_cola_ready_unica);
+        }
+        else { // caso en que el hilo continúa ejecutando
+            enviar_orden_de_ejecucion_al_cpu(hilo_exec);
+        }
     }
 }
 
@@ -449,6 +473,7 @@ void finalizar_hilo(t_tcb* tcb) {
     liberar_hilo(pcb, tcb);
     log_info(log_kernel_oblig, "## (%d:%d) Finaliza el hilo", tcb->pid_pertenencia, tcb->tid);
     if(hilo_exec == tcb) {
+        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN.
         hilo_exec = NULL;
     }
     pthread_mutex_lock(&mutex_cola_exit);
@@ -546,6 +571,7 @@ void bloquear_mutex(t_tcb* tcb, t_mutex* mutex) {
         // Manda el hilo a la cola de bloqueados esperando por el mutex
         list_add(mutex->bloqueados_esperando, tcb);
         log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: MUTEX", tcb->pid_pertenencia, tcb->tid);
+        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
         hilo_exec = NULL;
         return;
     }
@@ -585,6 +611,7 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
         tcb->tid_joined = tid_a_joinear;
         list_add(cola_blocked_join, tcb);
         log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: PTHREAD_JOIN", tcb->pid_pertenencia, tcb->tid);
+        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
         hilo_exec = NULL;
     }
     else {
@@ -608,6 +635,7 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
     list_add(cola_blocked_memory_dump, tcb);
     pthread_mutex_unlock(&mutex_cola_blocked_memory_dump);
     log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: MEMORY_DUMP", tcb->pid_pertenencia, tcb->tid);
+    //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
     hilo_exec = NULL;
 
     t_recepcion_respuesta_memory_dump* info_para_recibir_rta = malloc(sizeof(t_recepcion_respuesta_memory_dump));

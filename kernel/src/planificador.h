@@ -6,6 +6,7 @@
 #include "utils.h"
 
 extern int contador_pid; // Contador. Para asignar diferente pid a cada nuevo proceso.
+//extern bool hay_que_chequear_colas_cmn; // Para determinar cuando se debe chequear la cola a ejecutar en CMN.
 
 /**
 * @brief Inicia el Planificador de corto plazo.

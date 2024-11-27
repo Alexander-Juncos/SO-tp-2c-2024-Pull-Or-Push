@@ -50,5 +50,6 @@ void usar_io(t_tcb* tcb, int tiempo_uso_io_en_ms) {
     pthread_mutex_unlock(&mutex_cola_blocked_io);
     sem_post(&sem_cola_blocked_io);
     log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: IO", tcb->pid_pertenencia, tcb->tid);
+    //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
     hilo_exec = NULL;
 }

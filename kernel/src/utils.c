@@ -47,6 +47,7 @@ t_log* log_kernel_gral = NULL;
 
 sem_t sem_cola_new;
 sem_t sem_cola_ready_unica;
+sem_t sem_hilos_ready_en_cmn;
 sem_t sem_cola_blocked_io;
 sem_t sem_cola_exit;
 sem_t sem_sincro_new_exit;
@@ -172,14 +173,16 @@ void ingresar_a_ready_multinivel(t_tcb* tcb) {
         dictionary_put(diccionario_ready_multinivel, key, estructura_ready_correspondiente);
     }
 
+    pthread_mutex_lock(&(estructura_ready_correspondiente->mutex_cola_ready));
     list_add(estructura_ready_correspondiente->cola_ready, tcb);
-    sem_post(&(estructura_ready_correspondiente->sem_cola_ready));
+    pthread_mutex_unlock(&(estructura_ready_correspondiente->mutex_cola_ready));
+    sem_post(&sem_hilos_ready_en_cmn);
 }
 
 t_cola_ready* crear_ready_multinivel(void) {
     t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
     nueva_estructura_cola_ready->cola_ready = list_create();
-    sem_init(&(nueva_estructura_cola_ready->sem_cola_ready), 0, 0);
+    pthread_mutex_init(&(nueva_estructura_cola_ready->mutex_cola_ready), NULL);
     return nueva_estructura_cola_ready;
 }
 
