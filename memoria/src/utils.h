@@ -73,6 +73,7 @@ typedef struct {
 extern t_list* procesos_cargados; // sus elementos van a ser de tipo t_pcb_mem
 extern pthread_mutex_t mutex_procesos_cargados;
 extern t_contexto_de_ejecucion_mem* contexto_ejecucion;
+extern pthread_mutex_t mutex_contexto_ejecucion;
 // extern pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 typedef struct {
@@ -111,7 +112,7 @@ void consolidar_particion (int indice); // Tiene bastantes logs para debuguear
 
 // Kernel - Memoria
 void rutina_crear_proceso(t_list* param, int socket_cliente);
-void rutina_finalizar_proceso(int socket_cliente); // Tiene bastantes logs para debuguear
+void rutina_finalizar_proceso(t_list* param, int socket_cliente); // Tiene bastantes logs para debuguear
 void rutina_crear_hilo(t_list* param, int socket_cliente);
 void rutina_finalizar_hilo(t_list* param, int socket_cliente);
 void memory_dump_fs (t_list* pedido, int socket_cliente); 

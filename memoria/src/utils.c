@@ -22,6 +22,7 @@ t_memoria_particionada* memoria;
 pthread_mutex_t mutex_memoria;
 
 t_contexto_de_ejecucion_mem* contexto_ejecucion;
+pthread_mutex_t mutex_contexto_ejecucion;
 // pthread_mutex_t mutex_contexto_ejecucion; // lo comento porque solo el main va a acceder
 
 // ==========================================================================
@@ -165,7 +166,7 @@ bool cargar_contexto_ejecucion(int pid, int tid)
     t_pcb_mem* pcb = NULL;
     t_tcb_mem* tcb = NULL;
     bool nuevo_pcb = false;
-
+    pthread_mutex_lock(&mutex_contexto_ejecucion);
     // buscando pcb
     if (pid != contexto_ejecucion->pcb->pid)
     {
@@ -200,9 +201,10 @@ bool cargar_contexto_ejecucion(int pid, int tid)
       
     // cargando a var global
     if (pcb != NULL)
-        contexto_ejecucion->pcb = pcb;
+        contexto_ejecucion->pcb = pcb; 
     if (tcb != NULL)
-        contexto_ejecucion->tcb = tcb;
+        contexto_ejecucion->tcb = tcb;  
+    pthread_mutex_unlock(&mutex_contexto_ejecucion);
     return true;
 }
 
@@ -435,46 +437,44 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
     }
 }
 
-void rutina_finalizar_proceso(int socket_cliente)
+void rutina_finalizar_proceso(t_list* param, int socket_cliente)
 {
     t_tcb_mem* tcb;
     t_particion* particion_liberada = NULL;
-    int pid;
+    int pid = *(int*)list_get(param,0);
     int tamanio_proceso_eliminado;
+    t_pcb_mem* pcb = obtener_pcb(pid);
 
 
     // Limpiando cada TCB perteneciente al proceso y sus estrucutras
-    pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
+    pthread_mutex_lock(&(pcb->sem_p_mutex));
     
     log_debug(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
-                                contexto_ejecucion->pcb->pid,
-                                list_size(contexto_ejecucion->pcb->lista_tcb));
-    pid = contexto_ejecucion->pcb->pid; // para poder loguear luego de la destrucción
+                                pcb->pid,
+                                list_size(pcb->lista_tcb));
 
-    for (int i=0; i< list_size(contexto_ejecucion->pcb->lista_tcb); i++)
+    for (int i=0; i< list_size(pcb->lista_tcb); i++)
     {
-        tcb = list_remove(contexto_ejecucion->pcb->lista_tcb, 0);
+        tcb = list_remove(pcb->lista_tcb, 0);
         list_destroy_and_destroy_elements(tcb->instrucciones, free);
         free(tcb);
     }
-    list_destroy_and_destroy_elements(contexto_ejecucion->pcb->lista_tcb, free); // x las dudas
-    pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));  
-    pthread_mutex_destroy(&(contexto_ejecucion->pcb->sem_p_mutex));
-    contexto_ejecucion->tcb = NULL;
+    list_destroy_and_destroy_elements(pcb->lista_tcb, free); // x las dudas
+    pthread_mutex_unlock(&(pcb->sem_p_mutex));  
+    pthread_mutex_destroy(&(pcb->sem_p_mutex));
 
     // Libero la particion y la retengo en var auxiliar
-    contexto_ejecucion->pcb->particion->ocupada = false;
-    particion_liberada = contexto_ejecucion->pcb->particion;
-    contexto_ejecucion->pcb->particion = NULL;
+    pcb->particion->ocupada = false;
+    particion_liberada = pcb->particion;
+    pcb->particion = NULL;
 
     //backup tamanio
-    tamanio_proceso_eliminado = contexto_ejecucion->pcb->tamanio;
+    tamanio_proceso_eliminado = pcb->tamanio;
 
     // Saco el PCB de la lista y lo libero
     pthread_mutex_lock(&mutex_procesos_cargados); 
-    eliminar_pcb(procesos_cargados, contexto_ejecucion->pcb->pid);
+    eliminar_pcb(procesos_cargados, pcb->pid);
     pthread_mutex_unlock(&mutex_procesos_cargados);
-    contexto_ejecucion->pcb = NULL;
 
     enviar_mensaje("OK", socket_cliente);
 
@@ -530,7 +530,6 @@ void rutina_crear_hilo(t_list* param, int socket_cliente)
 
 void rutina_finalizar_hilo(t_list* param, int socket_cliente)
 {
-    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
     void* aux; // para recibir parametros
     int tid;
     int pid; 
@@ -538,10 +537,8 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     // descargo parametros
     // aux = list_get(param, 0);
     // int pid = *(int*) aux;
-    aux = list_get(param, 0);
-    tid = *(int*)aux;
-    aux = list_get(param, 1);
-    pid = *(int*)aux;
+    tid = *(int*)list_get(param, 0);
+    pid = *(int*)list_get(param, 1);
     t_pcb_mem* pcb = obtener_pcb(pid); 
 
     pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
@@ -992,6 +989,7 @@ int obtener_indice_particion(int base_objetivo)
 t_paquete* empaquetar_contexto (void)
 {
     t_paquete* p = crear_paquete(CONTEXTO_EJECUCION);
+    pthread_mutex_lock(&mutex_contexto_ejecucion);
     agregar_a_paquete(p, &(contexto_ejecucion->tcb->PC), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.AX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.BX), sizeof(uint32_t));
@@ -1003,7 +1001,7 @@ t_paquete* empaquetar_contexto (void)
     agregar_a_paquete(p, &(contexto_ejecucion->tcb->registros.HX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->base), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_ejecucion->pcb->particion->limite), sizeof(uint32_t));
-    
+    pthread_mutex_unlock(&mutex_contexto_ejecucion);
     return p;
 }
 

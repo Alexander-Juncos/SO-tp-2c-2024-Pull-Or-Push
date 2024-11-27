@@ -70,9 +70,8 @@ void* rutina_ejecucion (void* nada)
         
         case FINALIZAR_PROCESO: // PENDIENTE IMPLEMENTAR + FUNCIONES
             pedido = recibir_paquete(socket_cliente);
-            // el paquete se encuentra "vacio"...
 
-            rutina_finalizar_proceso(socket_cliente);
+            rutina_finalizar_proceso(pedido, socket_cliente);
 
             list_destroy_and_destroy_elements(pedido, free);
             break;

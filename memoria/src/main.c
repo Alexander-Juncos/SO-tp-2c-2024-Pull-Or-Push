@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
     int setsockt_val_aux = 1; // para setsockop y recibir resultado pthread
     char* puerto;
     pthread_t hilo_recepcion;
+    pthread_mutex_init(&mutex_contexto_ejecucion, NULL); //agrego semaforo para proteger el contexto de ejecucion
 
     /****************** Inicialización *****************/
     if (argc == 1) // si no recibe ruta para archivo config

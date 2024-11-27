@@ -116,7 +116,7 @@ void enviar_fin_hilo(t_tcb* tcb, int socket) {
 
 void enviar_fin_proceso(int pid, int socket) {
     t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
-    //agregar_a_paquete(paquete, (void*)&pid, sizeof(int));
+    agregar_a_paquete(paquete, (void*)&pid, sizeof(int));
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
