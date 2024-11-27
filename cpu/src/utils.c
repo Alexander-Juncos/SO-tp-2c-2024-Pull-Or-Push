@@ -242,7 +242,7 @@ char* fetch (void)
 
     // logs grales y obligatorio
     log_info(log_cpu_gral, "PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.tid, (int)contexto_exec.PC);
-    log_info(log_cpu_oblig, "## TID: <%d> - FETCH - Program Counter: <%d>",contexto_exec.tid,contexto_exec.PC);
+    log_info(log_cpu_oblig, "## TID: %d - FETCH - Program Counter: %d",contexto_exec.tid,contexto_exec.PC);
     log_info(log_cpu_gral, "Instruccion recibida: %s", instruccion);
 
     return instruccion;
