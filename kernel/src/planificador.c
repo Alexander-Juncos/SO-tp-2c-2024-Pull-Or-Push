@@ -368,11 +368,11 @@ void planific_corto_multinivel_rr(void) {
             reiniciar_quantum();
 
             sem_wait(&sem_hilos_ready_en_cmn);
-            // VIENDO ACA --------------
-            //estructura_ready = obtener_estructura_cola_ready(AAA);
-            pthread_mutex_lock(&mutex_cola_ready_unica);
-            ejecutar_siguiente_hilo(cola_ready_unica);
-            pthread_mutex_unlock(&mutex_cola_ready_unica);
+
+            estructura_ready = encontrar_cola_multinivel_de_mas_baja_prioridad();
+            pthread_mutex_lock(&(estructura_ready->mutex_cola_ready));
+            ejecutar_siguiente_hilo(estructura_ready->cola_ready);
+            pthread_mutex_unlock(&(estructura_ready->mutex_cola_ready));
         }
         else { // caso en que el hilo continúa ejecutando
             enviar_orden_de_ejecucion_al_cpu(hilo_exec);
@@ -448,11 +448,13 @@ t_tcb* encontrar_y_remover_tcb(int pid, int tid) {
         return tcb;
     }
     // Busca en BLOCKED (esperando respuesta Memory Dump)
+    pthread_mutex_lock(&mutex_cola_blocked_memory_dump);
     tcb = buscar_tcb_por_pid_y_tid(cola_blocked_memory_dump, pid, tid);
     if(tcb != NULL) {
         list_remove_element(cola_blocked_memory_dump, tcb);
         return tcb;
     }
+    pthread_mutex_unlock(&mutex_cola_blocked_memory_dump);
     // Busca en READY
     tcb = encontrar_y_remover_tcb_en_ready(pid, tid);
     return tcb;

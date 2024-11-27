@@ -196,7 +196,9 @@ t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
     tcb = buscar_tcb_por_pid_y_tid(cola_ready_unica, pid, tid);
     if(tcb != NULL) {
         sem_wait(&sem_cola_ready_unica);
+        pthread_mutex_lock(&mutex_cola_ready_unica);
         list_remove_element(cola_ready_unica, tcb);
+        pthread_mutex_unlock(&mutex_cola_ready_unica);
     }
     return tcb;
 }
@@ -217,11 +219,27 @@ t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
     cola_multinivel = NULL;
     if(key_de_cola_ready != NULL) {
         cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
-        sem_wait(&(cola_multinivel->sem_cola_ready));
+        sem_wait(&sem_hilos_ready_en_cmn);
+        pthread_mutex_lock(&(cola_multinivel->mutex_cola_ready));
         list_remove_element(cola_multinivel->cola_ready, tcb);
+        pthread_mutex_unlock(&(cola_multinivel->mutex_cola_ready));
     }
     list_destroy(lista_de_keys);
     return tcb;
+}
+
+t_cola_ready* encontrar_cola_multinivel_de_mas_baja_prioridad(void) {
+    t_cola_ready* cola_multinivel = NULL;
+    t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
+    int cant_keys = list_size(lista_de_keys);
+    char* key_de_cola_ready = list_get(lista_de_keys, 0);
+    for(int i = 1; i <= cant_keys-1; i++) {
+        if(atoi(list_get(lista_de_keys, i)) > atoi(key_de_cola_ready)) {
+            key_de_cola_ready = list_get(lista_de_keys, i);
+        }
+    }
+    cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
+    return cola_multinivel;
 }
 
 void finalizar_hilos_no_main_de_proceso(t_pcb* pcb) {

@@ -194,6 +194,8 @@ t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid);
 
 t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid);
 
+t_cola_ready* encontrar_cola_multinivel_de_mas_baja_prioridad(void);
+
 void finalizar_hilos_no_main_de_proceso(t_pcb* pcb);
 /**
 * @brief Libera los mutexes asignados a un Hilo, y desbloquea a los Hilos que
