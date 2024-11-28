@@ -160,7 +160,7 @@ void instruccion_sum (t_list* param)
 
 	*(uint32_t*)reg_dstn = *(uint32_t*)reg_dstn + *(uint32_t*)reg_orig;
 
-	log_debug(log_cpu_gral, "Se hizo SUM de %s y %s", str_r_dstn, str_r_orig); // temporal. Sacar luego
+	log_debug(log_cpu_gral, "Se hizo SUM de %s y %s, nuevo valor de %s: %d", str_r_dstn, str_r_orig, str_r_dstn, *(uint32_t*)reg_dstn); // temporal. Sacar luego
     
 }
 
@@ -435,6 +435,7 @@ void instruccion_read_mem (t_list* param)
     *(uint32_t*)registro_dat = atoi((char*)valor);
 
     log_info(log_cpu_oblig, "## TID: %d - Acción: LEER - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
+    log_debug(log_cpu_gral, "Nuevo valor registro %s: %d", str_r_dat, *(uint32_t*)registro_dat);
 
     list_clean_and_destroy_elements(respuesta, free);
 }
@@ -442,20 +443,22 @@ void instruccion_read_mem (t_list* param)
 void instruccion_write_mem (t_list* param)
 {
     // actualmente esta armado para ser legible, pero podria optimizarse a usar solo 3 void* para manejar lista-registros (creo)
-    char* str_r_dat = (char*)list_get(param, 0);
-    char* str_r_dir = (char*)list_get(param, 1);
+    char* str_r_dir = (char*)list_get(param, 0);
+    char* str_r_dat = (char*)list_get(param, 1);
     t_paquete* paquete;
     bool resultado;
     uint32_t* dir_fis;
     
     // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s - %s %s", contexto_exec.pid, contexto_exec.tid, "WRITE_MEM", str_r_dir, str_r_dat);
 
     // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dat, str_r_dir);
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %s", contexto_exec.tid, "WRITE_MEM", str_r_dir, str_r_dat);
 
 	void* registro_dat = dictionary_get(diccionario_reg, str_r_dat);
     void* registro_dir = dictionary_get(diccionario_reg, str_r_dir);
+
+    log_debug(log_cpu_gral, "Valor a escribir registro %s: %d", str_r_dat, *(uint32_t*)registro_dat);
 
     // MMU
     dir_fis = mmu((uint32_t*)registro_dir);
