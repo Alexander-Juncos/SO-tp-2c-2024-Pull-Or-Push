@@ -432,7 +432,7 @@ void instruccion_read_mem (t_list* param)
     }
     
     valor = list_get(respuesta, 0);
-    *(uint32_t*)registro_dat = atoi((char*)valor);
+    *(uint32_t*)registro_dat = *(uint32_t*)valor;
 
     log_info(log_cpu_oblig, "## TID: %d - Acción: LEER - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
     log_debug(log_cpu_gral, "Nuevo valor registro %s: %d", str_r_dat, *(uint32_t*)registro_dat);

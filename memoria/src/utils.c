@@ -296,7 +296,7 @@ char* mem_lectura (unsigned int desplazamiento)
     memcpy(data, aux_direccion, BYTES_ACCESO);
 
 
-    log_debug(log_memoria_gral, "Resultado ACCESO_LECTURA: %s", data);
+    log_debug(log_memoria_gral, "Resultado ACCESO_LECTURA: %d", *(uint32_t*)data);
     
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
