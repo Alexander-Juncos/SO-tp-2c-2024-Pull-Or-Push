@@ -467,7 +467,7 @@ void instruccion_write_mem (t_list* param)
     }        
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
-    paquete = crear_paquete(ACCESO_LECTURA);
+    paquete = crear_paquete(ACCESO_ESCRITURA);
     agregar_a_paquete(paquete, dir_fis, sizeof(uint32_t));
     agregar_a_paquete(paquete, (uint32_t*)registro_dat, sizeof(uint32_t));
     enviar_paquete(paquete, socket_memoria);
