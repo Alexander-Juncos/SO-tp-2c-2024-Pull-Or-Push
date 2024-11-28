@@ -511,12 +511,6 @@ void syscall_io (t_list* param)
     char* tiempo_como_string;
     int tiempo;
 
-    // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "IO");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "IO", tiempo);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -528,6 +522,12 @@ void syscall_io (t_list* param)
     tiempo_como_string = (char*)var_aux;
     tiempo = atoi(tiempo_como_string);
     agregar_a_paquete(paquete, &tiempo, sizeof(int));
+
+    // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "IO");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "IO", tiempo);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
@@ -544,12 +544,6 @@ void syscall_process_create (t_list* param)
     int tamanio;
     char* prioridad_como_string;
     int prioridad;
-
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_CREATE");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, tamanio, prioridad); 
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -572,6 +566,12 @@ void syscall_process_create (t_list* param)
     prioridad = atoi(prioridad_como_string);
     agregar_a_paquete(paquete, &prioridad, sizeof(int));
 
+        // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_CREATE");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d %d", contexto_exec.tid, "PROCESS_CREATE", ruta, tamanio, prioridad); 
+
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
@@ -585,12 +585,6 @@ void syscall_thread_create (t_list* param)
     char* ruta;
     char* prioridad_como_string;
     int prioridad;
-
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_CREATE");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, prioridad);
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
@@ -608,6 +602,12 @@ void syscall_thread_create (t_list* param)
     prioridad = atoi(prioridad_como_string);
     agregar_a_paquete(paquete, &prioridad, sizeof(int));
 
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_CREATE");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s %d", contexto_exec.tid, "THREAD_CREATE", ruta, prioridad);
+
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 
@@ -621,12 +621,6 @@ void syscall_thread_join (t_list* param)
     char* tid_como_string;
     int tid;
 
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_JOIN");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "THREAD_JOIN", tid);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -638,6 +632,12 @@ void syscall_thread_join (t_list* param)
     tid_como_string = (char*)var_aux;
     tid = atoi(tid_como_string);
     agregar_a_paquete(paquete, &tid, sizeof(int));
+
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_JOIN");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "THREAD_JOIN", tid);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
@@ -652,12 +652,6 @@ void syscall_thread_cancel (t_list* param)
     char* tid_como_string;
     int tid;
 
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_CANCEL");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "THREAD_CANCEL", tid);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -669,6 +663,12 @@ void syscall_thread_cancel (t_list* param)
     tid_como_string = (char*)var_aux;
     tid = atoi(tid_como_string);
     agregar_a_paquete(paquete, &tid, sizeof(int));
+
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "THREAD_CANCEL");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %d", contexto_exec.tid, "THREAD_CANCEL", tid);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
@@ -682,12 +682,6 @@ void syscall_mutex_create (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_CREATE");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_CREATE", recurso);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -698,6 +692,12 @@ void syscall_mutex_create (t_list* param)
     var_aux = list_get(param, 0);
     recurso = (char*)var_aux;
     agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_CREATE");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_CREATE", recurso);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
@@ -711,12 +711,6 @@ void syscall_mutex_lock (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_LOCK");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_LOCK", recurso);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -727,6 +721,12 @@ void syscall_mutex_lock (t_list* param)
     var_aux = list_get(param, 0);
     recurso = (char*)var_aux;
     agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+        // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_LOCK");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_LOCK", recurso);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
@@ -739,12 +739,6 @@ void syscall_mutex_unlock (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // para revisar si coincide hubo algun error al cambiar contexto
-    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_UNLOCK");
-
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_UNLOCK", recurso);
-
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -755,6 +749,12 @@ void syscall_mutex_unlock (t_list* param)
     var_aux = list_get(param, 0);
     recurso = (char*)var_aux;
     agregar_a_paquete(paquete, recurso, strlen(recurso) + 1);
+
+    // para revisar si coincide hubo algun error al cambiar contexto
+    log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "MUTEX_UNLOCK");
+
+    // LOG OBLIGATORIO
+    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s - %s", contexto_exec.tid, "MUTEX_UNLOCK", recurso);
 
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
