@@ -788,18 +788,18 @@ void syscall_process_exit (bool exitoso)
     // para revisar si coincide hubo algun error al cambiar contexto (para agilizar no pongo los param (par no repetir))
     log_debug(log_cpu_gral, "PID: %d - TID: %d - Ejecutando: %s", contexto_exec.pid, contexto_exec.tid, "PROCESS_EXIT");
 
-    // LOG OBLIGATORIO
-    log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s", contexto_exec.tid, "PROCESS_EXIT");
-    
-    // variables parametros
-    void* ptr_exitoso = &exitoso;
+    if(exitoso) {
+        log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s", contexto_exec.tid, "PROCESS_EXIT");
+    }
+    else {
+        log_info(log_cpu_gral, "## TID: %d - SEGMENTATION FAULT", contexto_exec.tid);
+    }
 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
     // devuelvo control a kernel junto con parametros q requiera
     t_paquete* paquete = crear_paquete(SYSCALL_FINALIZAR_PROCESO);
-    agregar_a_paquete(paquete, ptr_exitoso, sizeof(bool));
     enviar_paquete(paquete, socket_kernel_dispatch);
     eliminar_paquete(paquete);
 

@@ -225,7 +225,7 @@ void rutina_main_cpu(void)
             list_clean_and_destroy_elements(instruccion_procesada, free);
             break;
         case PROCESS_EXIT:
-            syscall_process_exit(instruccion_procesada);
+            syscall_process_exit(true);
             list_clean_and_destroy_elements(instruccion_procesada, free);
             break;
 

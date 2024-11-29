@@ -54,7 +54,6 @@ void planific_corto_fifo_y_prioridades(void) {
     int* prioridad = NULL;
     char* nombre_mutex = NULL;
     t_mutex* mutex_encontrado = NULL;
-    bool* proceso_finalizo_exitosamente = NULL;
 
     if(cod_algoritmo_planif_corto == FIFO) {
         log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
@@ -166,13 +165,6 @@ void planific_corto_fifo_y_prioridades(void) {
 
             case SYSCALL_FINALIZAR_PROCESO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            proceso_finalizo_exitosamente = list_get(argumentos_recibidos, 0);
-            if(*proceso_finalizo_exitosamente) {
-                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d leyo la instruccion PROCES_EXIT", hilo_exec->pid_pertenencia);
-            }
-            else {
-                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d tuvo SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
-            }
             finalizar_proceso();
             break;
            
@@ -214,7 +206,6 @@ void planific_corto_multinivel_rr(void) {
     int* prioridad = NULL;
     char* nombre_mutex = NULL;
     t_mutex* mutex_encontrado = NULL;
-    bool* proceso_finalizo_exitosamente = NULL;
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo CMN y Round Robin.");
 
@@ -350,13 +341,6 @@ void planific_corto_multinivel_rr(void) {
 
             case SYSCALL_FINALIZAR_PROCESO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            proceso_finalizo_exitosamente = list_get(argumentos_recibidos, 0);
-            if(*proceso_finalizo_exitosamente) {
-                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d leyo la instruccion PROCES_EXIT", hilo_exec->pid_pertenencia);
-            }
-            else {
-                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d tuvo SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
-            }
             finalizar_proceso();
             break;
 
