@@ -149,6 +149,8 @@ void setup_algoritmo_plani_corto_plazo(char* algoritmo) {
         ingresar_a_ready = ingresar_a_ready_multinivel;
         encontrar_y_remover_tcb_en_ready = encontrar_y_remover_tcb_en_ready_multinivel;
         diccionario_ready_multinivel = dictionary_create();
+        sem_init(&sem_hilos_ready_en_cmn, 0, 0);
+        pthread_mutex_init(&mutex_colas_ready_cmn, NULL);
         agregar_ready_multinivel(0);
     }
     else {

@@ -53,7 +53,7 @@ extern bool new_puede_intentar_crear_proceso;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).
 extern t_list* cola_ready_unica; // Estado READY (para FIFO y PRIORIDADES). Es una lista de t_tcb* (Hilos).
-extern t_dictionary* diccionario_ready_multinivel; // Estado READY (para MULTINIVEL). Contiene elementos de t_cola_ready*. La key es la prioridad.
+extern t_dictionary* diccionario_ready_multinivel; // Estado READY (para MULTINIVEL). Contiene elementos de t_list*. La key es la prioridad.
 extern t_tcb* hilo_exec; // Estado EXEC. Es un t_tcb* (Hilo).
 extern t_tcb* hilo_usando_io; // Estado BLOCKED (usando IO). Es un t_tcb* (Hilo).
 extern t_list* cola_blocked_io; // Estado BLOCKED (esperando para usar IO). Es una lista de t_tcb* (Hilos).
@@ -88,6 +88,7 @@ extern sem_t sem_cola_exit;
 extern sem_t sem_sincro_new_exit;
 extern pthread_mutex_t mutex_cola_new;
 extern pthread_mutex_t mutex_cola_ready_unica;
+extern pthread_mutex_t mutex_colas_ready_cmn;
 // extern pthread_mutex_t mutex_hilo_exec; // ESTE ESTÁ EN OBSERVACIÓN. POR AHORA NO VA.
 extern pthread_mutex_t mutex_hilo_usando_io;
 extern pthread_mutex_t mutex_cola_blocked_io;
@@ -186,15 +187,13 @@ void ingresar_a_ready_prioridades(t_tcb* tcb);
 */
 void ingresar_a_ready_multinivel(t_tcb* tcb);
 
-t_cola_ready* crear_ready_multinivel(void);
-
 void agregar_ready_multinivel(int prioridad);
 
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid);
 
 t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid);
 
-t_cola_ready* encontrar_cola_multinivel_de_mas_baja_prioridad(void);
+t_list* encontrar_cola_multinivel_de_mas_baja_prioridad(char** key_de_cola_encontrada);
 
 void finalizar_hilos_no_main_de_proceso(t_pcb* pcb);
 /**

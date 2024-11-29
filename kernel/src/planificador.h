@@ -95,7 +95,7 @@ bool ya_existe_mutex(t_pcb* pcb, char* nombre);
 
 t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre);
 
-t_cola_ready* obtener_estructura_cola_ready(int prioridad);
+t_list* obtener_cola_ready_cmn(int prioridad);
 
 bool mutex_esta_asignado_a_hilo(t_mutex* mutex, int tid);
 

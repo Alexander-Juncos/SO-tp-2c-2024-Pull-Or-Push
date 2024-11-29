@@ -54,6 +54,7 @@ void planific_corto_fifo_y_prioridades(void) {
     int* prioridad = NULL;
     char* nombre_mutex = NULL;
     t_mutex* mutex_encontrado = NULL;
+    bool* proceso_finalizo_exitosamente = NULL;
 
     if(cod_algoritmo_planif_corto == FIFO) {
         log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo FIFO.");
@@ -165,11 +166,13 @@ void planific_corto_fifo_y_prioridades(void) {
 
             case SYSCALL_FINALIZAR_PROCESO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            finalizar_proceso();
-            break;
-
-            case SEGMENTATION_FAULT:
-            log_debug(log_kernel_gral, "## SEGMENTATION_FAULT de proceso %d", hilo_exec->pid_pertenencia);
+            proceso_finalizo_exitosamente = list_get(argumentos_recibidos, 0);
+            if(*proceso_finalizo_exitosamente) {
+                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d leyo la instruccion PROCES_EXIT", hilo_exec->pid_pertenencia);
+            }
+            else {
+                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d tuvo SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
+            }
             finalizar_proceso();
             break;
            
@@ -197,10 +200,11 @@ void planific_corto_fifo_y_prioridades(void) {
 // La idea es crear una cola nueva de ready por cada nivel de prioridad que se va conociendo.
 void planific_corto_multinivel_rr(void) {
     int codigo_recibido = -1;
+    t_list* cola_ready = NULL;
+    char* key_cola_ready = NULL;
     // Lista con data del paquete recibido desde cpu.
     t_list* argumentos_recibidos = NULL;
     // variables que defino acá porque las repito en varios case del switch
-    t_cola_ready* estructura_ready = NULL;
     t_pcb* pcb = NULL;
     t_tcb* tcb = NULL;
     int* pid = NULL;
@@ -210,15 +214,19 @@ void planific_corto_multinivel_rr(void) {
     int* prioridad = NULL;
     char* nombre_mutex = NULL;
     t_mutex* mutex_encontrado = NULL;
+    bool* proceso_finalizo_exitosamente = NULL;
 
     log_debug(log_kernel_gral, "Planificador corto plazo listo para funcionar con algoritmo CMN y Round Robin.");
 
     sem_wait(&sem_hilos_ready_en_cmn);
 
-    estructura_ready = obtener_estructura_cola_ready(0);
-    pthread_mutex_lock(&(estructura_ready->mutex_cola_ready));
-    ejecutar_siguiente_hilo(estructura_ready->cola_ready);
-    pthread_mutex_unlock(&(estructura_ready->mutex_cola_ready));
+    pthread_mutex_lock(&mutex_colas_ready_cmn);
+    cola_ready = obtener_cola_ready_cmn(0);
+    ejecutar_siguiente_hilo(cola_ready);
+    // se destruye la cola ready de prioridad 0, pues ahora no tiene hilos.
+    dictionary_remove(diccionario_ready_multinivel, "0");
+    list_destroy(cola_ready);
+    pthread_mutex_unlock(&mutex_colas_ready_cmn);
 
     while (true) {
         /*
@@ -342,11 +350,13 @@ void planific_corto_multinivel_rr(void) {
 
             case SYSCALL_FINALIZAR_PROCESO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: PROCESS_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
-            finalizar_proceso();
-            break;
-
-            case SEGMENTATION_FAULT:
-            log_debug(log_kernel_gral, "## Finaliza el proceso %d. Motivo: SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
+            proceso_finalizo_exitosamente = list_get(argumentos_recibidos, 0);
+            if(*proceso_finalizo_exitosamente) {
+                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d leyo la instruccion PROCES_EXIT", hilo_exec->pid_pertenencia);
+            }
+            else {
+                log_debug(log_kernel_gral, "## Motivo de PROCESS_EXIT: Proceso %d tuvo SEGMENTATION_FAULT", hilo_exec->pid_pertenencia);
+            }
             finalizar_proceso();
             break;
 
@@ -369,10 +379,15 @@ void planific_corto_multinivel_rr(void) {
 
             sem_wait(&sem_hilos_ready_en_cmn);
 
-            estructura_ready = encontrar_cola_multinivel_de_mas_baja_prioridad();
-            pthread_mutex_lock(&(estructura_ready->mutex_cola_ready));
-            ejecutar_siguiente_hilo(estructura_ready->cola_ready);
-            pthread_mutex_unlock(&(estructura_ready->mutex_cola_ready));
+            pthread_mutex_lock(&mutex_colas_ready_cmn);
+            cola_ready = encontrar_cola_multinivel_de_mas_baja_prioridad(&key_cola_ready);
+            ejecutar_siguiente_hilo(cola_ready);
+            if(list_is_empty(cola_ready)) { // si no quedan hilos en esa cola, se destruye.
+                dictionary_remove(diccionario_ready_multinivel, key_cola_ready);
+                list_destroy(cola_ready);
+            }
+            free(key_cola_ready);
+            pthread_mutex_unlock(&mutex_colas_ready_cmn);
         }
         else { // caso en que el hilo continúa ejecutando
             enviar_orden_de_ejecucion_al_cpu(hilo_exec);
@@ -527,9 +542,10 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
     return mutex_encontrado;
 }
 
-t_cola_ready* obtener_estructura_cola_ready(int prioridad) {
-    t_cola_ready* estructura_cola_ready = dictionary_get(diccionario_ready_multinivel, string_itoa(prioridad));
-    return estructura_cola_ready;
+t_list* obtener_cola_ready_cmn(int prioridad) {
+    t_list* cola_ready = NULL;
+    cola_ready = dictionary_get(diccionario_ready_multinivel, string_itoa(prioridad));
+    return cola_ready;
 }
 
 bool mutex_esta_asignado_a_hilo(t_mutex* mutex, int tid) {

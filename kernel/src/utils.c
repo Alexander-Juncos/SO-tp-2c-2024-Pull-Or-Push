@@ -53,6 +53,7 @@ sem_t sem_cola_exit;
 sem_t sem_sincro_new_exit;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_cola_ready_unica;
+pthread_mutex_t mutex_colas_ready_cmn;
 // pthread_mutex_t mutex_hilo_exec;
 pthread_mutex_t mutex_hilo_usando_io;
 pthread_mutex_t mutex_cola_blocked_io;
@@ -163,32 +164,25 @@ void ingresar_a_ready_prioridades(t_tcb* tcb) {
 }
 
 void ingresar_a_ready_multinivel(t_tcb* tcb) {
-
-    t_cola_ready* estructura_ready_correspondiente = NULL;
+    pthread_mutex_lock(&mutex_colas_ready_cmn);
+    t_list* cola_ready_correspondiente = NULL;
     char* key = string_itoa(tcb->prioridad);
-    estructura_ready_correspondiente = dictionary_get(diccionario_ready_multinivel, key);
+    cola_ready_correspondiente = dictionary_get(diccionario_ready_multinivel, key);
 
-    if(estructura_ready_correspondiente == NULL) { // if (no existe cola para esa prioridad)
-        estructura_ready_correspondiente = crear_ready_multinivel();
-        dictionary_put(diccionario_ready_multinivel, key, estructura_ready_correspondiente);
+    if(cola_ready_correspondiente == NULL) { // if (no existe cola para esa prioridad)
+        cola_ready_correspondiente = list_create();
+        dictionary_put(diccionario_ready_multinivel, key, cola_ready_correspondiente);
     }
 
-    pthread_mutex_lock(&(estructura_ready_correspondiente->mutex_cola_ready));
-    list_add(estructura_ready_correspondiente->cola_ready, tcb);
-    pthread_mutex_unlock(&(estructura_ready_correspondiente->mutex_cola_ready));
+    list_add(cola_ready_correspondiente, tcb);
+    pthread_mutex_unlock(&mutex_colas_ready_cmn);
+
     sem_post(&sem_hilos_ready_en_cmn);
 }
 
-t_cola_ready* crear_ready_multinivel(void) {
-    t_cola_ready* nueva_estructura_cola_ready = malloc(sizeof(t_cola_ready));
-    nueva_estructura_cola_ready->cola_ready = list_create();
-    pthread_mutex_init(&(nueva_estructura_cola_ready->mutex_cola_ready), NULL);
-    return nueva_estructura_cola_ready;
-}
-
 void agregar_ready_multinivel(int prioridad) {
-    t_cola_ready* estruct_cola_ready = crear_ready_multinivel();
-    dictionary_put(diccionario_ready_multinivel, string_itoa(prioridad), estruct_cola_ready);
+    t_list* cola_ready = list_create();
+    dictionary_put(diccionario_ready_multinivel, string_itoa(prioridad), cola_ready);
 }
 
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
@@ -205,14 +199,15 @@ t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
 
 t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
     t_tcb* tcb = NULL;
-    t_cola_ready* cola_multinivel = NULL;
+    t_list* cola_multinivel = NULL;
 
     bool _es_la_key_que_busco(char* key) {
         cola_multinivel = dictionary_get(diccionario_ready_multinivel, key);
-        tcb = buscar_tcb_por_pid_y_tid(cola_multinivel->cola_ready, pid, tid);
+        tcb = buscar_tcb_por_pid_y_tid(cola_multinivel, pid, tid);
         return tcb != NULL;
     }
 
+    pthread_mutex_lock(&mutex_colas_ready_cmn);
     t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
     char* key_de_cola_ready = NULL;
     key_de_cola_ready = list_find(lista_de_keys, (void*)_es_la_key_que_busco);
@@ -220,26 +215,30 @@ t_tcb* encontrar_y_remover_tcb_en_ready_multinivel(int pid, int tid) {
     if(key_de_cola_ready != NULL) {
         cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
         sem_wait(&sem_hilos_ready_en_cmn);
-        pthread_mutex_lock(&(cola_multinivel->mutex_cola_ready));
-        list_remove_element(cola_multinivel->cola_ready, tcb);
-        pthread_mutex_unlock(&(cola_multinivel->mutex_cola_ready));
+        list_remove_element(cola_multinivel, tcb);
+        if(list_is_empty(cola_multinivel)) {
+            dictionary_remove(diccionario_ready_multinivel, key_de_cola_ready);
+            list_destroy(cola_multinivel);
+        }
     }
     list_destroy(lista_de_keys);
+    pthread_mutex_unlock(&mutex_colas_ready_cmn);
     return tcb;
 }
 
-t_cola_ready* encontrar_cola_multinivel_de_mas_baja_prioridad(void) {
-    t_cola_ready* cola_multinivel = NULL;
+t_list* encontrar_cola_multinivel_de_mas_baja_prioridad(char** key_de_cola_encontrada) {
+    t_list* cola_ready = NULL;
     t_list* lista_de_keys = dictionary_keys(diccionario_ready_multinivel);
     int cant_keys = list_size(lista_de_keys);
     char* key_de_cola_ready = list_get(lista_de_keys, 0);
     for(int i = 1; i <= cant_keys-1; i++) {
-        if(atoi(list_get(lista_de_keys, i)) > atoi(key_de_cola_ready)) {
+        if(atoi(list_get(lista_de_keys, i)) < atoi(key_de_cola_ready)) {
             key_de_cola_ready = list_get(lista_de_keys, i);
         }
     }
-    cola_multinivel = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
-    return cola_multinivel;
+    cola_ready = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
+    *key_de_cola_encontrada = string_duplicate(key_de_cola_ready);
+    return cola_ready;
 }
 
 void finalizar_hilos_no_main_de_proceso(t_pcb* pcb) {
