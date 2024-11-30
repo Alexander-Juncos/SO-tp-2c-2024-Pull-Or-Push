@@ -79,7 +79,7 @@ void enviar_orden_de_interrupcion(void) {
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->pid_pertenencia), sizeof(int));
 	agregar_a_paquete(paquete, (void*)&(hilo_exec->tid), sizeof(int));
 	enviar_paquete(paquete, socket_cpu_interrupt);
-    log_info(log_kernel_gral, "Envio interrupcion");
+    log_info(log_kernel_gral, "Envio interrupcion a (%d:%d)", *(int*)&(hilo_exec->pid_pertenencia), *(int*)&(hilo_exec->tid));
 	eliminar_paquete(paquete);
 }
 

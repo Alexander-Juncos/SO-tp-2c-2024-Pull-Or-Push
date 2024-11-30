@@ -89,7 +89,7 @@ void* rutina_hilo_interrupcion (void*)
         }
         log_info(log_cpu_oblig, "## Llega interrupción al puerto Interrupt");
         
-        recibido = recibir_paquete(socket_escucha_puerto_interrupt);
+        recibido = recibir_paquete(socket_kernel_interrupt);
         aux_recibido = list_get(recibido, 0);
         pid = *(int*)aux_recibido;
         aux_recibido = list_get(recibido, 1);
