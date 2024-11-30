@@ -3,6 +3,9 @@ bin/
 obj/
 *.log
 
+# Config files
+config/
+
 # Eclipse files
 .settings/
 .cproject
