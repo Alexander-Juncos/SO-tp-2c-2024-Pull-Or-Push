@@ -82,6 +82,8 @@ void* rutina_hilo_interrupcion (void*)
     do
     {
         operacion = recibir_codigo(socket_kernel_interrupt);
+
+        pthread_mutex_lock(&mutex_interrupcion);
         if (operacion != INTERRUPCION)
         {
             log_error(log_cpu_gral, "ERROR: se recibio un operacion desconocida al esperar interrupcion, valor: %d", operacion);
@@ -96,22 +98,21 @@ void* rutina_hilo_interrupcion (void*)
         tid = *(int*)aux_recibido;
 
         if (pid == contexto_exec.pid && tid == contexto_exec.tid){
-            pthread_mutex_lock(&mutex_interrupcion);
             hay_interrupcion = true;
-            pthread_mutex_unlock(&mutex_interrupcion);
             log_debug(log_cpu_gral, "PID: %d - TID: %d - Interrupcion Aceptada", pid, tid);
         } else
         {
             log_debug(log_cpu_gral, "Interrupcion ignorada - PID: %d - TID: %d - no coincide con contexto ejecucion (PID: %d - TID: %d).",
                                     pid, tid, contexto_exec.pid, contexto_exec.tid);
         }
+        pthread_mutex_unlock(&mutex_interrupcion);
 
         list_clean_and_destroy_elements(recibido, free);
     } while (operacion > 0);
 
     free(puerto);
 
-    return;
+    return NULL;
 }
 
 void rutina_main_cpu(void)
@@ -135,9 +136,11 @@ void rutina_main_cpu(void)
     {
         // reseteo interrupcion, kernel se va a encargar de enviar siempre un pedido q pueda ejecutarse
         // gestionara casos de syscalls y esas cosas
+        /*
         pthread_mutex_lock(&mutex_interrupcion);
         hay_interrupcion = false;
         pthread_mutex_unlock(&mutex_interrupcion);
+        */
 
         if (desalojado)
         {
@@ -234,6 +237,14 @@ void rutina_main_cpu(void)
             break;
         }
 
+        // se actualiza registro program counter si corresponde
+        if(!se_hizo_jnz) {
+            contexto_exec.PC++;
+        }
+        else {
+            se_hizo_jnz = false;
+        }
+
         // CHECK INTERRUPT
         pthread_mutex_lock(&mutex_interrupcion);
         if (hay_interrupcion)
@@ -241,13 +252,5 @@ void rutina_main_cpu(void)
         pthread_mutex_unlock(&mutex_interrupcion);
 
         free(instruccion_raw);
-
-        // actualizo registro program counter si corresponde
-        if(!se_hizo_jnz) {
-            contexto_exec.PC++;
-        }
-        else {
-            se_hizo_jnz = false;
-        }
     } 
 }

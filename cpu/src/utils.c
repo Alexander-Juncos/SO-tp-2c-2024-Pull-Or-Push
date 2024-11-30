@@ -242,15 +242,16 @@ char* fetch (void)
     agregar_a_paquete(paq, &(contexto_exec.PC), sizeof(uint32_t));
     enviar_paquete(paq, socket_memoria);
     eliminar_paquete(paq);
-
+    // logs grales y obligatorios
+    log_info(log_cpu_gral, "## PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.tid, (int)contexto_exec.PC);
+    log_info(log_cpu_oblig, "## TID: %d - FETCH - Program Counter: %d", contexto_exec.tid, (int)contexto_exec.PC);
+    
     if(recibir_codigo(socket_memoria) != MENSAJE){
         log_error(log_cpu_gral,"Error en respuesta de siguiente instruccion");
     }
     char* instruccion = recibir_mensaje(socket_memoria);
 
-    // logs grales y obligatorio
-    log_info(log_cpu_gral, "## PID: %d - TID: %d - FETCH - Program Counter: %d", contexto_exec.pid, contexto_exec.tid, (int)contexto_exec.PC);
-    log_info(log_cpu_oblig, "## TID: %d - FETCH - Program Counter: %d",contexto_exec.tid,contexto_exec.PC);
+    // log gral
     log_debug(log_cpu_gral, "Instruccion recibida: %s", instruccion);
 
     return instruccion;
@@ -820,10 +821,10 @@ void interrupcion (op_code tipo_interrupcion)
     switch (tipo_interrupcion)
     {
     case INTERRUPCION:
-        string_append(str_interrupcion, "INTERRUPCION");
+        string_append(&str_interrupcion, "INTERRUPCION");
         break;
     // case SEGMENTATION_FAULT:
-    //     string_append(str_interrupcion, "SEGMENTATION_FAULT");
+    //     string_append(&str_interrupcion, "SEGMENTATION_FAULT");
     //     break;
     default:
         log_debug(log_cpu_gral, "PID: %d - TID: %d - tipo interrupcion invalida, continuando ejecucion.", 
@@ -846,8 +847,9 @@ void interrupcion (op_code tipo_interrupcion)
 
     free(str_interrupcion);
     desalojado = true;
-    // hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
+    hay_interrupcion = false; // cuando se llama a la funcion ya esta protegida x mutex
     // la comento xq la interrupcion se resetea forzadamente al inicio de cada ciclo
+    // Alexis 1: Lo descomento, y quito el reseteo forzado al inicio de cada ciclo
 }
 
 // ==========================================================================

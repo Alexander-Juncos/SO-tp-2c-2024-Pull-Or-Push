@@ -43,6 +43,7 @@ t_list* esperar_cpu_rr(int* codigo_operacion) {
     }
     temporal_destroy(timer);
     pthread_mutex_unlock(&mutex_rutina_quantum);
+    return argumentos_recibidos;
 }
 
 void reiniciar_quantum(void) {
