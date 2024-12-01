@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
     if(argc == 1)
     {
         // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
-        proceso_inicial = nuevo_proceso(32, 0, string_duplicate("PLANI_PROC"));
+        proceso_inicial = nuevo_proceso(32, 0, string_duplicate("RECURSOS_MUTEX_PROC"));
     }
     else
     {
