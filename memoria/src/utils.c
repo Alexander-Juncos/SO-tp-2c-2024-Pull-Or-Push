@@ -39,7 +39,7 @@ bool iniciar_memoria()
     str_auxiliar = config_get_string_value(config, "ESQUEMA");
     if (strcmp(str_auxiliar, "FIJAS") == 0){
         memoria->particiones_dinamicas = false;
-    } else if (strcmp(str_auxiliar, "DINAMICAS")){
+    } else if (strcmp(str_auxiliar, "DINAMICAS") == 0){
         memoria->particiones_dinamicas = true;
     } else {
         log_error(log_memoria_gral, "Error obtener el esquema de particiones");
