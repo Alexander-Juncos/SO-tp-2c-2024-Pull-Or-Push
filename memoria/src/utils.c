@@ -291,7 +291,7 @@ char* mem_lectura (unsigned int desplazamiento)
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
-    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
+    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %p - FIN: %p - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
     
@@ -329,7 +329,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
-    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %p - FIN: %p - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
 
