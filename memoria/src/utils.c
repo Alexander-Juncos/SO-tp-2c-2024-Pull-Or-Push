@@ -83,6 +83,8 @@ bool iniciar_memoria()
     pthread_mutex_init(&mutex_procesos_cargados, NULL);
     // inicio contexto_ejecucion
     contexto_ejecucion = malloc(sizeof(t_contexto_de_ejecucion_mem));
+    contexto_ejecucion->pcb = NULL;
+    contexto_ejecucion->tcb = NULL;
     
     log_debug(log_memoria_gral, "Memoria iniciada correctamente");
     return true;
@@ -167,9 +169,10 @@ bool cargar_contexto_ejecucion(int pid, int tid)
     t_tcb_mem* tcb = NULL;
     bool nuevo_pcb = false;
     pthread_mutex_lock(&mutex_contexto_ejecucion);
+
+    
     // buscando pcb
-    if (pid != contexto_ejecucion->pcb->pid)
-    {
+    if (contexto_ejecucion->pcb == NULL || pid != contexto_ejecucion->pcb->pid) {
         pcb = obtener_pcb(pid);
 
         if (pcb == NULL){
