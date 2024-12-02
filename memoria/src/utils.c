@@ -287,11 +287,11 @@ char* mem_lectura (unsigned int desplazamiento)
     // me desplazo al byte solicitado
     aux_direccion += desplazamiento;
 
-    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %p",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
-    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %d - Limite (REAL): %d - DIR LECTURA (real): %d",
+    log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %d - FIN: %d - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
     
@@ -352,46 +352,53 @@ void consolidar_particion (int indice) // Ya protegida x memoria
     t_particion* particion_derecha = NULL;
 
     // chequeo la particion anterior al indice
-    particion_izquierda = list_get(memoria->lista_particiones, indice -1);
-    if (particion_izquierda->ocupada == false)
+    if(indice > 0)
     {
-        particion_derecha = list_remove(memoria->lista_particiones, indice);
-        
-        // log para debug
-        log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
-                                     indice-1, particion_izquierda->base, particion_izquierda->limite,
-                                     indice, particion_derecha->base, particion_derecha->limite);
+        particion_izquierda = list_get(memoria->lista_particiones, indice -1);
+        if (particion_izquierda->ocupada == false)
+        {
+            if(indice < list_size(memoria->lista_particiones))
+                particion_derecha = list_remove(memoria->lista_particiones, indice);
+            
+            // log para debug
+            log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+                                        indice-1, particion_izquierda->base, particion_izquierda->limite,
+                                        indice, particion_derecha->base, particion_derecha->limite);
 
-        // paso el limite de la particion actual a la particion anterior (extendiendola hacia adelante)
-        particion_izquierda->limite = particion_derecha->limite;
-        free(particion_derecha);
+            // paso el limite de la particion actual a la particion anterior (extendiendola hacia adelante)
+            particion_izquierda->limite = particion_derecha->limite;
+            free(particion_derecha);
 
-        // ajusto indice para el siguiente chequeo ya q la particion a la q apuntaba fue consolidada con la anterior
-        indice--;
+            // ajusto indice para el siguiente chequeo ya q la particion a la q apuntaba fue consolidada con la anterior
+            indice--;
 
-        // logueo
-        log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
-                                    particion_izquierda->base, particion_izquierda->limite);
+            // logueo
+            log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+                                        particion_izquierda->base, particion_izquierda->limite);
+        }
     }
 
     // chequeo la particion siguiente al indice
-    particion_derecha = list_get(memoria->lista_particiones, indice +1);
-    if (particion_derecha->ocupada == false)
+    if (indice < list_size(memoria->lista_particiones) - 1)
     {
-        particion_izquierda = list_remove(memoria->lista_particiones, indice);
+        particion_derecha = list_get(memoria->lista_particiones, indice + 1);
+        if (particion_derecha->ocupada == false)
+        {
+            particion_izquierda = list_remove(memoria->lista_particiones, indice);
 
-        // log para debug
-        log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
-                                     indice, particion_izquierda->base, particion_izquierda->limite,
-                                     indice+1, particion_derecha->base, particion_derecha->limite);
+            // log para debug
+            log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
+                                        indice, particion_izquierda->base, particion_izquierda->limite,
+                                        indice+1, particion_derecha->base, particion_derecha->limite);
 
-        // paso la base de la particion actual a la particion siguiente (extiendola hacia atras)
-        particion_derecha->base = particion_izquierda->base;
-        free(particion_izquierda);
+            // paso la base de la particion actual a la particion siguiente (extiendola hacia atras)
+            particion_derecha->base = particion_izquierda->base;
+            free(particion_izquierda);
 
-        // logueo
-        log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
-                                    particion_derecha->base, particion_derecha->limite);
+            // logueo
+            log_debug(log_memoria_gral, "Particion %d consolidada - Base: %d - Limite(new): %d :", indice, 
+                                        particion_derecha->base, particion_derecha->limite);
+        }
     }
 
     /* RESUMEN VISUAL:
@@ -400,6 +407,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
         P_Izq->libre y P_Der->libre      ==>   P_Izq->base (=)                ||  P_Izq->limite = P_Der->limite 
         P_Izq->Ocupada y P_Der->Ocupada  ==>   NADA  
     */
+    
 }
 
 // ==========================================================================

@@ -26,7 +26,8 @@ int main(int argc, char* argv[]) {
     }
     iniciar_logs(modulo_en_testeo);
 
-    if (iniciar_memoria() == false){
+    if (iniciar_memoria() == false)
+    {
         log_error(log_memoria_gral, "Error al iniciar la memoria, abortando");
         exit(3);
     }
@@ -47,7 +48,8 @@ int main(int argc, char* argv[]) {
     
     /****************** Servidor CPU *******************/
     socket_cpu = esperar_cliente(socket_escucha);
-    if (recibir_handshake(socket_cpu) != CPU){
+    if (recibir_handshake(socket_cpu) != CPU)
+    {
         terminar_programa();
         return EXIT_FAILURE;
     }
@@ -58,7 +60,8 @@ int main(int argc, char* argv[]) {
     // if (valor_aux != 0) {
 	// 	log_error(log_memoria_gral, "Error al crear hilo_recepcion");
 	// } 
-    if (pthread_create(&hilo_recepcion, NULL, rutina_recepcion, NULL) != 0) {
+    if (pthread_create(&hilo_recepcion, NULL, rutina_recepcion, NULL) != 0) 
+    {
 		log_error(log_memoria_gral, "Error al crear hilo_recepcion");
 	} // si esto les parece bien lo podemos dejar así
 
