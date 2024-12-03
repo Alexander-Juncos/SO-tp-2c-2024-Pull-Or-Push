@@ -112,8 +112,9 @@ t_list* decode (char* instruccion)
 
 uint32_t* mmu(uint32_t* dir_log)
 {
-    if (*dir_log > contexto_exec.Limite)
+    if (*dir_log > contexto_exec.Limite || (*dir_log + 4) > contexto_exec.Limite)
     {
+        log_error(log_cpu_gral, "ERROR: direccion logica %d - limite: %d", dir_log, contexto_exec.Limite);
         segmentation_fault = true;
         return 0;
     }
@@ -463,12 +464,13 @@ void instruccion_write_mem (t_list* param)
 
     // MMU
     dir_fis = mmu((uint32_t*)registro_dir);
+    
     if (segmentation_fault)
     {
         free(dir_fis);
         syscall_process_exit(false);
         return;
-    }        
+    }
 	
     // envio pedido lectura a memoria (mismo protocolo q antes sin pid-tid q se toman de contexto exec)
     paquete = crear_paquete(ACCESO_ESCRITURA);

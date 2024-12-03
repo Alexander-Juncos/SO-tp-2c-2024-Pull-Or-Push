@@ -325,7 +325,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
     // me desplazo al byte solicitado
     aux_direccion += desplazamiento;
 
-    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %d - Limite: %d - Desplazamiento: %d",
+    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
                                 desplazamiento);
@@ -337,7 +337,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
     memcpy(aux_direccion, data, BYTES_ACCESO);
 
     // LOG OBLIGATORIO
-    log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
+    log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %p - Tamaño: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 (contexto_ejecucion->pcb->particion->base + desplazamiento),
                                 BYTES_ACCESO);
@@ -351,14 +351,15 @@ void consolidar_particion (int indice) // Ya protegida x memoria
     t_particion* particion_izquierda = NULL;
     t_particion* particion_derecha = NULL;
 
+    int cant_particiones = list_size(memoria->lista_particiones);
+
     // chequeo la particion anterior al indice
     if(indice > 0)
     {
         particion_izquierda = list_get(memoria->lista_particiones, indice -1);
-        if (particion_izquierda->ocupada == false)
+        if (particion_izquierda->ocupada == false && indice < cant_particiones -1)
         {
-            if(indice < list_size(memoria->lista_particiones))
-                particion_derecha = list_remove(memoria->lista_particiones, indice);
+            particion_derecha = list_remove(memoria->lista_particiones, indice);
             
             // log para debug
             log_debug(log_memoria_gral, "Consolidando Memoria - Particiones [num](Base:Limite) - [%d](%d:%d) >> [%d](%d:%d)",
@@ -379,7 +380,7 @@ void consolidar_particion (int indice) // Ya protegida x memoria
     }
 
     // chequeo la particion siguiente al indice
-    if (indice < list_size(memoria->lista_particiones) - 1)
+    if (indice < cant_particiones - 1)
     {
         particion_derecha = list_get(memoria->lista_particiones, indice + 1);
         if (particion_derecha->ocupada == false)
