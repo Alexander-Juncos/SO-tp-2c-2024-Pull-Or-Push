@@ -77,7 +77,6 @@ bool iniciar_fs()
 bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación de t_bloques_libres a vector unsigned int
 {
     FILE* f_metadata;
-    t_bloques_libres* bloques;
     unsigned int bloque_indice;
     t_config* metadata;
 
@@ -156,25 +155,12 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
                                 ruta, bloque_indice);
 
-    // PENDIENTE *******************************************************************************************
-    for (int i=0; i<=list_size(lista_bloques); i++)
-    {
-        for(int j=0; j<bloques->cant_bloques; j++)
-        {
-            fwrite(&(bloques->bloque), fs->tam_bloques, 1, fs->f_bloques);
-            bloques->bloque++;
-        }
-        free(bloques);
-        if (!list_is_empty(lista_bloques))
-        {
-            bloques = list_remove(lista_bloques, 0);
-        }
-        else
-        {
-            list_destroy_and_destroy_elements(lista_bloques, free);
-        }
-    }
-    
+
+    // escribo los indices de los bloques
+    fwrite((vector_bloques+1), sizeof(uint32_t), cant_bloques-1, fs->f_bloques);
+    log_debug(log_fs_gral, "Indices escritos en bloque indice - bloque indice: %d", bloque_indice);
+
+    // REVISAR *******************************************************************************************    
     // Como ya estan los indices en el bloque indice, ya puedo escribir
     escribir_bloques(ruta, bloque_indice, data, cant_bloques);
     
@@ -189,6 +175,9 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
 
 void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsigned int cant_bloques)
 {
+
+    cant_bloques--; // resto el bloque de indices
+
     void* ptr_data = data;
     // tomo todo el bloque de indices
     uint32_t* bloque = malloc(fs->tam_bloques); // es lo mismo que sizeof(uint32_t)*cantidad_indices_max
