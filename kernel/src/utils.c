@@ -340,6 +340,7 @@ void terminar_programa()
 
 void enviar_nuevo_hilo(t_tcb* tcb, int socket) {
     t_paquete* paquete = crear_paquete(CREAR_HILO);
+    agregar_a_paquete(paquete, (void*)&(tcb->pid_pertenencia), sizeof(int));
     agregar_a_paquete(paquete, (void*)&(tcb->tid), sizeof(int));
     char* path = tcb->path_relativo_archivo_instrucciones;
     agregar_a_paquete(paquete, (void*)path, strlen(path) + 1);

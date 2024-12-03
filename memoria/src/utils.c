@@ -420,18 +420,15 @@ void consolidar_particion (int indice) // Ya protegida x memoria
 
 void rutina_crear_proceso(t_list* param, int socket_cliente)
 {
-    void* aux; // para recibir parametros
+    // para recibir parametros
     int pid;
     int tamanio;
     char* ruta;
 
     // descargo parametros
-    aux = list_get(param, 0);
-    pid = *(int*) aux;
-    aux = list_get(param, 1);
-    tamanio = *(int*) aux;
-    aux = list_get(param, 2);
-    ruta = aux;
+    pid = *(int*)list_get(param, 0);
+    tamanio = *(int*)list_get(param, 1);
+    ruta = (char*)list_get(param, 2);
 
     t_pcb_mem* pcb_new = iniciar_pcb(pid, tamanio, ruta);
 
@@ -456,12 +453,14 @@ void rutina_finalizar_proceso(t_list* param, int socket_cliente)
     t_particion* particion_liberada = NULL;
     int pid = *(int*)list_get(param,0);
     int tamanio_proceso_eliminado;
+    
+    // busco proceso (pcb)
+    pthread_mutex_lock(&mutex_procesos_cargados);
     t_pcb_mem* pcb = obtener_pcb(pid);
-
+    pthread_mutex_unlock(&mutex_procesos_cargados);
 
     // Limpiando cada TCB perteneciente al proceso y sus estrucutras
     pthread_mutex_lock(&(pcb->sem_p_mutex));
-    
     log_debug(log_memoria_gral, "PID: %d - Se van a liberar %d TCB asociados",
                                 pcb->pid,
                                 list_size(pcb->lista_tcb));
@@ -511,28 +510,29 @@ void rutina_finalizar_proceso(t_list* param, int socket_cliente)
 
 void rutina_crear_hilo(t_list* param, int socket_cliente)
 {
-    // trabaja sobre el proceso que se encuentre actualemnte en contexto de ejecucion
-    void* aux; // para recibir parametros
+    // para recibir parametros
+    int pid;
     int tid;
     char* ruta;
 
     // descargo parametros
-    // aux = list_get(param, 0);
-    // int pid = *(int*) aux;
-    aux = list_get(param, 0);
-    tid = *(int*) aux;
-    aux = list_get(param, 1);
-    ruta = aux;
+    pid = *(int*)list_get(param, 0);
+    tid = *(int*)list_get(param, 1);
+    ruta = (char*)list_get(param, 2);
 
-    t_pcb_mem* tcb_new = iniciar_tcb(contexto_ejecucion->pcb->pid, tid, ruta);
+    t_tcb_mem* tcb_new = iniciar_tcb(pid, tid, ruta);
 
     if (tcb_new == NULL) {
         enviar_mensaje("ERROR", socket_cliente);
     } else {
+        // busco proceso (pcb)
+        pthread_mutex_lock(&mutex_procesos_cargados);
+        t_pcb_mem* pcb = obtener_pcb(pid);
+        pthread_mutex_unlock(&mutex_procesos_cargados);
         // agrego tcb a la lista del proceso
-        pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
-        list_add(contexto_ejecucion->pcb->lista_tcb, tcb_new);
-        pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
+        pthread_mutex_lock(&(pcb->sem_p_mutex));
+        list_add(pcb->lista_tcb, tcb_new);
+        pthread_mutex_unlock(&(pcb->sem_p_mutex));
 
         enviar_mensaje("OK", socket_cliente);
 
@@ -543,20 +543,22 @@ void rutina_crear_hilo(t_list* param, int socket_cliente)
 
 void rutina_finalizar_hilo(t_list* param, int socket_cliente)
 {
-    void* aux; // para recibir parametros
+    // para recibir parametros
     int tid;
     int pid; 
 
     // descargo parametros
-    // aux = list_get(param, 0);
-    // int pid = *(int*) aux;
     tid = *(int*)list_get(param, 0);
     pid = *(int*)list_get(param, 1);
-    t_pcb_mem* pcb = obtener_pcb(pid); 
 
-    pthread_mutex_lock(&(contexto_ejecucion->pcb->sem_p_mutex));
+    // busco proceso (pcb)
+    pthread_mutex_lock(&mutex_procesos_cargados);
+    t_pcb_mem* pcb = obtener_pcb(pid);
+    pthread_mutex_unlock(&mutex_procesos_cargados);
+    // elimino tcb
+    pthread_mutex_lock(&(pcb->sem_p_mutex));
     eliminar_tcb(pcb->lista_tcb, tid); //cambio para eliminar el tcb correspondiente
-    pthread_mutex_unlock(&(contexto_ejecucion->pcb->sem_p_mutex));
+    pthread_mutex_unlock(&(pcb->sem_p_mutex));
 
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Hilo Destruido - (PID:TID) - (%d:%d)", pid, tid);
@@ -564,7 +566,7 @@ void rutina_finalizar_hilo(t_list* param, int socket_cliente)
     enviar_mensaje("OK", socket_cliente);
 }
 
-void memory_dump_fs (t_list* pedido, int socket_cliente)
+void memory_dump_fs (t_list* param, int socket_cliente)
 {
     char* ip;
     char* puerto;
@@ -575,6 +577,14 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
     int tamanio_proceso;
     char* timestamp;
 
+    // para recibir parametros
+    int pid;
+    int tid;
+
+    // descargo parametros
+    pid = *(int*)list_get(param, 0);
+    tid = *(int*)list_get(param, 1);
+
     // preparo la conexion
     ip = config_get_string_value(config, "IP_FILESYSTEM");
     puerto = config_get_string_value(config, "PUERTO_FILESYSTEM");
@@ -582,10 +592,19 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
     enviar_handshake(MEMORIA, socket_fs);
     recibir_y_manejar_rta_handshake(log_memoria_gral, "Memoria", socket_fs);
 
+    // busco proceso (pcb)
+    pthread_mutex_lock(&mutex_procesos_cargados);
+    t_pcb_mem* pcb = obtener_pcb(pid);
+    pthread_mutex_unlock(&mutex_procesos_cargados);
+    // busco tcb
+    pthread_mutex_lock(&(pcb->sem_p_mutex));
+    t_tcb_mem* tcb = obtener_tcb(tid, pcb->lista_tcb);
+    pthread_mutex_unlock(&(pcb->sem_p_mutex));
+
     // preparo lo que voy a enviar
-    tamanio_proceso = contexto_ejecucion->pcb->particion->limite - contexto_ejecucion->pcb->particion->base + 1;
+    tamanio_proceso = pcb->particion->limite - pcb->particion->base + 1;
     data_proceso = malloc(tamanio_proceso);
-    aux_mem = memoria->espacio_usuario + contexto_ejecucion->pcb->particion->base;
+    aux_mem = memoria->espacio_usuario + pcb->particion->base;
     // cargo data
     pthread_mutex_lock(&mutex_memoria);
     memcpy(data_proceso, aux_mem, tamanio_proceso);
@@ -594,8 +613,8 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
 
     // creo el paquete y lo envio
     paquete = crear_paquete(MEMORY_DUMP);
-    agregar_a_paquete(paquete, &(contexto_ejecucion->pcb->pid), sizeof(int));
-    agregar_a_paquete(paquete, &(contexto_ejecucion->tcb->tid), sizeof(int));
+    agregar_a_paquete(paquete, &(pcb->pid), sizeof(int));
+    agregar_a_paquete(paquete, &(tcb->tid), sizeof(int));
     agregar_a_paquete(paquete, timestamp, string_length(timestamp) + 1);
     agregar_a_paquete(paquete, &tamanio_proceso, sizeof(int));
     agregar_a_paquete(paquete, data_proceso, tamanio_proceso);       
@@ -604,7 +623,7 @@ void memory_dump_fs (t_list* pedido, int socket_cliente)
 
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Memory Dump solicitado - (PID:TID) - (%d:%d)",
-                                contexto_ejecucion->pcb->pid,contexto_ejecucion->tcb->tid);
+                                pid, tid);
 
     // recibo respuesta y la reenvio a kernel
     if (recibir_mensaje_de_rta(log_memoria_gral, "MEMORY_DUMP", socket_fs)){
