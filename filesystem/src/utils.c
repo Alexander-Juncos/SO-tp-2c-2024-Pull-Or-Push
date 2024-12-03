@@ -26,8 +26,6 @@ char* PATH_BASE;
 
 bool iniciar_fs()
 {
-    imprimir_mensaje("FS en Proceso. Revisar carga de archivo bitmap preexistente");
-
     // variables
     fs = malloc(sizeof(t_file_system));
     char *ruta_aux;
@@ -76,7 +74,7 @@ bool iniciar_fs()
     return true;
 }
 
-bool memory_dump(char* ruta, int size, void* data)
+bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación de t_bloques_libres a vector unsigned int
 {
     FILE* f_metadata;
     t_bloques_libres* bloques;
@@ -84,14 +82,17 @@ bool memory_dump(char* ruta, int size, void* data)
     t_config* metadata;
 
     // preparo para buscar bloques
-    t_list* lista_bloques;
+    unsigned int* vector_bloques;
     unsigned int cant_bloques = size / fs->tam_bloques;
     if (size % fs->tam_bloques != 0)
         cant_bloques++;
+    cant_bloques++; // agrego el bloque de indices
     
     // verifico si la cant_bloques es valida, si no va a entrar en un unico bloque de indices => ERROR
     if (cant_bloques > cantidad_indices_max)
     {
+        log_error(log_fs_gral, "cantidad de bloques necesaria [%d] - supera el numero maximo de indices posible [%d].",
+                    cant_bloques, cantidad_indices_max);
         return false;
     }
 
@@ -100,36 +101,40 @@ bool memory_dump(char* ruta, int size, void* data)
 
     // busco bloques libres
     pthread_mutex_lock(&mutex_bitmap);
-    lista_bloques = bloques_libres(cant_bloques);
-    pthread_mutex_unlock(&mutex_bitmap);
-
+    vector_bloques = bloques_libres(cant_bloques);
+    // pthread_mutex_unlock(&mutex_bitmap);       // amplio la ZC para mayor seguridad
 
     // si la lista no esta iniciada es xq no hay bloques suficientes - ABORTAR
-    if (lista_bloques == NULL)
+    if (vector_bloques == NULL)
     {
-        log_error(log_fs_gral, "ERROR en la Creacion de archivo: \"%s\" - No hay bloques suficientes - cantidad requerida: %i", ruta, cant_bloques);
+        pthread_mutex_unlock(&mutex_bitmap);  // si fallo libero la ZC
+        log_error(log_fs_gral, "ERROR en la Creacion de archivo: \"%s\" - No hay bloques suficientes - cantidad requerida: %i",
+                                ruta, cant_bloques);
         free(ruta_absoluta);
         return false;
     }
 
     // marco como ocupados los bloques
-    pthread_mutex_lock(&mutex_bitmap);
-    marcar_bloques_libres(lista_bloques, ruta);
+    // pthread_mutex_lock(&mutex_bitmap);
+    marcar_bloques_libres(vector_bloques, cant_bloques, ruta);
     pthread_mutex_unlock(&mutex_bitmap);
 
-    // obtengo el bloque indice y lo saco de la lista
-    bloques = list_remove(lista_bloques, 0);
-    bloque_indice = bloques->bloque;
-    if (bloques->cant_bloques == 1)
-    { // el elemento esta vacio
-        free(bloques);
-        bloques = list_remove(lista_bloques, 0);
-    }
-    else
-    { // como hay + de 1 bloque libre seguido, paso al siguiente y reduzco la cantidad 
-        bloques->bloque++; 
-        bloques->cant_bloques--;
-    }
+    // obtengo el bloque indice
+    bloque_indice = *vector_bloques;
+
+    // // obtengo el bloque indice y lo saco de la lista
+    // bloques = list_remove(lista_bloques, 0);
+    // bloque_indice = bloques->bloque;
+    // if (bloques->cant_bloques == 1)
+    // { // el elemento esta vacio
+    //     free(bloques);
+    //     bloques = list_remove(lista_bloques, 0);
+    // }
+    // else
+    // { // como hay + de 1 bloque libre seguido, paso al siguiente y reduzco la cantidad 
+    //     bloques->bloque++; 
+    //     bloques->cant_bloques--;
+    // }
 
     // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
     f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
@@ -137,7 +142,7 @@ bool memory_dump(char* ruta, int size, void* data)
 
     metadata = config_create(ruta_absoluta);    
         
-    config_set_value(metadata, "SIZE", string_itoa(cant_bloques));
+    config_set_value(metadata, "SIZE", string_itoa(size));
     config_set_value(metadata, "INDEX_BLOCK", string_itoa(bloque_indice));
     config_save(metadata);
 
@@ -151,6 +156,7 @@ bool memory_dump(char* ruta, int size, void* data)
     log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
                                 ruta, bloque_indice);
 
+    // PENDIENTE *******************************************************************************************
     for (int i=0; i<=list_size(lista_bloques); i++)
     {
         for(int j=0; j<bloques->cant_bloques; j++)
@@ -247,7 +253,11 @@ bool rutina_memory_dump(t_list* param)
     string_append(&nombre, "-");
     string_append(&nombre, timestamp);
     string_append(&nombre, ".dmp");
+
+    // agrego un log
+    log_debug(log_fs_gral, "Pedido rutina memory_dump >> Nombre: %s - Tamaño: %d", nombre, size);
     
+    // realizo el memory_dump
     resultado = memory_dump(nombre, size, data);
 
     free(nombre);
@@ -263,7 +273,7 @@ void iniciar_bitmap()
 {
     bitmap = malloc(sizeof(t_bitmap));
 
-    struct stat stat_buf;
+    struct stat stat_buf; // para obtener datos del archivo bitmap si existiera
     int file_desc;
     int aux_tamanio = fs->cant_bloques / 8; // convierte bytes a bits
     if (aux_tamanio % 8 != 0) 
@@ -294,7 +304,7 @@ void iniciar_bitmap()
         file_desc = fileno(bitmap->f);
         fstat(file_desc, &stat_buf);
         ftruncate(file_desc, aux_tamanio);
-        log_debug(log_fs_gral, "bitmap.dat sobre-escrito - Creando nuevo FS.");
+        log_debug(log_fs_gral, "bitmap.dat sobre-escrito - Creado nuevo FS.");
     }
     else {
         log_debug(log_fs_gral, "bitmap.dat coincide con el esperado por config - Cargando.");
@@ -315,27 +325,6 @@ void iniciar_bitmap()
     imprimir_bitmap();
     contar_bloques_libres_totales();
 }
-
-// void contar_bloques_libres_totales()
-// {
-//     unsigned int inicio_busqueda = 0;
-//     unsigned int bloque_actual = inicio_busqueda;
-//     unsigned int cantidad;
-    
-//     do
-//     {
-//         if (bloque_actual > fs->cant_bloques){
-//             bloque_actual = 0;
-//         }
-
-//         if (!(bitarray_test_bit(bitmap->bitarray, bloque_actual)))
-//             cantidad++;
-
-//         bloque_actual++;
-//     } while (inicio_busqueda != bloque_actual);
-
-//     bitmap->bloques_libres_tot = cantidad;
-// }
 
 void contar_bloques_libres_totales() {
     unsigned int bloque_actual = 0;  // Inicia en el primer bloque
@@ -364,89 +353,64 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
     imprimir_bitmap();
 
     msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
-
 }
 
-t_list* bloques_libres (unsigned int cantidad)
+unsigned int* bloques_libres (unsigned int cantidad)
 {
-    t_bloques_libres* bloqs_lib;
-    unsigned int inicio_busqueda = ultimo_bloque_revisado;
-    t_list* lista = list_create();
+    unsigned int* bloques;
+    unsigned int contador = 0;
 
-    // agrego el bloque indice
-    cantidad++;
-    
-    do
+    if (cantidad > bitmap->bloques_libres_tot) 
     {
-        ultimo_bloque_revisado++;
-
-        if (ultimo_bloque_revisado > fs->cant_bloques){
-            ultimo_bloque_revisado = 0;
-        }
-
-        if (bitarray_test_bit(bitmap->bitarray, ultimo_bloque_revisado))
-        { // el bloque esta ocupado, guardo lo q conte y limpio
-            // si la estructura no esta limpia hay q cargarla y limpiarla
-            if (bloqs_lib != NULL)
-            {
-                list_add(lista, bloqs_lib);
-                bloqs_lib = NULL;
-            }
-        }
-        else // el bloque esta libre, lo agrego
-        { // Si el bloque esta libre lo cargo en estructura
-            cantidad--;
-            // anido xq la vida es una
-            if(bloqs_lib == NULL)
-            {
-                bloqs_lib = malloc(sizeof(t_bloques_libres));
-                bloqs_lib->bloque = ultimo_bloque_revisado;
-                bloqs_lib->cant_bloques = 1;
-            }
-            else // ya habia bloques libres previos (continuos)
-            {
-                bloqs_lib->cant_bloques++;
-            } 
-        }
-    } while (inicio_busqueda != ultimo_bloque_revisado && cantidad > 0);
-
-    if (cantidad == 0) // Si encontro todos los bloques q necesitaba
-    {
-        if (bloqs_lib != NULL)
-        {
-            list_add(lista, bloqs_lib);
-            bloqs_lib = NULL;
-        }
-        return lista;
+        log_error(log_fs_gral, "Cantidad de bloques libres FS: %d - es menor a la cantidad requerida: %d",
+                                bitmap->bloques_libres_tot, cantidad);
+        return NULL;
     }
+
+    bloques = malloc(sizeof(unsigned int) * cantidad); // reservo un vector de [cantidad] int
     
-    // Si no lo encontro hay q limpiar y devolver NULL
-    list_destroy_and_destroy_elements(lista, free);
-    if (bloqs_lib != NULL)
-        free(bloqs_lib);
-    return NULL;    
+    // reviso el bitmap desde la posición 0 (mas simple)
+    for (unsigned int i=0; i < fs->cant_bloques; i++)
+    {
+        if (bitarray_test_bit(bitmap->bitarray, i) == false) // bloque libre
+        {
+            *(bloques + contador) = i; // escribo en bloques[contador] el indice del bloque libre
+            contador++;
+        }
+
+        // si se obtienen los bloques necesarios retorno;
+        if (contador == cantidad)
+        {
+            return bloques;
+        }
+    }
+
+    // nunca deberia llegar a este punto
+    log_error(log_fs_gral, "ERROR: no encontro los bloques libres al revisar todo el bitmap, esto no deberia pasar");
+    free(bloques);
+    return NULL;
 }
 
-void marcar_bloques_libres(t_list* lista, char* archivo)
+void marcar_bloques_libres(unsigned int* v_bloques, unsigned int cant_bloques, char* archivo)
 {
-    t_bloques_libres* bloques;
-    unsigned int contador;
+    unsigned int bloque;
+    unsigned int bloques_libres_iniciales = bitmap->bloques_libres_tot;
 
-    for (unsigned int i=0; i<list_size(lista); i++)
+    log_debug(log_fs_gral, "Bloques libres actuales: %d", bitmap->bloques_libres_tot);
+
+    for (unsigned int i=0; i < cant_bloques; i++)
     {
-        bloques = list_get(lista, i);
-        contador = 0;
+        bloque = *(v_bloques + i);
+        bitarray_set_bit(bitmap->bitarray, bloque);
+        bitmap->bloques_libres_tot--;
 
-        while (contador != bloques->cant_bloques)
-        {
-            bitarray_set_bit(bitmap->bitarray, bloques->bloque + contador);
-            bitmap->bloques_libres_tot--;
-
-            // LOG OBLIGATORIO
-            log_info(log_fs_oblig, "## Bloque asignado: %d - Archivo: \"%s\" - Bloques Libres: %d", 
-                                    bloques->bloque + contador, archivo, bitmap->bloques_libres_tot);
-        }
+        // LOG OBLIGATORIO
+        log_info(log_fs_oblig, "## Bloque asignado: %d - Archivo: \"%s\" - Bloques Libres: %d", 
+                                bloque, archivo, bitmap->bloques_libres_tot);
     }
+
+    log_debug(log_fs_gral, "Se marcaron %d bloques - bloques libres: [%d]>>[%d]",
+                            cant_bloques, bloques_libres_iniciales, bitmap->bloques_libres_tot);
     actualizar_f_bitmap();
 }
 

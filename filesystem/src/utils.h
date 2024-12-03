@@ -50,10 +50,11 @@ extern pthread_mutex_t mutex_fs;
 extern pthread_mutex_t mutex_bitmap;
 extern t_bitmap* bitmap;
 
-typedef struct {
-    unsigned int bloque;
-    unsigned int cant_bloques;
-} t_bloques_libres;
+// typedef struct {
+//     unsigned int bloque;
+//     unsigned int cant_bloques;
+// } t_bloques_libres;
+// lo cambio para tomar simplificar el codigo (vector de unsigned int)
 
 // ==========================================================================
 // ====  Funciones Internas:  ===============================================
@@ -89,11 +90,11 @@ void actualizar_f_bitmap();
 
 /// @brief Revisa el bitmap buscando bloques libres y los va agregando una lista (de t_bloques_libres). Usando una busqueda
 /// secuencial (usando ultimo_bloque_revisado)
-/// @param cantidad  cantidad de bloques libres q tiene q encontrar
-/// @return          Si no encontro suficiente retorna NULL, sino retorna la lista cargada
-t_list* bloques_libres (unsigned int cantidad);
+/// @param cantidad  cantidad de bloques libres q tiene q encontrar (incluye bloque indices)
+/// @return          Si no encontro suficiente retorna NULL, sino retorna un vector con los indices
+unsigned int* bloques_libres (unsigned int cantidad);
 
-void marcar_bloques_libres(t_list* lista, char* archivo);
+void marcar_bloques_libres(unsigned int* v_bloques, unsigned int cant_bloques, char* archivo);
 
 /// @brief imprime el bitmap en lineas q contienen 20 bits del bitarray c/u 
 void imprimir_bitmap();

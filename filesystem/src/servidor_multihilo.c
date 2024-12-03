@@ -62,10 +62,12 @@ void* rutina_ejecucion (void* nada)
             
             if (rutina_memory_dump(pedido))
             {
+                log_debug(log_fs_gral, "Memory_dump exitoso - Notificando memoria.");
                 enviar_mensaje("OK", socket_cliente);
             }
             else
             {
+                log_debug(log_fs_gral, "Fallo al realizar Memory_dump - Notificando memoria");
                 enviar_mensaje("ERROR", socket_cliente);
             }
 
@@ -73,6 +75,7 @@ void* rutina_ejecucion (void* nada)
             break;
 
             // No sé si falta algún case para que reciba el handshake de memoria, ya que cada vez que se conecta libera el socket y rompe toda la ejecución
+            // ** ya lo maneja al iniciar la rutina
     
         default:
             // consumo lo q haya llegado (para liberar socket) (esto puede causar algun error)
