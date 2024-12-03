@@ -326,10 +326,10 @@ bool mem_escritura (unsigned int dir_fisica, void* data)
     // me desplazo al byte solicitado
     aux_direccion += dir_fisica;
 
-    // log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %p",
-    //                             contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
-    //                             contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
-    //                             ((*(uint32_t*)aux_direccion) - (*(uint32_t*)base_part)));
+    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %p",
+                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+                                ((*(uint32_t*)aux_direccion) - (*(uint32_t*)base_part)));
     log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %p - FIN: %p - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
