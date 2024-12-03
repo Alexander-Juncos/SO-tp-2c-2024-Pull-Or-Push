@@ -629,7 +629,9 @@ void memory_dump_fs (t_list* param, int socket_cliente)
     if (recibir_mensaje_de_rta(log_memoria_gral, "MEMORY_DUMP", socket_fs)){
         enviar_mensaje("OK", socket_cliente);
     } else {
-        enviar_mensaje("ERROR FS al realizar DUMP_MEMORY", socket_cliente);
+        char* mensaje_error = string_from_format("ERROR FS al realizar DUMP_MEMORY de (%d:%d)", pid, tid);
+        enviar_mensaje(mensaje_error, socket_cliente);
+        free(mensaje_error);
     }
 
     liberar_conexion(log_memoria_gral, "memoria >> FS", socket_fs);
