@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
     if(argc == 1)
     {
         // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
-        proceso_inicial = nuevo_proceso(128, 0, string_duplicate("MEM_DINAMICA_BASE"));
+        proceso_inicial = nuevo_proceso(8, 0, string_duplicate("PRUEBA_FS"));
     }
     else
     {

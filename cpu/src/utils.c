@@ -122,6 +122,8 @@ uint32_t* mmu(uint32_t* dir_log)
     uint32_t* dir_fis = malloc(sizeof(uint32_t));
     *dir_fis = contexto_exec.Base + *dir_log;
 
+    log_debug(log_cpu_gral, "MMU - Base: %d - Direccion: %d - Limite: %d", contexto_exec.Base, *dir_fis, contexto_exec.Limite);
+
     return dir_fis;
 }
 

@@ -271,26 +271,27 @@ char* obtener_instruccion(uint32_t num_instruccion)
     return instruccion;
 }
 
-char* mem_lectura (unsigned int desplazamiento)
+char* mem_lectura (unsigned int dir_fisica)
 {
     char* data = malloc (BYTES_ACCESO);// bytes de lectura
 
     // apunto al espacio de usuario
+    // apunto al espacio de usuario
     void* aux_direccion = memoria->espacio_usuario; 
     // me muevo a la particion del proceso en ejecucion
-    aux_direccion += contexto_ejecucion->pcb->particion->base;
+    // aux_direccion += contexto_ejecucion->pcb->particion->base;
 
     // Lo siguiente es solo a motivo de debug 
-    void* base_part = aux_direccion;
+    void* base_part = aux_direccion + contexto_ejecucion->pcb->particion->base;
     void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
 
     // me desplazo al byte solicitado
-    aux_direccion += desplazamiento;
+    aux_direccion += dir_fisica;
 
-    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %p",
+    log_debug(log_memoria_gral, "ACCESO_LECTURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
                                 contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
-                                desplazamiento);
+                                ((*(uint32_t*)aux_direccion) - (*(uint32_t*)base_part)));
     log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %p - FIN: %p - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
@@ -304,31 +305,31 @@ char* mem_lectura (unsigned int desplazamiento)
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
-                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                dir_fisica,
                                 BYTES_ACCESO);
 
     retardo_operacion();
     return data;
 }
 
-bool mem_escritura (unsigned int desplazamiento, void* data)
+bool mem_escritura (unsigned int dir_fisica, void* data)
 {
     // apunto al espacio de usuario
     void* aux_direccion = memoria->espacio_usuario; 
     // me muevo a la particion del proceso en ejecucion
-    aux_direccion += contexto_ejecucion->pcb->particion->base;
+    // aux_direccion += contexto_ejecucion->pcb->particion->base;
 
     // Lo siguiente es solo a motivo de debug 
-    void* base_part = aux_direccion;
+    void* base_part = aux_direccion + contexto_ejecucion->pcb->particion->base;
     void* limite_part = base_part + contexto_ejecucion->pcb->particion->limite;
 
     // me desplazo al byte solicitado
-    aux_direccion += desplazamiento;
+    aux_direccion += dir_fisica;
 
-    log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %d",
-                                contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
-                                contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
-                                desplazamiento);
+    // log_debug(log_memoria_gral, "ACCESO_ESCRITURA - PID: %d - TID: %d - Base: %p - Limite: %p - Desplazamiento: %p",
+    //                             contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
+    //                             contexto_ejecucion->pcb->particion->base,contexto_ejecucion->pcb->particion->limite,
+    //                             ((*(uint32_t*)aux_direccion) - (*(uint32_t*)base_part)));
     log_debug(log_memoria_gral, "DIR Espacio Usuario (REAL) INI: %p - FIN: %p - Base (REAL): %p - Limite (REAL): %p - DIR LECTURA (real): %p",
                                 memoria->espacio_usuario, (memoria->espacio_usuario + memoria->tamano_memoria -1),
                                 base_part, limite_part, aux_direccion);
@@ -339,7 +340,7 @@ bool mem_escritura (unsigned int desplazamiento, void* data)
     // LOG OBLIGATORIO
     log_info(log_memoria_oblig, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %p - Tamaño: %d",
                                 contexto_ejecucion->pcb->pid, contexto_ejecucion->tcb->tid,
-                                (contexto_ejecucion->pcb->particion->base + desplazamiento),
+                                dir_fisica,
                                 BYTES_ACCESO);
 
     retardo_operacion();
@@ -857,7 +858,7 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     // creo nuevo elemento de la lista (nueva particion)
     t_particion* p_new = malloc(sizeof(t_particion));
     p_new->base = p->base;
-    p_new->limite = tamanio -1;
+    p_new->limite = p->base + tamanio -1;
     p_new->ocupada = true;
 
     // como la referencia ya apunta a un elemento existente lo modifico
@@ -868,7 +869,8 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     */
 
     // agrego el nuevo elemento en indice adecuado
-    list_add_in_index(memoria->lista_particiones, obtener_indice_particion(p_new->base), p_new);
+    int indice = obtener_indice_particion(p_new->base);
+    list_add_in_index(memoria->lista_particiones, indice, p_new);
     /*
         como la particion recibida fue actualizada el indice obtenido va a ser el q le correspondia...
         x lo q su lugar en la lista sera tomado x p_new y pasando al siguiente indice.
