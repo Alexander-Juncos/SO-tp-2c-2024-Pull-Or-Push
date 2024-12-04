@@ -51,9 +51,9 @@ bool iniciar_memoria()
     str_auxiliar = config_get_string_value(config, "ALGORITMO_BUSQUEDA");
     if (strcmp(str_auxiliar, "FIRST") == 0){
         memoria->algorit_busq = FIRST_FIT;
-    } else if (strcmp(str_auxiliar, "BEST")){
+    } else if (strcmp(str_auxiliar, "BEST") == 0){
         memoria->algorit_busq = BEST_FIT;
-    } else if (strcmp(str_auxiliar, "WORST")){
+    } else if (strcmp(str_auxiliar, "WORST") == 0){
         memoria->algorit_busq = WORST_FIT; 
     } else {
         log_error(log_memoria_gral, "Error al obtener el algoritmo busqueda");

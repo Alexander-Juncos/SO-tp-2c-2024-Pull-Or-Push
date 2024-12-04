@@ -317,7 +317,7 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     // si no cambio pid y tid entonces el contexto ya esta en CPU
     if (contexto_exec.pid == pid && contexto_exec.tid == tid)
     {
-        log_trace(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
+        log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
         return true;
     }
     log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
@@ -519,6 +519,8 @@ void syscall_io (t_list* param)
     char* tiempo_como_string;
     int tiempo;
 
+    // se pasa a la sig instruccion para evitar un bucle inf de io
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -541,6 +543,8 @@ void syscall_io (t_list* param)
     eliminar_paquete(paquete);
     
     desalojado = true;
+    // forzamos el cambio de contexto
+    contexto_exec.pid = -10;
 }
 
 void syscall_process_create (t_list* param)
