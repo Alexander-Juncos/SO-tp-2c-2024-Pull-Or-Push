@@ -79,6 +79,7 @@ int main(int argc, char* argv[]) {
     sem_init(&sem_cola_blocked_io, 0, 0);
     sem_init(&sem_cola_exit, 0, 0);
     sem_init(&sem_sincro_new_exit, 0, 0);
+    sem_init(&sem_sincro_rta_memory_dump, 0, 0);
     
     pthread_mutex_init(&mutex_cola_new, NULL);
     pthread_mutex_init(&mutex_hilo_usando_io, NULL);
@@ -88,6 +89,7 @@ int main(int argc, char* argv[]) {
     pthread_mutex_init(&mutex_procesos_activos, NULL);
     pthread_mutex_init(&mutex_procesos_exit, NULL);
     pthread_mutex_init(&mutex_sincro_new_exit, NULL);
+    pthread_mutex_init(&mutex_sincro_rta_memory_dump, NULL);
     
             /*************** Lógica de Kernel ***************/
     algoritmo_plani = config_get_string_value(config, "ALGORITMO_PLANIFICACION");

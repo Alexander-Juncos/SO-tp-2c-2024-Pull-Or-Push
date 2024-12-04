@@ -50,6 +50,7 @@ extern int socket_cpu_dispatch;
 extern int socket_cpu_interrupt;
 
 extern bool new_puede_intentar_crear_proceso;
+extern bool pthread_memory_dump_necesita_finalizar_hilo;
 
 extern t_list* cola_new; // Estado NEW. Es una lista de t_pcb* (Procesos).
 extern t_list* cola_ready_unica; // Estado READY (para FIFO y PRIORIDADES). Es una lista de t_tcb* (Hilos).
@@ -86,6 +87,7 @@ extern sem_t sem_hilos_ready_en_cmn; // Cantidad de hilos en estado READY (para 
 extern sem_t sem_cola_blocked_io;
 extern sem_t sem_cola_exit;
 extern sem_t sem_sincro_new_exit;
+extern sem_t sem_sincro_rta_memory_dump;
 extern pthread_mutex_t mutex_cola_new;
 extern pthread_mutex_t mutex_cola_ready_unica;
 extern pthread_mutex_t mutex_colas_ready_cmn;
@@ -97,6 +99,7 @@ extern pthread_mutex_t mutex_cola_exit;
 extern pthread_mutex_t mutex_procesos_activos;
 extern pthread_mutex_t mutex_procesos_exit;
 extern pthread_mutex_t mutex_sincro_new_exit;
+extern pthread_mutex_t mutex_sincro_rta_memory_dump;
 /* Sacados del tp anterior
 ----------------------------------------------
 extern pthread_mutex_t mutex_proceso_exec;

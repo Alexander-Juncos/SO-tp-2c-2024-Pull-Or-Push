@@ -41,6 +41,7 @@ void iniciar_planificador(void) {
  */ 
 
 void planific_corto_fifo_y_prioridades(void) {
+    bool plani_puede_proseguir = true;
     int codigo_recibido = -1;
     // Lista con data del paquete recibido desde cpu.
     t_list* argumentos_recibidos = NULL;
@@ -173,7 +174,22 @@ void planific_corto_fifo_y_prioridades(void) {
             break;
 		}
 
+        // Si el pthread de de rta_memory_dump está esperando para finalizar
+        // un hilo, acá se le permite hacerlo.
+        pthread_mutex_lock(&mutex_sincro_rta_memory_dump);
+        if(pthread_memory_dump_necesita_finalizar_hilo) {
+            pthread_memory_dump_necesita_finalizar_hilo = false;
+            plani_puede_proseguir = false;
+            sem_post(&sem_sincro_rta_memory_dump);
+        }
+        pthread_mutex_unlock(&mutex_sincro_rta_memory_dump);
+
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
+
+        if(!plani_puede_proseguir) {
+            sem_wait(&sem_sincro_rta_memory_dump);
+            plani_puede_proseguir = true;
+        }
 
         if(hilo_exec == NULL) { // caso en que el hilo NO continúa ejecutando
             sem_wait(&sem_cola_ready_unica);
@@ -191,6 +207,7 @@ void planific_corto_fifo_y_prioridades(void) {
 // TODAVÍA EN DESARROLLO!!!
 // La idea es crear una cola nueva de ready por cada nivel de prioridad que se va conociendo.
 void planific_corto_multinivel_rr(void) {
+    bool plani_puede_proseguir = true;
     int codigo_recibido = -1;
     t_list* cola_ready = NULL;
     char* key_cola_ready = NULL;
@@ -356,7 +373,22 @@ void planific_corto_multinivel_rr(void) {
             break;
         }
 
+        // Si el pthread de de rta_memory_dump está esperando para finalizar
+        // un hilo, acá se le permite hacerlo.
+        pthread_mutex_lock(&mutex_sincro_rta_memory_dump);
+        if(pthread_memory_dump_necesita_finalizar_hilo) {
+            pthread_memory_dump_necesita_finalizar_hilo = false;
+            plani_puede_proseguir = false;
+            sem_post(&sem_sincro_rta_memory_dump);
+        }
+        pthread_mutex_unlock(&mutex_sincro_rta_memory_dump);
+
         list_destroy_and_destroy_elements(argumentos_recibidos, (void*)free);
+
+        if(!plani_puede_proseguir) {
+            sem_wait(&sem_sincro_rta_memory_dump);
+            plani_puede_proseguir = true;
+        }
 
         if(hilo_exec == NULL) { // caso en que el hilo NO continúa ejecutando
             reiniciar_quantum();
@@ -469,7 +501,6 @@ void finalizar_hilo(t_tcb* tcb) {
         pthread_mutex_lock(&mutex_procesos_exit);
         list_add(procesos_exit, pcb);
         pthread_mutex_unlock(&mutex_procesos_exit);
-        hilo_exec = NULL;
 	}
     liberar_hilo(pcb, tcb);
     log_info(log_kernel_oblig, "## (%d:%d) Finaliza el hilo", tcb->pid_pertenencia, tcb->tid);

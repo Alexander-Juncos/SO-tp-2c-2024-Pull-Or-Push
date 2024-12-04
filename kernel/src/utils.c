@@ -15,6 +15,7 @@ int socket_cpu_dispatch = 1;
 int socket_cpu_interrupt = 1;
 
 bool new_puede_intentar_crear_proceso = true;
+bool pthread_memory_dump_necesita_finalizar_hilo = false;
 
 t_list* cola_new = NULL;
 t_list* cola_ready_unica = NULL;
@@ -51,6 +52,7 @@ sem_t sem_hilos_ready_en_cmn;
 sem_t sem_cola_blocked_io;
 sem_t sem_cola_exit;
 sem_t sem_sincro_new_exit;
+sem_t sem_sincro_rta_memory_dump;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_cola_ready_unica;
 pthread_mutex_t mutex_colas_ready_cmn;
@@ -62,6 +64,7 @@ pthread_mutex_t mutex_cola_exit;
 pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_procesos_exit;
 pthread_mutex_t mutex_sincro_new_exit;
+pthread_mutex_t mutex_sincro_rta_memory_dump;
 /* Sacados del tp anterior
 ----------------------------------------------
 pthread_mutex_t mutex_proceso_exec;

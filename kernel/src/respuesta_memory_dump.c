@@ -34,7 +34,13 @@ void* rutina_respuesta_memory_dump(void* info_para_recepcion) {
         ingresar_a_ready(recepcion->tcb);
     }
     else {
+        pthread_mutex_lock(&mutex_sincro_rta_memory_dump);
+        pthread_memory_dump_necesita_finalizar_hilo = true;
+        pthread_mutex_unlock(&mutex_sincro_rta_memory_dump);
+        // Espera que el Plani me permita proceder a finalizar el hilo.
+        sem_wait(&sem_sincro_rta_memory_dump);
         finalizar_hilo(recepcion->tcb);
+        sem_post(&sem_sincro_rta_memory_dump);
     }
     
     liberar_conexion(log_kernel_gral, "Memoria (por Memory Dump)", recepcion->socket_de_la_conexion);
