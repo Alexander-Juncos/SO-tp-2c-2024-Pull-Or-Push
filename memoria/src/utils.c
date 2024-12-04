@@ -151,15 +151,14 @@ t_pcb_mem* iniciar_pcb(int pid, int tamanio, char* ruta_script_tid_0)
         free(pcb_new->particion);
         free(pcb_new);
         log_error(log_memoria_gral, 
-                    "ERROR: thread 0 del proceso %d no pudo ser iniciado. Abortando creacion de pcb",pid);
+                    "ERROR: thread 0 del proceso %d no pudo ser iniciado. Abortando creacion de pcb", pid);
         return NULL;
     }
 
     list_add(pcb_new->lista_tcb, tcb_0);
 
-    // este log luego deberia cambiarse por un log obligatorio
     log_debug(log_memoria_gral, 
-                    "Creado el proceso %d, junto con su thread 0",pid);
+                    "Creado el proceso %d, junto con su thread 0", pid);
     return pcb_new;
 }
 
@@ -441,7 +440,9 @@ void rutina_crear_proceso(t_list* param, int socket_cliente)
         enviar_mensaje("OK", socket_cliente);
         
         // LOG OBLIGATORIO
-        log_info(log_memoria_oblig, "## Proceso Creado-  PID: %d - Tamaño: %d", pid, tamanio);
+        log_info(log_memoria_oblig, "## Proceso Creado - PID: %d - Tamaño: %d", pid, tamanio);
+        // LOG OBLIGATORIO
+        log_info(log_memoria_oblig, "## Hilo Creado - (PID:TID) - (%d:0)", pid);
     } else {
         enviar_mensaje("INSUFICIENTE/ERROR", socket_cliente);
     }

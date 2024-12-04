@@ -115,6 +115,7 @@ int main(int argc, char* argv[]) {
         // DEBE QUEDAR SOLO ESTO
         proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, string_duplicate(argv[1]));
     }
+    log_info(log_kernel_oblig, "## (0:0) Se crea el proceso - Estado: NEW");
     ingresar_a_new(proceso_inicial);
 
 

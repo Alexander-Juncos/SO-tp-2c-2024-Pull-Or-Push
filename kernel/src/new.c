@@ -13,6 +13,7 @@ void* rutina_new(void* puntero_null) {
     while(true) {
 
         tcb_hilo_main = inicializacion_de_proceso();
+        log_info(log_kernel_oblig, "## (%d:0) Se crea el Hilo - Estado: READY", tcb_hilo_main->pid_pertenencia);
         ingresar_a_ready(tcb_hilo_main);
     }
 

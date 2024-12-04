@@ -93,6 +93,7 @@ void planific_corto_fifo_y_prioridades(void) {
             tamanio = list_get(argumentos_recibidos, 1);
             prioridad = list_get(argumentos_recibidos, 2);
             pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
+            log_info(log_kernel_oblig, "## (%d:0) Se crea el proceso - Estado: NEW", pcb->pid);
             // NEW se ocupa de enviar el nuevo proceso a Memoria.
             pthread_mutex_lock(&mutex_cola_new);
             ingresar_a_new(pcb);
@@ -106,6 +107,7 @@ void planific_corto_fifo_y_prioridades(void) {
             pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
             enviar_nuevo_hilo_a_memoria(tcb);
+            log_info(log_kernel_oblig, "## (%d:%d) Se crea el Hilo - Estado: READY", tcb->pid_pertenencia, tcb->tid);
             ingresar_a_ready(tcb);
             break;
 
@@ -284,6 +286,7 @@ void planific_corto_multinivel_rr(void) {
             tamanio = list_get(argumentos_recibidos, 1);
             prioridad = list_get(argumentos_recibidos, 2);
             pcb = nuevo_proceso(*tamanio, *prioridad, path_instrucciones);
+            log_info(log_kernel_oblig, "## (%d:0) Se crea el proceso - Estado: NEW", pcb->pid);
             // NEW se ocupa de enviar el nuevo proceso a Memoria.
             pthread_mutex_lock(&mutex_cola_new);
             ingresar_a_new(pcb);
@@ -297,6 +300,7 @@ void planific_corto_multinivel_rr(void) {
             pcb = encontrar_pcb_activo(hilo_exec->pid_pertenencia);
             tcb = nuevo_hilo(pcb, *prioridad, path_instrucciones);
             enviar_nuevo_hilo_a_memoria(tcb);
+            log_info(log_kernel_oblig, "## (%d:%d) Se crea el Hilo - Estado: READY", tcb->pid_pertenencia, tcb->tid);
             ingresar_a_ready(tcb);
             break;
 
