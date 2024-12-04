@@ -504,6 +504,9 @@ void finalizar_hilo(t_tcb* tcb) {
 	}
     liberar_hilo(pcb, tcb);
     log_info(log_kernel_oblig, "## (%d:%d) Finaliza el hilo", tcb->pid_pertenencia, tcb->tid);
+    if(tcb->tid == 0) { // (if es Hilo main)
+        log_info(log_kernel_oblig, "## Finaliza el proceso %d", tcb->pid_pertenencia);
+    }
     if(hilo_exec == tcb) {
         //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN.
         hilo_exec = NULL;
@@ -523,9 +526,6 @@ void finalizar_proceso(void) {
         t_pcb* pcb = encontrar_pcb_activo(pid_proceso);
         finalizar_hilo(pcb->hilo_main);
     }
-
-
-    log_info(log_kernel_oblig, "## Finaliza el proceso %d", pid_proceso);
 }
 
 void crear_mutex(t_pcb* pcb, char* nombre) {
