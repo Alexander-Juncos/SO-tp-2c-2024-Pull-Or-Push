@@ -85,7 +85,7 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     unsigned int cant_bloques = size / fs->tam_bloques;
     if (size % fs->tam_bloques != 0)
         cant_bloques++;
-    cant_bloques++; // agrego el bloque de indices
+    
     
     // verifico si la cant_bloques es valida, si no va a entrar en un unico bloque de indices => ERROR
     if (cant_bloques > cantidad_indices_max)
@@ -94,6 +94,8 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
                     cant_bloques, cantidad_indices_max);
         return false;
     }
+
+    cant_bloques++; // agrego el bloque de indices
 
     // obtengo la ruta absoluta
     char* ruta_absoluta = obtener_path_absoluto_metadata(ruta);
@@ -265,9 +267,11 @@ void iniciar_bitmap()
     struct stat stat_buf; // para obtener datos del archivo bitmap si existiera
     int file_desc;
     int aux_tamanio = fs->cant_bloques / 8; // convierte bytes a bits
-    if (aux_tamanio % 8 != 0) 
+    if (fs->cant_bloques % 8 != 0) 
         aux_tamanio++; // compenso si hubo perdida
     char * ruta = obtener_path_absoluto("bitmap.dat");
+
+    // log_debug(log_fs_gral, "Tamaño real: %d - Esperado: %d - resto: %f", fs->cant_bloques / 8, aux_tamanio);
 
     // veo si existe un archivo bitmap
     log_debug(log_fs_gral, "ruta bitmap: %s", ruta);

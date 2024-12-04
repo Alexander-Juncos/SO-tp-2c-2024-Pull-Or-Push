@@ -264,10 +264,10 @@ char* obtener_instruccion(uint32_t num_instruccion)
     instruccion = (char*) list_get(contexto_ejecucion->tcb->instrucciones,
                                     num_instruccion);
     // actualizo el PC del tcb
-    contexto_ejecucion->tcb->PC = num_instruccion;
+    // contexto_ejecucion->tcb->PC = num_instruccion;
 
     // emito para testear la instruccion                                
-    log_debug(log_memoria_gral,"Intruccion %d: %s", num_instruccion, instruccion);
+    log_debug(log_memoria_gral,"Instruccion %d: %s", num_instruccion, instruccion);
     return instruccion;
 }
 
