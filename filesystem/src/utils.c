@@ -123,20 +123,6 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     // obtengo el bloque indice
     bloque_indice = *vector_bloques;
 
-    // // obtengo el bloque indice y lo saco de la lista
-    // bloques = list_remove(lista_bloques, 0);
-    // bloque_indice = bloques->bloque;
-    // if (bloques->cant_bloques == 1)
-    // { // el elemento esta vacio
-    //     free(bloques);
-    //     bloques = list_remove(lista_bloques, 0);
-    // }
-    // else
-    // { // como hay + de 1 bloque libre seguido, paso al siguiente y reduzco la cantidad 
-    //     bloques->bloque++; 
-    //     bloques->cant_bloques--;
-    // }
-
     // Crear el archivo de metadata (config) contiene un bloque de indices y su size en bytes
     f_metadata = fopen (ruta_absoluta, "w"); // crea archivo de texto (revisar si path no debe modificarse antes)
     fclose(f_metadata);
@@ -150,28 +136,33 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     // LOG OBLIGATORIO - Creación de Archivo
     log_info(log_fs_oblig, "## Archivo Creado: %s - Tamaño: %d", ruta, size);
 
-    // Agrego al bloque_indice los bloques libres
-    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
-
     // LOG OBLIGATORIO - ACCESO A BLOQUE INDICE
     log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
                                 ruta, bloque_indice);
 
+    pthread_mutex_lock(&mutex_fs);
+    // Agrego al bloque_indice los bloques libres
+    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
 
     // escribo los indices de los bloques
     fwrite((vector_bloques+1), sizeof(uint32_t), cant_bloques-1, fs->f_bloques);
+    pthread_mutex_unlock(&mutex_fs);
     log_debug(log_fs_gral, "Indices escritos en bloque indice - bloque indice: %d", bloque_indice);
 
     // REVISAR *******************************************************************************************    
     // Como ya estan los indices en el bloque indice, ya puedo escribir
+    pthread_mutex_lock(&mutex_fs);
     escribir_bloques(ruta, bloque_indice, data, cant_bloques);
+    pthread_mutex_unlock(&mutex_fs);
     
-    // cerrar archivo metadata 
+    // cerrar archivo metadata y libero estructuras
     config_destroy(metadata);
     free(ruta_absoluta);
+    free(vector_bloques);
 
     // LOG OBLIGATORIO
     log_info(log_fs_oblig,"## Fin de solicitud - Archivo: %s", ruta);
+
     return true;
 }
 
@@ -211,6 +202,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
         Ya que si al leer el bloque indice x alguna razon estuviera en el ultimo bloque, al leer el ultimo indice
         el flag de EOF no permitiria realizar ninguna otra lectura...
     */
+    free(bloque);
 }
 
 // ==========================================================================
@@ -252,6 +244,7 @@ bool rutina_memory_dump(t_list* param)
     resultado = memory_dump(nombre, size, data);
 
     free(nombre);
+    // no se libera timestamp ni data xq pertenecen a lista
 
     return resultado;
 }
@@ -317,6 +310,8 @@ void iniciar_bitmap()
     // Lo imprimimos para testear
     imprimir_bitmap();
     contar_bloques_libres_totales();
+
+    free(ruta);
 }
 
 void contar_bloques_libres_totales() {
@@ -447,12 +442,15 @@ void terminar_programa()
 {
 	// Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
 	// con las funciones de las commons y del TP mencionadas en el enunciado /
+    pthread_mutex_destroy(&mutex_bitmap);
+    pthread_mutex_destroy(&mutex_fs);
     fclose(fs->f_bloques);
     bitarray_destroy(bitmap->bitarray);
     fclose(bitmap->f);
     free(bitmap->espacio_bitmap);
     free(bitmap);
     free(fs);
+    free(PATH_BASE);
 	liberar_conexion(log_fs_gral, "Servidor Multihilo",socket_escucha); 
 	// config_destroy(config); comento para q no rompa al liberar el nivel de log
 }
