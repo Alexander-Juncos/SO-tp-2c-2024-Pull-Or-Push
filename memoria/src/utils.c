@@ -1064,7 +1064,7 @@ void eliminar_tcb( t_list* lista, int tid)
     i--; // lo vuelvo al anterior
 
     tcb = list_remove(lista, i);
-    list_clean_and_destroy_elements(tcb->instrucciones, free);
+    list_destroy_and_destroy_elements(tcb->instrucciones, free);
     free(tcb);
 }
 
@@ -1091,6 +1091,7 @@ void eliminar_pcb( t_list* lista, int pid)
     i--; // lo vuelvo al anterior
 
     pcb = list_remove(lista, i);
+
     free(pcb);
 }
 
