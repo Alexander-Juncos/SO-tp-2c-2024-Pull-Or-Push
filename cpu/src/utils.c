@@ -543,8 +543,6 @@ void syscall_io (t_list* param)
     eliminar_paquete(paquete);
     
     desalojado = true;
-    // forzamos el cambio de contexto
-    contexto_exec.pid = -10;
 }
 
 void syscall_process_create (t_list* param)
