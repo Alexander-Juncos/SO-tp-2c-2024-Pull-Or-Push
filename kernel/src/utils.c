@@ -244,6 +244,7 @@ t_list* encontrar_cola_multinivel_de_mas_baja_prioridad(char** key_de_cola_encon
     }
     cola_ready = dictionary_get(diccionario_ready_multinivel, key_de_cola_ready);
     *key_de_cola_encontrada = string_duplicate(key_de_cola_ready);
+    list_destroy(lista_de_keys);
     return cola_ready;
 }
 
