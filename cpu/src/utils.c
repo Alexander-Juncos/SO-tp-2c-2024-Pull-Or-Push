@@ -557,6 +557,8 @@ void syscall_process_create (t_list* param)
     char* prioridad_como_string;
     int prioridad;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -598,6 +600,8 @@ void syscall_thread_create (t_list* param)
     char* prioridad_como_string;
     int prioridad;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -633,6 +637,8 @@ void syscall_thread_join (t_list* param)
     char* tid_como_string;
     int tid;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -664,6 +670,8 @@ void syscall_thread_cancel (t_list* param)
     char* tid_como_string;
     int tid;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -694,6 +702,8 @@ void syscall_mutex_create (t_list* param)
     void* var_aux;
     char* recurso;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -723,6 +733,8 @@ void syscall_mutex_lock (t_list* param)
     void* var_aux;
     char* recurso;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -751,6 +763,8 @@ void syscall_mutex_unlock (t_list* param)
     void* var_aux;
     char* recurso;
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -781,6 +795,8 @@ void syscall_thread_exit (void)
     // LOG OBLIGATORIO
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s", contexto_exec.tid, "THREAD_EXIT");
 
+    // se pasa a la sig instruccion 
+    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 

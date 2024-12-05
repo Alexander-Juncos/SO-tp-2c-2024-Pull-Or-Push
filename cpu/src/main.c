@@ -238,7 +238,7 @@ void rutina_main_cpu(void)
         }
 
         // se actualiza registro program counter si corresponde
-        if(!se_hizo_jnz) {
+        if(!se_hizo_jnz && !desalojado) {
             contexto_exec.PC++;
         }
         else {
