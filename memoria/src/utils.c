@@ -739,7 +739,7 @@ t_list* crear_lista_de_particiones()
             list_add(lista_particiones, particion);
             i++;
 	    }
-        free(array_particiones);
+        string_array_destroy(array_particiones);
     }
     else
     { // crea una partición q ocupa toda la memoria
