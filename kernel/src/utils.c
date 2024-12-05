@@ -176,6 +176,7 @@ void ingresar_a_ready_multinivel(t_tcb* tcb) {
         cola_ready_correspondiente = list_create();
         dictionary_put(diccionario_ready_multinivel, key, cola_ready_correspondiente);
     }
+    free(key);
 
     list_add(cola_ready_correspondiente, tcb);
     pthread_mutex_unlock(&mutex_colas_ready_cmn);
@@ -185,7 +186,9 @@ void ingresar_a_ready_multinivel(t_tcb* tcb) {
 
 void agregar_ready_multinivel(int prioridad) {
     t_list* cola_ready = list_create();
-    dictionary_put(diccionario_ready_multinivel, string_itoa(prioridad), cola_ready);
+    char* prio = string_itoa(prioridad); //para no perder la referencia
+    dictionary_put(diccionario_ready_multinivel, prio, cola_ready);
+    free(prio);
 }
 
 t_tcb* encontrar_y_remover_tcb_en_ready_fifo_y_prioridades(int pid, int tid) {
