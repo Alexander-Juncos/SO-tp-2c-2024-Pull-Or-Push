@@ -107,6 +107,10 @@ t_list* decode (char* instruccion)
     {
         list_add(parametros, arg[i]);
     }
+
+    //faltaba liberar arg
+    string_array_destroy(arg);
+
     return parametros;    
 }
 
@@ -304,7 +308,7 @@ void recibir_pedido_ejecucion(void)
     }
 
     desalojado = false; // como ya estoy seguro q tengo contexto
-    list_clean_and_destroy_elements(pedido, free);
+    list_destroy_and_destroy_elements(pedido, free);
 }
 
 bool obtener_contexto_ejecucion(int pid, int tid)
@@ -327,12 +331,13 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     agregar_a_paquete(paquete, &pid, sizeof(int));
     agregar_a_paquete(paquete, &tid, sizeof(int));
     enviar_paquete(paquete, socket_memoria);
+    eliminar_paquete(paquete);
 
     codigo = recibir_codigo(socket_memoria);
     if(codigo != CONTEXTO_EJECUCION)
     {
         recibido = recibir_paquete(socket_memoria);
-        list_clean_and_destroy_elements(recibido, free);
+        list_destroy_and_destroy_elements(recibido, free);
         return false;
     }
     
@@ -362,6 +367,8 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     contexto_exec.Base= *(uint32_t*)data;
     data = list_get(recibido, 10);
     contexto_exec.Limite = *(uint32_t*)data;
+
+    list_destroy_and_destroy_elements(recibido,free);
 
     log_debug(log_cpu_gral, "Contexto Cargado: PID: %d - TID: %d - PC: %d - AX: %d - BX: %d - CX: %d - DX: %d - EX: %d - FX: %d - GX: %d - HX: %d - BASE: %d - LIMITE: %d",
         pid, tid, contexto_exec.PC,
@@ -431,7 +438,7 @@ void instruccion_read_mem (t_list* param)
 
     if (codigo != ACCESO_LECTURA){ // si hubo error logueo y salgo
         log_error(log_cpu_gral, "ERROR: Respuesta memoria diferente a lo esperado");
-        list_clean_and_destroy_elements(respuesta, free);
+        list_destroy_and_destroy_elements(respuesta, free);
         return;
     }
     
@@ -441,7 +448,7 @@ void instruccion_read_mem (t_list* param)
     log_info(log_cpu_oblig, "## TID: %d - Acción: LEER - Dirección Física: %d", contexto_exec.tid, *(uint32_t*)registro_dir);
     log_debug(log_cpu_gral, "Nuevo valor registro %s: %d", str_r_dat, *(uint32_t*)registro_dat);
 
-    list_clean_and_destroy_elements(respuesta, free);
+    list_destroy_and_destroy_elements(respuesta, free);
 }
 
 void instruccion_write_mem (t_list* param)

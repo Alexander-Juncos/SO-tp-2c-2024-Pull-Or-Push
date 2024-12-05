@@ -107,7 +107,7 @@ void* rutina_hilo_interrupcion (void*)
         }
         pthread_mutex_unlock(&mutex_interrupcion);
 
-        list_clean_and_destroy_elements(recibido, free);
+        list_destroy_and_destroy_elements(recibido, free);
     } while (operacion > 0);
 
     free(puerto);
@@ -159,77 +159,77 @@ void rutina_main_cpu(void)
         /********************************** INSTRUCCIONES **********************************/
         case SET:
             instruccion_set(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case READ_MEM:
             instruccion_read_mem(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case WRITE_MEM:
             instruccion_write_mem(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case SUM:
             instruccion_sum(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case SUB:
             instruccion_sub(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case JNZ:
             instruccion_jnz(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case LOG:
             instruccion_log(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
 
         /********************************** SYSCALLS ************************************/
         case DUMP_MEMORY:
             syscall_dump_memory();
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case IO:
             syscall_io(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case PROCESS_CREATE:
             syscall_process_create(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case THREAD_CREATE:
             syscall_thread_create(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case THREAD_JOIN:
             syscall_thread_join(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case THREAD_CANCEL:
             syscall_thread_cancel(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case MUTEX_CREATE:
             syscall_mutex_create(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case MUTEX_LOCK:
             syscall_mutex_lock(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case MUTEX_UNLOCK:
             syscall_mutex_unlock(instruccion_procesada);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case THREAD_EXIT:
             syscall_thread_exit();
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
         case PROCESS_EXIT:
             syscall_process_exit(true);
-            list_clean_and_destroy_elements(instruccion_procesada, free);
+            list_destroy_and_destroy_elements(instruccion_procesada, free);
             break;
 
         default:
