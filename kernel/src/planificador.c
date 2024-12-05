@@ -564,7 +564,7 @@ t_mutex* encontrar_mutex(t_pcb* pcb, char* nombre) {
 t_list* obtener_cola_ready_cmn(int prioridad) {
     t_list* cola_ready = NULL;
     char* prio = string_itoa(prioridad); //para guardar referencia
-    cola_ready = dictionary_get(diccionario_ready_multinivel, string_itoa(prioridad));
+    cola_ready = dictionary_get(diccionario_ready_multinivel, prio);
     free(prio);
     return cola_ready;
 }
