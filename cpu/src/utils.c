@@ -309,6 +309,8 @@ void recibir_pedido_ejecucion(void)
     if (hay_interrupcion && contexto_exec.pid == pid && contexto_exec.tid == tid)
     {
         interrupcion(INTERRUPCION);
+        contexto_exec.pid = -1;
+        return;
     }
 
     resultado_contexto = obtener_contexto_ejecucion(pid, tid);
@@ -335,6 +337,7 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     //     log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
     //     return true;
     // }
+    log_debug(log_cpu_gral, "Solicito contexto Ejcución <PID:TID> %d:%d",pid,tid);
     log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
 
     // pido contexto

@@ -5,7 +5,7 @@
 //     argv[0] |        argv[1]       |
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
-    bool modulo_en_testeo = false; // gestiona si los logs auxiliares se muestran en consola o no
+    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip;
     char*   puerto;
     pthread_t hilo_interrupt;
@@ -145,6 +145,11 @@ void rutina_main_cpu(void)
         if (desalojado)
         {
             recibir_pedido_ejecucion();
+        }
+
+        if (contexto_exec.pid == -1)
+        {
+            continue;
         }
 
         // FETCH + DECODE
