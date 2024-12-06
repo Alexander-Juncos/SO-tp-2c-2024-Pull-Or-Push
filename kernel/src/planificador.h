@@ -1,12 +1,10 @@
 #ifndef HILO_PLANIFICADOR_KERNEL_H_
 #define HILO_PLANIFICADOR_KERNEL_H_
-#define MAX_NIVELES_PRIORIDAD 10  // Ajusta el valor según tus necesidades
 
 #include <commons/config.h>
 #include "utils.h"
 
 extern int contador_pid; // Contador. Para asignar diferente pid a cada nuevo proceso.
-//extern bool hay_que_chequear_colas_cmn; // Para determinar cuando se debe chequear la cola a ejecutar en CMN.
 
 /**
 * @brief Inicia el Planificador de corto plazo.
@@ -17,14 +15,15 @@ void iniciar_planificador(void);
 
 /////// ALGORITMOS
 
-// EN DESARROLLO
+/**
+* @brief Lógica del planificador corto plazo para algoritmos FIFO y PRIORIDADES.
+*/
 void planific_corto_fifo_y_prioridades(void);
 
-// EN DESARROLLO
+/**
+* @brief Lógica del planificador corto plazo para algoritmo CMN.
+*/
 void planific_corto_multinivel_rr(void);
-
-// DEL TP VIEJO, COMO REFERENCIA
-// void planific_corto_rr(void);
 
 
 // ==========================================================================
@@ -155,14 +154,5 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb);
 t_pcb* crear_pcb(int pid, int tamanio);
 
 void enviar_pedido_de_dump(int pid, int tid, int socket);
-
-/* OBSOLETO. --------------
-t_recurso* encontrar_recurso_del_sistema(char* nombre);
-t_recurso_ocupado* encontrar_recurso_ocupado(t_list* lista_de_recursos_ocupados, char* nombre);
-t_recurso_blocked* encontrar_recurso_blocked(char* nombre);
-void asignar_recurso_ocupado(t_pcb* pcb, char* nombre_recurso);
-// void* planificador_largo(t_parametros_planif_largo arg); //funcion para pasar a hilo, cuando se necesita al planificador de largo plazo se crea el hilo y se le da un opcode dependiendo del requisito.
----------------------------
-*/
 
 #endif

@@ -1,5 +1,6 @@
 #include "quantum.h"
 
+
 t_temporal* timer;
 int ms_transcurridos = 0;
 bool interrumpir_inmediatamente = false;

@@ -39,9 +39,7 @@ typedef enum
     CMN
 } algoritmo_corto_code;
 
-extern algoritmo_corto_code cod_algoritmo_planif_corto; // cod algoritmo planif. Obtenido del diccionario con la key del archivo config
-//extern int grado_multiprogramacion; // Viene del archivo config
-//extern int procesos_activos; // Cantidad de procesos en READY, BLOCKED, o EXEC
+extern algoritmo_corto_code cod_algoritmo_planif_corto; // cod algoritmo planif.
 extern bool hay_algun_proceso_en_exec;
 
 extern char* ip_memoria;
@@ -64,7 +62,6 @@ extern t_list* cola_exit; // Estado EXIT. Es una lista de t_tcb* (Hilos).
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
-//extern t_pcb* proceso_exec; // Estado EXEC. Es un t_pcb* (Proceso).
 extern t_list* procesos_activos; // Es una lista de t_pcb* (Procesos). Son los que están en READY, EXEC, o BLOCKED.
 extern t_list* procesos_exit; // Es una lista de t_pcb* (Procesos). Son los que están en EXIT.
 
@@ -91,7 +88,6 @@ extern sem_t sem_sincro_rta_memory_dump;
 extern pthread_mutex_t mutex_cola_new;
 extern pthread_mutex_t mutex_cola_ready_unica;
 extern pthread_mutex_t mutex_colas_ready_cmn;
-// extern pthread_mutex_t mutex_hilo_exec; // ESTE ESTÁ EN OBSERVACIÓN. POR AHORA NO VA.
 extern pthread_mutex_t mutex_hilo_usando_io;
 extern pthread_mutex_t mutex_cola_blocked_io;
 extern pthread_mutex_t mutex_cola_blocked_memory_dump;
@@ -100,12 +96,6 @@ extern pthread_mutex_t mutex_procesos_activos;
 extern pthread_mutex_t mutex_procesos_exit;
 extern pthread_mutex_t mutex_sincro_new_exit;
 extern pthread_mutex_t mutex_sincro_rta_memory_dump;
-/* Sacados del tp anterior
-----------------------------------------------
-extern pthread_mutex_t mutex_proceso_exec;
-extern pthread_mutex_t mutex_grado_multiprogramacion;
-----------------------------------------------
-*/
 
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================

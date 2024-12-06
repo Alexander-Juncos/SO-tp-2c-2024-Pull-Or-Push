@@ -1,9 +1,5 @@
 #include <new.h>
 
-// variables globales para este pthread:
-// -------------------------------------
-// por ahora ninguna...
-// -------------------------------------
 
 void* rutina_new(void* puntero_null) {
 

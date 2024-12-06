@@ -5,8 +5,6 @@
 // ==========================================================================
 
 algoritmo_corto_code cod_algoritmo_planif_corto;
-//int grado_multiprogramacion;
-//int procesos_activos = 0;
 bool hay_algun_proceso_en_exec = false;
 
 char* ip_memoria = NULL;
@@ -29,7 +27,6 @@ t_list* cola_exit = NULL;
 
 // Los bloqueados por Mutex, tienen sus propias colas dentro de los mutex listados en el PCB.
 
-//t_pcb* proceso_exec = NULL;
 t_list* procesos_activos = NULL;
 t_list* procesos_exit = NULL;
 
@@ -56,7 +53,6 @@ sem_t sem_sincro_rta_memory_dump;
 pthread_mutex_t mutex_cola_new;
 pthread_mutex_t mutex_cola_ready_unica;
 pthread_mutex_t mutex_colas_ready_cmn;
-// pthread_mutex_t mutex_hilo_exec;
 pthread_mutex_t mutex_hilo_usando_io;
 pthread_mutex_t mutex_cola_blocked_io;
 pthread_mutex_t mutex_cola_blocked_memory_dump;
@@ -65,12 +61,6 @@ pthread_mutex_t mutex_procesos_activos;
 pthread_mutex_t mutex_procesos_exit;
 pthread_mutex_t mutex_sincro_new_exit;
 pthread_mutex_t mutex_sincro_rta_memory_dump;
-/* Sacados del tp anterior
-----------------------------------------------
-pthread_mutex_t mutex_proceso_exec;
-pthread_mutex_t mutex_grado_multiprogramacion;
-----------------------------------------------
-*/
 
 // ==========================================================================
 // ====  Funciones Comunicación:  ===========================================

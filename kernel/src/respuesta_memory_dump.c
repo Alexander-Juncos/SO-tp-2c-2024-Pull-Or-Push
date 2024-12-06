@@ -1,9 +1,5 @@
 #include "respuesta_memory_dump.h"
 
-// variables globales para este hilo:
-// ============================================
-// por ahora ninguna...
-// ============================================
 
 void* rutina_respuesta_memory_dump(void* info_para_recepcion) {
     t_recepcion_respuesta_memory_dump* recepcion = info_para_recepcion;
@@ -13,8 +9,8 @@ void* rutina_respuesta_memory_dump(void* info_para_recepcion) {
     bool dump_exitoso = recibir_mensaje_de_rta(log_kernel_gral, "MEMORY DUMP", recepcion->socket_de_la_conexion);
     bool hilo_habia_finalizado = false;
     pthread_mutex_lock(&mutex_cola_blocked_memory_dump);
-    // Acá agrego esta verificación extra, por si el
-    // planificador lo mató mientras se esperaba la respuesta.
+    // Verificación extra, por si el planificador
+    // lo mató mientras se esperaba la respuesta.
     if(buscar_tcb_por_pid_y_tid(cola_blocked_memory_dump, pid_pertenencia, tid) != NULL) {
         list_remove_element(cola_blocked_memory_dump, recepcion->tcb);
     }
