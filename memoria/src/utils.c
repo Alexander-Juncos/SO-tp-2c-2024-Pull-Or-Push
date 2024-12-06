@@ -736,6 +736,7 @@ t_list* crear_lista_de_particiones()
             particion->base = puntero;
             puntero += atoi(array_particiones[i]); //
             particion->limite = puntero - 1; // el -1 para que cumpla el rango ej: 0->256-1 = 256 de tam_particion
+            particion->ocupada = false;
             list_add(lista_particiones, particion);
             i++;
 	    }
@@ -747,6 +748,7 @@ t_list* crear_lista_de_particiones()
         particion->base = puntero;
         puntero = memoria->tamano_memoria;
         particion->limite = puntero - 1;
+        particion->ocupada = false;
         list_add(lista_particiones, particion);
     }
 
@@ -795,6 +797,7 @@ t_particion* particion_libre (int tamanio)
         log_debug(log_memoria_gral, "Particion Fija hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, particion->limite);
         particion->ocupada = true;
         free(algoritmo);
+        listar_particiones();
         return particion;
     }
 
@@ -820,7 +823,7 @@ t_particion* alg_first_fit(int tamanio) // devuelve directamente la referencia a
             particion = aux;
             return particion;
         }
-        log_debug(log_memoria_gral, "Particion ocupada [FIRST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        log_debug(log_memoria_gral, "[FIRST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -843,9 +846,10 @@ t_particion* alg_best_fit(int tamanio) // devuelve directamente la referencia a 
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_debug(log_memoria_gral, "Particion posible [BEST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "[BEST_FIT] Particion posible >> Base: %d - Limite: %d", particion->base, particion->limite);
+        } else {
+            log_debug(log_memoria_gral, "[BEST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
         }
-        log_debug(log_memoria_gral, "Particion ocupada [BEST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -867,9 +871,12 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_debug(log_memoria_gral, "Particion posible [WORST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "[WORST_FIT] Particion posible >> Base: %d - Limite: %d", particion->base, particion->limite);
         }
-        log_debug(log_memoria_gral, "Particion ocupada [WORST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        else
+        {
+            log_debug(log_memoria_gral, "[WORST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
+        }
     }
 
     return particion; // si no encontro va a retornar NULL
