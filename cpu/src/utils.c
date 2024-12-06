@@ -105,7 +105,12 @@ t_list* decode (char* instruccion)
     // paso los parametros
     for (int i = 1; i <= num_arg; i++)
     {
-        list_add(parametros, arg[i]);
+        if(arg[i]==NULL)
+        {
+            // Si el parámetro es nulo no lo agrega
+            continue;
+        }
+        list_add(parametros, string_duplicate(arg[i]));
     }
 
     //faltaba liberar arg
