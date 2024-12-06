@@ -271,6 +271,8 @@ char* fetch (void)
 
 void recibir_pedido_ejecucion(void)
 {
+    desalojado = false; // como ya estoy seguro q tengo contexto
+
     t_list* pedido;
     int codigo;
     void* data;
@@ -317,7 +319,6 @@ void recibir_pedido_ejecucion(void)
         exit(3);
     }
 
-    desalojado = false; // como ya estoy seguro q tengo contexto
     list_destroy_and_destroy_elements(pedido, free);
 }
 
