@@ -2,10 +2,10 @@
 
 // variables globales para este hilo:
 // ============================================
-unsigned int tiempo_uso_io_en_microsegs = 0;
 // ============================================
 
 void* rutina_io(void* puntero_null) {
+    t_blocked_io* blocked_io = NULL;
     t_tcb* tcb = NULL;
     log_debug(log_kernel_gral, "Hilo responsable de simular IO listo.");
 
@@ -15,7 +15,8 @@ void* rutina_io(void* puntero_null) {
 
         pthread_mutex_lock(&mutex_cola_blocked_io);
         if(!list_is_empty(cola_blocked_io)) {
-            tcb = list_remove(cola_blocked_io, 0);
+            blocked_io = list_remove(cola_blocked_io, 0);
+            tcb = blocked_io->tcb;
         }
         pthread_mutex_unlock(&mutex_cola_blocked_io);
 
@@ -24,7 +25,7 @@ void* rutina_io(void* puntero_null) {
             hilo_usando_io = tcb;
             pthread_mutex_unlock(&mutex_hilo_usando_io);
 
-            usleep(tiempo_uso_io_en_microsegs);
+            usleep(blocked_io->tiempo_uso_io_en_microsegs);
 
             pthread_mutex_lock(&mutex_hilo_usando_io);
             if(hilo_usando_io != NULL) { // if (el hilo no finalizó mientras la IO laburaba)
@@ -35,6 +36,8 @@ void* rutina_io(void* puntero_null) {
             
             tcb = NULL;
         }
+
+        free(blocked_io);
     }
 
 
@@ -44,12 +47,13 @@ void* rutina_io(void* puntero_null) {
 // ==========================================================================
 
 void usar_io(t_tcb* tcb, int tiempo_uso_io_en_ms) {
-    tiempo_uso_io_en_microsegs = tiempo_uso_io_en_ms*MILISEG_A_MICROSEG;
+    t_blocked_io* hilo_bloqueado_por_io = malloc(sizeof(t_blocked_io));
+    hilo_bloqueado_por_io->tcb = tcb;
+    hilo_bloqueado_por_io->tiempo_uso_io_en_microsegs = tiempo_uso_io_en_ms*MILISEG_A_MICROSEG;
     pthread_mutex_lock(&mutex_cola_blocked_io);
-    list_add(cola_blocked_io, tcb);
+    list_add(cola_blocked_io, hilo_bloqueado_por_io);
     pthread_mutex_unlock(&mutex_cola_blocked_io);
     sem_post(&sem_cola_blocked_io);
     log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: IO", tcb->pid_pertenencia, tcb->tid);
-    //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
     hilo_exec = NULL;
 }

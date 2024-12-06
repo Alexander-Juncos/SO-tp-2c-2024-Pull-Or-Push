@@ -54,6 +54,12 @@ typedef struct
     t_list* bloqueados_esperando; // lista de TCB's
 } t_mutex;
 
+typedef struct
+{
+    t_tcb* tcb;
+    int tiempo_uso_io_en_microsegs; // para el usleep()
+} t_blocked_io;
+
 /* ==========  OBSOLETO  ====================================================
 typedef struct
 {
