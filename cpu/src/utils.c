@@ -304,6 +304,12 @@ void recibir_pedido_ejecucion(void)
     data = list_get(pedido, 1);
     tid = *(int*)data;
 
+    // Si habia interrupcion y desalojo a mismo pid-tid entonces interrumpo
+    if (hay_interrupcion && contexto_exec.pid == pid && contexto_exec.tid == tid)
+    {
+        interrupcion(INTERRUPCION);
+    }
+
     resultado_contexto = obtener_contexto_ejecucion(pid, tid);
 
     if (!resultado_contexto)

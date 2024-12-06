@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
 
     /******************** Variables ********************/
 
-    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
+    bool modulo_en_testeo = false; // gestiona si los logs auxiliares se muestran en consola o no
 
     char* ip;
     char* puerto;
