@@ -103,13 +103,13 @@ t_list* decode (char* instruccion)
         return parametros;
 
     // paso los parametros
-    for (int i = 1; i <= num_arg; i++)
+    for (int i = 1; i < num_arg; i++)
     {
-        if(arg[i]==NULL)
-        {
-            // Si el parámetro es nulo no lo agrega
-            continue;
-        }
+        // if(arg[i]==NULL)  // solucionado estaba indice n de n (deberia ser n-1 de n)
+        // {
+        //     log_debug(log_cpu_gral, "indice: %d - de %d indices - es NULL.", i, num_arg);
+        //     continue;
+        // }
         list_add(parametros, string_duplicate(arg[i]));
     }
 
@@ -323,12 +323,12 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     t_list* recibido;
     void* data;
 
-    // si no cambio pid y tid entonces el contexto ya esta en CPU
-    if (contexto_exec.pid == pid && contexto_exec.tid == tid)
-    {
-        log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
-        return true;
-    }
+    // // si no cambio pid y tid entonces el contexto ya esta en CPU
+    // if (contexto_exec.pid == pid && contexto_exec.tid == tid)
+    // {
+    //     log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
+    //     return true;
+    // }
     log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
 
     // pido contexto
@@ -531,8 +531,6 @@ void syscall_io (t_list* param)
     char* tiempo_como_string;
     int tiempo;
 
-    // se pasa a la sig instruccion para evitar un bucle inf de io
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -567,8 +565,6 @@ void syscall_process_create (t_list* param)
     char* prioridad_como_string;
     int prioridad;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -610,8 +606,6 @@ void syscall_thread_create (t_list* param)
     char* prioridad_como_string;
     int prioridad;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -647,8 +641,6 @@ void syscall_thread_join (t_list* param)
     char* tid_como_string;
     int tid;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -680,8 +672,6 @@ void syscall_thread_cancel (t_list* param)
     char* tid_como_string;
     int tid;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -712,8 +702,6 @@ void syscall_mutex_create (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -743,8 +731,6 @@ void syscall_mutex_lock (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -773,8 +759,6 @@ void syscall_mutex_unlock (t_list* param)
     void* var_aux;
     char* recurso;
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -805,8 +789,6 @@ void syscall_thread_exit (void)
     // LOG OBLIGATORIO
     log_info(log_cpu_oblig, "## TID: %d - Ejecutando: %s", contexto_exec.tid, "THREAD_EXIT");
 
-    // se pasa a la sig instruccion 
-    contexto_exec.PC++; 
     // actualizo el contexto de ejecucion en memoria
     actualizar_contexto_ejecucion();
 
@@ -870,7 +852,8 @@ void interrupcion (op_code tipo_interrupcion)
     log_debug(log_cpu_gral, "PID: %d - TID: %d - tipo interrupcion %s, continuando ejecucion.",
                             contexto_exec.pid, contexto_exec.tid, str_interrupcion);
 
-    // actualizo el contexto de ejecucion en memoria
+    // actualizo el contexto de ejecucion en memoria (resto 1 en caso de instruccion no syscall...)
+    contexto_exec.PC--;
     actualizar_contexto_ejecucion();
 
     // devuelvo control a kernel junto con parametros q requiera
@@ -926,9 +909,11 @@ t_dictionary* crear_diccionario_reg(t_contexto_exec* r)
 
 t_paquete* empaquetar_contexto()
 {
+    // para que al cargar contexto refleje la syscall como hecha
+    uint32_t siguiente_PC = contexto_exec.PC + 1;
+
     t_paquete* p = crear_paquete(ACTUALIZAR_CONTEXTO_EJECUCION);
-    // uint32_t siguiente_PC = contexto_exec.PC + 1;
-    agregar_a_paquete(p, &(contexto_exec.PC), sizeof(uint32_t));
+    agregar_a_paquete(p, &(siguiente_PC), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.AX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.BX), sizeof(uint32_t));
     agregar_a_paquete(p, &(contexto_exec.registros.CX), sizeof(uint32_t));

@@ -34,7 +34,6 @@ int main(int argc, char* argv[]) {
         // ESTO ES PARA ENVIAR EL PLANI_PROC POR AHORA. ELIMINAR CUANDO TODO ESTÉ LISTO
         config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES
 
-
         // imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
         // exit(3);
     }
