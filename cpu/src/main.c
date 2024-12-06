@@ -127,7 +127,7 @@ void rutina_main_cpu(void)
     diccionario_reg = crear_diccionario_reg(&contexto_exec);
     
     // para que se diferencie en caso de 1ra ejecucion
-    contexto_exec.pid = 999;
+    contexto_exec.pid = -1;
 
 
 

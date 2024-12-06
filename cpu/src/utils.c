@@ -280,7 +280,6 @@ void recibir_pedido_ejecucion(void)
     log_debug(log_cpu_gral, "Esperando pedido ejecución");
 
     codigo = recibir_codigo(socket_kernel_dispatch);
-    
 
     switch (codigo)
     {
