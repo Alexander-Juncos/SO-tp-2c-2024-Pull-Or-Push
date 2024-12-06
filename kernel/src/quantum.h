@@ -4,7 +4,6 @@
 #include "utils.h"
 #include <commons/temporal.h>
 
-/* TODO SACADO DEL TP ANTERIOR!! */
 
 extern t_temporal* timer;
 extern int ms_transcurridos;

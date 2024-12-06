@@ -9,7 +9,6 @@
 // ==========================================================================
 
 int contador_pid = 0;
-//bool hay_que_chequear_colas_cmn = false;
 
 // ==========================================================================
 // ====  Función principal (que inicia el planificador):  ===================
@@ -29,17 +28,16 @@ void iniciar_planificador(void) {
     
 }
 
-/////////////////////////////////////////////////////
+// ==================================================
 // -----------------------------------------------
-//---  TRABAJANDO EN LOS ALGORITMOS...
+// ---  ALGORITMOS  ------------------------------
 // -----------------------------------------------
-/////////////////////////////////////////////////////
+// ==================================================
 
 /**
- * Se determinó juntar ambos algoritmos ya que en el caso de prioridades se ingresan los hilos de forma ordenada 
- * según prioridad, lo que nos permite unificar FIFO y prioridades en uno solo.
+ * Se determinó juntar ambos algoritmos en una sola función, ya que la única diferencia
+ * entre los algoritmos la manejamos con la variable puntero a función "ingresar_a_ready".
  */ 
-
 void planific_corto_fifo_y_prioridades(void) {
     bool plani_puede_proseguir = true;
     int codigo_recibido = -1;
@@ -206,8 +204,8 @@ void planific_corto_fifo_y_prioridades(void) {
 	}
 }
 
-// TODAVÍA EN DESARROLLO!!!
-// La idea es crear una cola nueva de ready por cada nivel de prioridad que se va conociendo.
+// La idea es crear una cola nueva de Ready cada vez que llega a Ready un Hilo para cuya
+// prioridad no había otros Hilos en Ready. Y eliminar dicha cola cuando no tiene Hilos.
 void planific_corto_multinivel_rr(void) {
     bool plani_puede_proseguir = true;
     int codigo_recibido = -1;
@@ -239,30 +237,6 @@ void planific_corto_multinivel_rr(void) {
     pthread_mutex_unlock(&mutex_colas_ready_cmn);
 
     while (true) {
-        /*
-        char* clave_nivel = string_itoa(nivel);
-
-        if (!dictionary_has_key(diccionario_ready_multinivel, clave_nivel)) {
-            free(clave_nivel);
-            continue;
-        }
-
-        t_list* cola_nivel = dictionary_get(diccionario_ready_multinivel, clave_nivel);
-
-        if (list_is_empty(cola_nivel)) {
-            free(clave_nivel);
-            continue;
-        }
-
-        // Ejecutar el primer hilo en la cola
-        pthread_mutex_lock(&mutex_hilo_exec);
-        hilo_exec = list_remove(cola_nivel, 0);
-        enviar_orden_de_ejecucion_al_cpu(hilo_exec);
-        log_debug(log_kernel_gral, "## (%d:%d) - EJECUTANDO en nivel %d", hilo_exec->pid_pertenencia, hilo_exec->tid, nivel);
-        pthread_mutex_unlock(&mutex_hilo_exec);
-
-        free(clave_nivel);
-        */
 
         // Se queda esperando alguna Syscall del hilo en ejecución, o su interrupción por Quantum agotado.
         argumentos_recibidos = esperar_cpu_rr(&codigo_recibido);
@@ -322,7 +296,6 @@ void planific_corto_multinivel_rr(void) {
             case SYSCALL_FINALIZAR_ESTE_HILO:
             log_info(log_kernel_oblig, "## (%d:%d) - Solicitó syscall: THREAD_EXIT", hilo_exec->pid_pertenencia, hilo_exec->tid);
             finalizar_hilo(hilo_exec);
-            //hay_que_chequear_colas_cmn = true;
             break;
 
             case SYSCALL_CREAR_MUTEX:
@@ -368,7 +341,6 @@ void planific_corto_multinivel_rr(void) {
             case INTERRUPCION:
             log_info(log_kernel_oblig, "## (%d:%d) - Desalojado por fin de Quantum", hilo_exec->pid_pertenencia, hilo_exec->tid);
             ingresar_a_ready(hilo_exec);
-            //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
             hilo_exec = NULL;
             break;
 
@@ -415,8 +387,6 @@ void planific_corto_multinivel_rr(void) {
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
 
 // ==========================================================================
 // ====  Funciones Externas:  ===============================================
@@ -512,7 +482,6 @@ void finalizar_hilo(t_tcb* tcb) {
         log_info(log_kernel_oblig, "## Finaliza el proceso %d", tcb->pid_pertenencia);
     }
     if(hilo_exec == tcb) {
-        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN.
         hilo_exec = NULL;
     }
     pthread_mutex_lock(&mutex_cola_exit);
@@ -610,7 +579,6 @@ void bloquear_mutex(t_tcb* tcb, t_mutex* mutex) {
         // Manda el hilo a la cola de bloqueados esperando por el mutex
         list_add(mutex->bloqueados_esperando, tcb);
         log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: MUTEX", tcb->pid_pertenencia, tcb->tid);
-        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
         hilo_exec = NULL;
         return;
     }
@@ -650,7 +618,6 @@ void hacer_join(t_tcb* tcb, int tid_a_joinear) {
         tcb->tid_joined = tid_a_joinear;
         list_add(cola_blocked_join, tcb);
         log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: PTHREAD_JOIN", tcb->pid_pertenencia, tcb->tid);
-        //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
         hilo_exec = NULL;
     }
     else {
@@ -674,7 +641,6 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
     list_add(cola_blocked_memory_dump, tcb);
     pthread_mutex_unlock(&mutex_cola_blocked_memory_dump);
     log_info(log_kernel_oblig, "## (%d:%d) - Bloqueado por: MEMORY_DUMP", tcb->pid_pertenencia, tcb->tid);
-    //hay_que_chequear_colas_cmn = true; // Sirve solo para CMN
     hilo_exec = NULL;
 
     t_recepcion_respuesta_memory_dump* info_para_recibir_rta = malloc(sizeof(t_recepcion_respuesta_memory_dump));
@@ -708,46 +674,3 @@ void enviar_pedido_de_dump(int pid, int tid, int socket) {
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
-
-/* OBSOLETO. LO DEJO POR LAS DUDAS ==================================
-t_recurso* encontrar_recurso_del_sistema(char* nombre) {
-
-	bool _es_mi_recurso(t_recurso* recurso) {
-		return strcmp(recurso->nombre, nombre) == 0;
-	}
-
-    return list_find(recursos_del_sistema, (void*)_es_mi_recurso);
-}
-
-t_recurso_ocupado* encontrar_recurso_ocupado(t_list* lista_de_recursos_ocupados, char* nombre) {
-
-	bool _es_mi_recurso_ocupado(t_recurso_ocupado* recurso) {
-		return strcmp(recurso->nombre, nombre) == 0;
-	}
-
-    return list_find(lista_de_recursos_ocupados, (void*)_es_mi_recurso_ocupado);
-}
-
-t_recurso_blocked* encontrar_recurso_blocked(char* nombre) {
-
-	bool _es_mi_recurso_blocked(t_recurso_blocked* recurso) {
-		return strcmp(recurso->nombre, nombre) == 0;
-	}
-
-    return list_find(lista_recurso_blocked, (void*)_es_mi_recurso_blocked);
-}
-
-void asignar_recurso_ocupado(t_pcb* pcb, char* nombre_recurso) {
-    t_recurso_ocupado* recurso_ocupado = encontrar_recurso_ocupado(pcb->recursos_ocupados, nombre_recurso);
-    if (recurso_ocupado != NULL) {
-        (recurso_ocupado->instancias)++;
-    }
-    else {
-        recurso_ocupado = malloc(sizeof(t_recurso_ocupado));
-        recurso_ocupado->nombre = string_duplicate(nombre_recurso);
-        recurso_ocupado->instancias = 1;
-        list_add(proceso_exec->recursos_ocupados, recurso_ocupado);
-    }
-}
-=====================================================================
-*/

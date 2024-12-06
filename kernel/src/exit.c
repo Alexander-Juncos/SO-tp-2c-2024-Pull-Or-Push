@@ -1,9 +1,5 @@
 #include <exit.h>
 
-// variables globales para este hilo:
-// ----------------------------------
-// por ahora ninguna...
-// ----------------------------------
 
 void* rutina_exit(void* puntero_null) {
 
@@ -25,7 +21,6 @@ void* rutina_exit(void* puntero_null) {
             pid_de_pcb_a_eliminar = tcb->pid_pertenencia;
             destruir_tcb(tcb);
             destruir_pcb(pid_de_pcb_a_eliminar);
-
             
             // Si NEW se encuentra esperando, le avisa
             // que reintente la creación de proceso.
@@ -35,7 +30,7 @@ void* rutina_exit(void* puntero_null) {
                 sem_post(&sem_sincro_new_exit);
             }
             pthread_mutex_unlock(&mutex_sincro_new_exit);
-
+            
         }
         else {
             enviar_fin_hilo_a_memoria(tcb);
