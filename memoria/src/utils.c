@@ -890,6 +890,8 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     p_new->limite = p->base + tamanio -1;
     p_new->ocupada = true;
 
+    
+    
     // como la referencia ya apunta a un elemento existente lo modifico
     p->base = p_new->limite + 1;
     /*
@@ -900,6 +902,13 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     // agrego el nuevo elemento en indice adecuado
     int indice = obtener_indice_particion(p_new->base);
     list_add_in_index(memoria->lista_particiones, indice, p_new);
+    
+    if (p->base == memoria->tamano_memoria)
+    {
+        indice = obtener_indice_particion(p->base);
+        list_remove(memoria->lista_particiones, indice);
+        free(p);
+    }
     /*
         como la particion recibida fue actualizada el indice obtenido va a ser el q le correspondia...
         x lo q su lugar en la lista sera tomado x p_new y pasando al siguiente indice.
