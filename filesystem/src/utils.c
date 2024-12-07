@@ -48,7 +48,7 @@ bool iniciar_fs()
 
     // Abrir - Crear archivo bloques.dat con tamaño = BLOCK_SIZE * BLOCK_COUNT 
     ruta_aux = obtener_path_absoluto("bloques.dat");
-    aux_tamanio = (fs->tam_bloques * fs->cant_bloques) - 1; // tamaño en bytes 0-->tam_tot-1 
+    aux_tamanio = (fs->tam_bloques * fs->cant_bloques) ; // tamaño en bytes tam_tot
 
     log_debug(log_fs_gral, "ruta bloques: %s", ruta_aux);
     fs->f_bloques = fopen(ruta_aux, "rb+"); // busca si existe
@@ -148,7 +148,7 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
 
     pthread_mutex_lock(&mutex_fs);
     // Agrego al bloque_indice los bloques libres
-    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
+    fseek(fs->f_bloques, bloque_indice * fs->tam_bloques, SEEK_SET);
 
     // escribo los indices de los bloques
     fwrite((vector_bloques+1), sizeof(uint32_t), cant_bloques-1, fs->f_bloques);
@@ -174,10 +174,9 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
 
 void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsigned int cant_bloques)
 {
-
+    void* ptr_data;
     cant_bloques--; // resto el bloque de indices
 
-    void* ptr_data = data;
     // tomo todo el bloque de indices
     uint32_t* bloque = malloc(fs->tam_bloques); // es lo mismo que sizeof(uint32_t)*cantidad_indices_max
     
@@ -191,15 +190,15 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
 
     for (int i=0; i<cant_bloques; i++)
     {
+        ptr_data = (data + fs->tam_bloques * i);
+
         // LOG OBLIGATORIO - ACCESO A BLOQUE
         log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %d",
                                 nombre, bloque);
 
         // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
-        fseek(fs->f_bloques, *(uint32_t*)(bloque + i), SEEK_SET);
+        fseek(fs->f_bloques, (*(uint32_t*)(bloque + i)) * fs->tam_bloques, SEEK_SET);
         fwrite(ptr_data,fs->tam_bloques, 1, fs->f_bloques);
-
-        ptr_data += fs->tam_bloques;
     }
 
     // limpiar flag fin de lectura (x las dudas)
@@ -319,7 +318,7 @@ void iniciar_bitmap()
     pthread_mutex_init(&mutex_bitmap, NULL);
 
     // Lo imprimimos para testear
-    imprimir_bitmap();
+    // imprimir_bitmap();
     contar_bloques_libres_totales();
 
     free(ruta);
@@ -349,7 +348,7 @@ void actualizar_f_bitmap() // por ahora sincroniza todo el bitmap... podria hace
 
     // esto es opcional pero puede funcionar como seguro
     contar_bloques_libres_totales();
-    imprimir_bitmap();
+    // imprimir_bitmap();
 
     msync(bitmap->espacio_bitmap, stat_buf.st_size, MS_SYNC);
 }
