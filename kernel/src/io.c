@@ -32,6 +32,7 @@ void* rutina_io(void* puntero_null) {
             pthread_mutex_lock(&mutex_hilo_usando_io);
             if(hilo_usando_io != NULL) { // if (el hilo no finalizó mientras la IO laburaba)
                 ingresar_a_ready(hilo_usando_io);
+                log_info(log_kernel_oblig, "## (%d:%d) finalizó IO y pasa a READY", tcb->pid_pertenencia, tcb->tid);
                 hilo_usando_io = NULL;
             }
             pthread_mutex_unlock(&mutex_hilo_usando_io);
