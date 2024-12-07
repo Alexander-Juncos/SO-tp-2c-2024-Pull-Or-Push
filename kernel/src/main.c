@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
     iniciar_logs(modulo_en_testeo);
 
-    saludar("kernel");
+    //saludar("kernel");
 
     /****************** Conexión CPU *******************/
     ip = config_get_string_value(config, "IP_CPU");
@@ -107,7 +107,9 @@ int main(int argc, char* argv[]) {
     if(argc == 1)
     {
         // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
-        proceso_inicial = nuevo_proceso(8, 0, string_duplicate("PRUEBA_FS"));
+        //proceso_inicial = nuevo_proceso(8, 0, string_duplicate("PRUEBA_FS"));
+        imprimir_mensaje("INGRESA LOS PARAMETROS, VAGO");
+        imprimir_mensaje("ARCHIVO_PSEUDOCODIGO 32 ./c/k/ejemplo.config");
     }
     else
     {
