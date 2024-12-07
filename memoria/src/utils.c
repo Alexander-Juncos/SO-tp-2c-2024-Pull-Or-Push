@@ -500,8 +500,8 @@ void rutina_finalizar_proceso(t_list* param, int socket_cliente)
 
     /****************************** PARTICIONES DINAMICAS ***********************************************/
 
-    // Listado de particiones actuales
-    listar_particiones();
+    // // Listado de particiones actuales
+    // listar_particiones();
 
     // envio pedido de consolidacion (solo se hace de ser valido) - memoria protegida
     pthread_mutex_lock(&mutex_memoria);
