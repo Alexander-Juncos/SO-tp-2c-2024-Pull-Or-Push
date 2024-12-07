@@ -884,6 +884,13 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
 
 t_particion* recortar_particion(t_particion* p, int tamanio)
 {
+    // si lo q busco recortar es la particion entera
+    if (p->limite - p->base + 1 == tamanio)
+    {
+        p->ocupada = true;
+        return p;
+    }
+
     // creo nuevo elemento de la lista (nueva particion)
     t_particion* p_new = malloc(sizeof(t_particion));
     p_new->base = p->base;
@@ -891,24 +898,13 @@ t_particion* recortar_particion(t_particion* p, int tamanio)
     p_new->ocupada = true;
 
     
-    
     // como la referencia ya apunta a un elemento existente lo modifico
     p->base = p_new->limite + 1;
-    /*
-        la particion recibida sigue estando libre, solo q su base se adelanto al final
-        de la nueva particion creada...
-    */
 
     // agrego el nuevo elemento en indice adecuado
     int indice = obtener_indice_particion(p_new->base);
     list_add_in_index(memoria->lista_particiones, indice, p_new);
     
-    if (p->base == memoria->tamano_memoria)
-    {
-        indice = obtener_indice_particion(p->base);
-        list_remove(memoria->lista_particiones, indice);
-        free(p);
-    }
     /*
         como la particion recibida fue actualizada el indice obtenido va a ser el q le correspondia...
         x lo q su lugar en la lista sera tomado x p_new y pasando al siguiente indice.
