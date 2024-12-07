@@ -647,9 +647,9 @@ void enviar_pedido_de_dump_a_memoria(t_tcb* tcb) {
     info_para_recibir_rta->tcb = tcb;
     info_para_recibir_rta->socket_de_la_conexion = socket_memoria;
     // acá no debería haber problema de memory leak, pues al terminar el hilo detacheado, lo liberaría.
-    pthread_t* thread_respuesta_memory_dump = malloc(sizeof(pthread_t));
-    pthread_create(thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)info_para_recibir_rta);
-    pthread_detach(*thread_respuesta_memory_dump);
+    pthread_t thread_respuesta_memory_dump;
+    pthread_create(&thread_respuesta_memory_dump, NULL, rutina_respuesta_memory_dump, (void*)info_para_recibir_rta);
+    pthread_detach(&thread_respuesta_memory_dump);
 }
 
 // ==========================================================================

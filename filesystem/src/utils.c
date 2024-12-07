@@ -79,6 +79,7 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     FILE* f_metadata;
     unsigned int bloque_indice;
     t_config* metadata;
+    char* aux_config;
 
     // preparo para buscar bloques
     unsigned int* vector_bloques;
@@ -128,9 +129,14 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     fclose(f_metadata);
 
     metadata = config_create(ruta_absoluta);    
-        
-    config_set_value(metadata, "SIZE", string_itoa(size));
-    config_set_value(metadata, "INDEX_BLOCK", string_itoa(bloque_indice));
+
+    // para evitar memory leaks
+    aux_config = string_itoa(size); 
+    config_set_value(metadata, "SIZE", aux_config);
+    free(aux_config);
+    aux_config = string_itoa(bloque_indice);
+    config_set_value(metadata, "INDEX_BLOCK", aux_config);
+    free(aux_config);
     config_save(metadata);
 
     // LOG OBLIGATORIO - Creación de Archivo
@@ -190,7 +196,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
                                 nombre, bloque);
 
         // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
-        fseek(fs->f_bloques, *(uint32_t*)(bloque + i * sizeof(uint32_t)), SEEK_SET);
+        fseek(fs->f_bloques, *(uint32_t*)(bloque + i), SEEK_SET);
         fwrite(ptr_data,fs->tam_bloques, 1, fs->f_bloques);
 
         ptr_data += fs->tam_bloques;
@@ -212,6 +218,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
 bool rutina_memory_dump(t_list* param)
 {
     char* nombre = string_new();
+    char* aux_itoa; // para evitar memory leaks
     int pid;
     int tid;
     int size;
@@ -230,9 +237,13 @@ bool rutina_memory_dump(t_list* param)
     data = list_get(param, 4); // la informacion en el espacio usuario del proceso
 
     // formo el nombre para el archivo // <PID>-<TID>-<TIMESTAMP>.dmp
-    string_append(&nombre, string_itoa(pid));
+    aux_itoa = string_itoa(pid);
+    string_append(&nombre, aux_itoa);
+    free(aux_itoa);
     string_append(&nombre, "-");
-    string_append(&nombre, string_itoa(tid));
+    aux_itoa = string_itoa(tid);
+    string_append(&nombre, aux_itoa);
+    free(aux_itoa);
     string_append(&nombre, "-");
     string_append(&nombre, timestamp);
     string_append(&nombre, ".dmp");

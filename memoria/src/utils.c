@@ -736,6 +736,7 @@ t_list* crear_lista_de_particiones()
             particion->base = puntero;
             puntero += atoi(array_particiones[i]); //
             particion->limite = puntero - 1; // el -1 para que cumpla el rango ej: 0->256-1 = 256 de tam_particion
+            particion->ocupada = false;
             list_add(lista_particiones, particion);
             i++;
 	    }
@@ -747,6 +748,7 @@ t_list* crear_lista_de_particiones()
         particion->base = puntero;
         puntero = memoria->tamano_memoria;
         particion->limite = puntero - 1;
+        particion->ocupada = false;
         list_add(lista_particiones, particion);
     }
 
@@ -795,6 +797,7 @@ t_particion* particion_libre (int tamanio)
         log_debug(log_memoria_gral, "Particion Fija hallada [%s] >> Base: %d - Limite: %d", algoritmo, particion->base, particion->limite);
         particion->ocupada = true;
         free(algoritmo);
+        listar_particiones();
         return particion;
     }
 
@@ -820,7 +823,7 @@ t_particion* alg_first_fit(int tamanio) // devuelve directamente la referencia a
             particion = aux;
             return particion;
         }
-        log_debug(log_memoria_gral, "Particion ocupada [FIRST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        log_debug(log_memoria_gral, "[FIRST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -843,9 +846,10 @@ t_particion* alg_best_fit(int tamanio) // devuelve directamente la referencia a 
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_debug(log_memoria_gral, "Particion posible [BEST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "[BEST_FIT] Particion posible >> Base: %d - Limite: %d", particion->base, particion->limite);
+        } else {
+            log_debug(log_memoria_gral, "[BEST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
         }
-        log_debug(log_memoria_gral, "Particion ocupada [BEST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -867,9 +871,12 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
         {
             tam_part_elegida = tam_aux;
             particion = aux;
-            log_debug(log_memoria_gral, "Particion posible [WORST_FIT] >> Base: %d - Limite: %d", particion->base, particion->limite);
+            log_debug(log_memoria_gral, "[WORST_FIT] Particion posible >> Base: %d - Limite: %d", particion->base, particion->limite);
         }
-        log_debug(log_memoria_gral, "Particion ocupada [WORST_FIT] >> Base: %d - Limite: %d", aux->base,aux->limite);
+        else
+        {
+            log_debug(log_memoria_gral, "[WORST_FIT] Particion no valida >> Base: %d - Limite: %d", aux->base,aux->limite);
+        }
     }
 
     return particion; // si no encontro va a retornar NULL
@@ -877,22 +884,27 @@ t_particion* alg_worst_fit(int tamanio) // devuelve directamente la referencia a
 
 t_particion* recortar_particion(t_particion* p, int tamanio)
 {
+    // si lo q busco recortar es la particion entera
+    if (p->limite - p->base + 1 == tamanio)
+    {
+        p->ocupada = true;
+        return p;
+    }
+
     // creo nuevo elemento de la lista (nueva particion)
     t_particion* p_new = malloc(sizeof(t_particion));
     p_new->base = p->base;
     p_new->limite = p->base + tamanio -1;
     p_new->ocupada = true;
 
+    
     // como la referencia ya apunta a un elemento existente lo modifico
     p->base = p_new->limite + 1;
-    /*
-        la particion recibida sigue estando libre, solo q su base se adelanto al final
-        de la nueva particion creada...
-    */
 
     // agrego el nuevo elemento en indice adecuado
     int indice = obtener_indice_particion(p_new->base);
     list_add_in_index(memoria->lista_particiones, indice, p_new);
+    
     /*
         como la particion recibida fue actualizada el indice obtenido va a ser el q le correspondia...
         x lo q su lugar en la lista sera tomado x p_new y pasando al siguiente indice.

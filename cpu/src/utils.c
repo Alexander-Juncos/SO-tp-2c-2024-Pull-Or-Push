@@ -310,6 +310,7 @@ void recibir_pedido_ejecucion(void)
     {
         interrupcion(INTERRUPCION);
         contexto_exec.pid = -1;
+        list_destroy_and_destroy_elements(pedido, free);
         return;
     }
 
