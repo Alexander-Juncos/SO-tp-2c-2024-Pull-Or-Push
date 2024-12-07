@@ -19,9 +19,6 @@
     {
       "name": "utils",
       "path": "utils"
-    },
-    {
-      "path": "configuraciones"
     }
   ],
   "settings": {
