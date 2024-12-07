@@ -20,10 +20,14 @@ int main(int argc, char* argv[]) {
     {
         config = config_create(argv[3]);
     }
-    else if (argc == 3) // si no recibe ruta para archivo config
+    else // si no recibe ruta para archivo config
     {
-        config = iniciar_config("default"); 
+        //config = iniciar_config("default"); 
+        imprimir_mensaje("INGRESA BIEN LOS PARAMETROS, VAGO");
+        imprimir_mensaje("ARCHIVO_PSEUDOCODIGO 32 ./c/k/ejemplo.config");
+        exit(3);
     }
+    /*
     else if (argc == 2)
     {
         imprimir_mensaje("Error: Debe ingresar tambien el [tamanio_proceso]");
@@ -37,6 +41,7 @@ int main(int argc, char* argv[]) {
         // imprimir_mensaje("Error: Debe ingresar, como minimo, un [archivo_pseudocodigo] y el [tamanio_proceso]");
         // exit(3);
     }
+    */
 
     // argv[1] => ruta de archivo de pseudocodigo (para memoria)
     // argv[2] => tamanio para reserva inicial de memoria
@@ -104,18 +109,8 @@ int main(int argc, char* argv[]) {
     
     t_pcb* proceso_inicial = NULL;
     // El Proceso inicial
-    if(argc == 1)
-    {
-        // ESTE PROCESO ES PARA PROBAR FÁCILMENTE. SE DEBE ELIMINAR CUANDO TERMINEMOS DE DEBUGGEAR
-        //proceso_inicial = nuevo_proceso(8, 0, string_duplicate("PRUEBA_FS"));
-        imprimir_mensaje("INGRESA LOS PARAMETROS, VAGO");
-        imprimir_mensaje("ARCHIVO_PSEUDOCODIGO 32 ./c/k/ejemplo.config");
-    }
-    else
-    {
-        // DEBE QUEDAR SOLO ESTO
-        proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, string_duplicate(argv[1]));
-    }
+    proceso_inicial = nuevo_proceso(atoi(argv[2]), 0, string_duplicate(argv[1]));
+    
     log_info(log_kernel_oblig, "## (0:0) Se crea el proceso - Estado: NEW");
     ingresar_a_new(proceso_inicial);
 
