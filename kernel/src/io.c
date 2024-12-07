@@ -25,9 +25,9 @@ void* rutina_io(void* puntero_null) {
             hilo_usando_io = tcb;
             pthread_mutex_unlock(&mutex_hilo_usando_io);
 
-            log_debug(log_kernel_oblig, "Empiezo a dormir - PID: %d - TID: %d - voy a dormir: %d",tcb->pid_pertenencia,tcb->tid, blocked_io->tiempo_uso_io_en_microsegs/MILISEG_A_MICROSEG);
+            //log_debug(log_kernel_oblig, "Empiezo a dormir - PID: %d - TID: %d - voy a dormir: %d",tcb->pid_pertenencia,tcb->tid, blocked_io->tiempo_uso_io_en_microsegs/MILISEG_A_MICROSEG);
             usleep(blocked_io->tiempo_uso_io_en_microsegs);
-            log_debug(log_kernel_oblig, "Me desperte - PID: %d - TID: %d",tcb->pid_pertenencia,tcb->tid);
+            //log_debug(log_kernel_oblig, "Me desperte - PID: %d - TID: %d",tcb->pid_pertenencia,tcb->tid);
 
             pthread_mutex_lock(&mutex_hilo_usando_io);
             if(hilo_usando_io != NULL) { // if (el hilo no finalizó mientras la IO laburaba)
