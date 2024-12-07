@@ -79,6 +79,7 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     FILE* f_metadata;
     unsigned int bloque_indice;
     t_config* metadata;
+    char* aux_config;
 
     // preparo para buscar bloques
     unsigned int* vector_bloques;
@@ -128,9 +129,14 @@ bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación 
     fclose(f_metadata);
 
     metadata = config_create(ruta_absoluta);    
-        
-    config_set_value(metadata, "SIZE", string_itoa(size));
-    config_set_value(metadata, "INDEX_BLOCK", string_itoa(bloque_indice));
+
+    // para evitar memory leaks
+    aux_config = string_itoa(size); 
+    config_set_value(metadata, "SIZE", aux_config);
+    free(aux_config);
+    aux_config = string_itoa(bloque_indice);
+    config_set_value(metadata, "INDEX_BLOCK", aux_config);
+    free(aux_config);
     config_save(metadata);
 
     // LOG OBLIGATORIO - Creación de Archivo
