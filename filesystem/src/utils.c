@@ -74,7 +74,7 @@ bool iniciar_fs()
     return true;
 }
 
-bool memory_dump(char* ruta, int size, void* data) // pendiente simplificación de t_bloques_libres a vector unsigned int
+bool memory_dump(char* ruta, int size, void* data) 
 {
     FILE* f_metadata;
     unsigned int bloque_indice;
