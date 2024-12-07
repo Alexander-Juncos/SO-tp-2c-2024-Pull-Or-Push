@@ -13,20 +13,18 @@ int main(int argc, char* argv[]) {
 
     if (argc == 1) // si no recibe ruta para archivo config
     {
-        config = iniciar_config("default"); 
+        //config = iniciar_config("default");
+        imprimir_mensaje("INGRESA EL PARAMETRO, VAGO");
+        imprimir_mensaje("./c/f/ejemplo.config");
+	    exit(3);
     }
     else if (argc == 2){
         config = config_create(argv[1]);
     }
     else
     {
-        config = iniciar_config("default"); // PARA PROBAR LOS HANDSHAKES.
-
-        /* COMENTO ESTO POR AHORA, PARA PROBAR LOS HANDSHAKES.
-        *
         imprimir_mensaje("Error: demasiados argumentos, solo se acepta <pathConfig>");
         exit(3);
-        */
     }
     iniciar_logs(modulo_en_testeo);
 
