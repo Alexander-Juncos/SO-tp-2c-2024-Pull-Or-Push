@@ -194,7 +194,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
 
         // LOG OBLIGATORIO - ACCESO A BLOQUE
         log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %u",
-                                nombre, bloque);
+                                nombre, *(unsigned int*)(bloque + i));
 
         // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
         fseek(fs->f_bloques, (*(uint32_t*)(bloque + i)) * fs->tam_bloques, SEEK_SET);
