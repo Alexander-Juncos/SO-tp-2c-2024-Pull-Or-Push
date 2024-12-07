@@ -180,10 +180,10 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
     // tomo todo el bloque de indices
     uint32_t* bloque = malloc(fs->tam_bloques); // es lo mismo que sizeof(uint32_t)*cantidad_indices_max
     
-    fseek(fs->f_bloques, bloque_indice, SEEK_SET);
+    fseek(fs->f_bloques, bloque_indice * fs->tam_bloques, SEEK_SET);
 
     // LOG OBLIGATORIO - ACCESO A BLOQUE INDICE
-    log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d",
+    log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %u",
                                 nombre, bloque_indice);
 
     fread((void*)bloque, fs->tam_bloques, 1, fs->f_bloques); // cargo TODO el bloque indices (un unico acceso)
@@ -193,7 +193,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
         ptr_data = (data + fs->tam_bloques * i);
 
         // LOG OBLIGATORIO - ACCESO A BLOQUE
-        log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %d",
+        log_info(log_fs_oblig,"## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %u",
                                 nombre, bloque);
 
         // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
@@ -202,7 +202,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
     }
 
     // limpiar flag fin de lectura (x las dudas)
-    clearerr(fs->f_bloques);
+    // clearerr(fs->f_bloques);
     /* 
         Ya que si al leer el bloque indice x alguna razon estuviera en el ultimo bloque, al leer el ultimo indice
         el flag de EOF no permitiria realizar ninguna otra lectura...
