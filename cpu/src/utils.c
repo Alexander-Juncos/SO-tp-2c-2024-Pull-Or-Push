@@ -336,12 +336,6 @@ bool obtener_contexto_ejecucion(int pid, int tid)
     t_list* recibido;
     void* data;
 
-    // // si no cambio pid y tid entonces el contexto ya esta en CPU
-    // if (contexto_exec.pid == pid && contexto_exec.tid == tid)
-    // {
-    //     log_debug(log_cpu_gral, "Contexto PID: %d - TID: %d - Ya cargado en cpu", pid, tid);
-    //     return true;
-    // }
     log_debug(log_cpu_gral, "Solicito contexto Ejcución <PID:TID> %d:%d",pid,tid);
     log_info(log_cpu_oblig, "## TID: %d - Solicito Contexto Ejecución", tid);
 
