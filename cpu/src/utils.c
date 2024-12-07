@@ -17,6 +17,7 @@ t_config* config;
 bool se_hizo_jnz = false;
 
 t_contexto_exec contexto_exec;
+pthread_mutex_t mutex_contexto;
 
 bool hay_interrupcion;
 pthread_mutex_t mutex_interrupcion;
@@ -279,6 +280,7 @@ void recibir_pedido_ejecucion(void)
     int pid;
     int tid;
     bool resultado_contexto = true;
+    bool en_contexto_exec = false;
     log_debug(log_cpu_gral, "Esperando pedido ejecución");
 
     codigo = recibir_codigo(socket_kernel_dispatch);
@@ -303,10 +305,12 @@ void recibir_pedido_ejecucion(void)
     data = list_get(pedido, 0);
     pid = *(int*)data;
     data = list_get(pedido, 1);
-    tid = *(int*)data;
+    tid = *(int*)data; 
+
+    en_contexto_exec = contexto_exec.pid == pid && contexto_exec.tid == tid;
 
     // Si habia interrupcion y desalojo a mismo pid-tid entonces interrumpo
-    if (hay_interrupcion && contexto_exec.pid == pid && contexto_exec.tid == tid)
+    if (hay_interrupcion && en_contexto_exec)
     {
         interrupcion(INTERRUPCION);
         contexto_exec.pid = -1;

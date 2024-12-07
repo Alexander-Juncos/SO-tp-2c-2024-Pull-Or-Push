@@ -78,6 +78,7 @@ typedef struct {
 
 
 extern t_contexto_exec contexto_exec;
+extern pthread_mutex_t mutex_contexto;
 
 extern bool hay_interrupcion;
 extern pthread_mutex_t mutex_interrupcion;

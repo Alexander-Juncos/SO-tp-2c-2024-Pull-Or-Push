@@ -5,7 +5,7 @@
 //     argv[0] |        argv[1]       |
 int main(int argc, char* argv[]) {
     /******************** Variables ********************/
-    bool modulo_en_testeo = true; // gestiona si los logs auxiliares se muestran en consola o no
+    bool modulo_en_testeo = false; // gestiona si los logs auxiliares se muestran en consola o no
     char*   ip;
     char*   puerto;
     pthread_t hilo_interrupt;
@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
     iniciar_logs(modulo_en_testeo);
 
     saludar("cpu");
+    pthread_mutex_init(&mutex_contexto, NULL);
     
     /***************** Conexión Memoria ****************/
     ip = config_get_string_value(config, "IP_MEMORIA");
@@ -62,6 +63,7 @@ void* rutina_hilo_interrupcion (void*)
     int pid,
         tid;
     void* aux_recibido;
+    bool en_contexto_exec = 0;
 
     char* puerto = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     socket_escucha_puerto_interrupt = iniciar_servidor(puerto);
@@ -97,7 +99,11 @@ void* rutina_hilo_interrupcion (void*)
         aux_recibido = list_get(recibido, 1);
         tid = *(int*)aux_recibido;
 
-        if (pid == contexto_exec.pid && tid == contexto_exec.tid){
+        pthread_mutex_lock(&mutex_contexto);
+        en_contexto_exec = pid == contexto_exec.pid && tid == contexto_exec.tid;
+        pthread_mutex_unlock(&mutex_contexto);
+
+        if (en_contexto_exec){
             hay_interrupcion = true;
             log_debug(log_cpu_gral, "PID: %d - TID: %d - Interrupcion Aceptada", pid, tid);
         } else
@@ -144,7 +150,9 @@ void rutina_main_cpu(void)
 
         if (desalojado)
         {
+            pthread_mutex_lock(&mutex_contexto);
             recibir_pedido_ejecucion();
+            pthread_mutex_unlock(&mutex_contexto);
         }
 
         if (contexto_exec.pid == -1)
