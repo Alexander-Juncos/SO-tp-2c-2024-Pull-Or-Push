@@ -14,7 +14,10 @@ int main(int argc, char* argv[]) {
     /****************** Inicialización *****************/
     if (argc == 1) // si no recibe ruta para archivo config
     {
-        config = iniciar_config("default"); 
+        //config = iniciar_config("default");
+        imprimir_mensaje("INGRESA EL PARAMETRO, VAGO");
+        imprimir_mensaje("./c/m/ejemplo.config");
+	exit(3);
     }
     else if (argc == 2){
         config = config_create(argv[1]);
