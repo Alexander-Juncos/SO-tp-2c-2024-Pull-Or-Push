@@ -190,7 +190,7 @@ void escribir_bloques(char* nombre, unsigned int bloque_indice, void* data, unsi
                                 nombre, bloque);
 
         // *(uint32_t*)(bloque + i * sizeof(uint32_t)) => permite obtener cada indice
-        fseek(fs->f_bloques, *(uint32_t*)(bloque + i * sizeof(uint32_t)), SEEK_SET);
+        fseek(fs->f_bloques, *(uint32_t*)(bloque + i), SEEK_SET);
         fwrite(ptr_data,fs->tam_bloques, 1, fs->f_bloques);
 
         ptr_data += fs->tam_bloques;
